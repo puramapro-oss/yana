@@ -1,6 +1,8 @@
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import BottomTabBar from '@/components/layout/BottomTabBar'
+import CinematicIntro from '@/components/onboarding/CinematicIntro'
+import TutorialOverlay from '@/components/onboarding/TutorialOverlay'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +15,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
       <BottomTabBar />
+      <CinematicIntro />
+      <TutorialOverlay />
     </div>
   )
 }

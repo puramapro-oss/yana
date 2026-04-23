@@ -32,6 +32,7 @@ const patchSchema = z.object({
     .nullable()
     .optional(),
   notifications_enabled: z.boolean().optional(),
+  tutorial_completed: z.boolean().optional(),
 })
 
 export async function GET() {

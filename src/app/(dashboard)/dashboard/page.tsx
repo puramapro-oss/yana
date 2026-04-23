@@ -9,6 +9,7 @@ import type { Trip } from '@/types'
 import { formatDateTime } from '@/lib/utils'
 import DailyGiftCard from '@/components/rewards/DailyGiftCard'
 import AnniversaryBanner from '@/components/rewards/AnniversaryBanner'
+import CrossPromoBanner from '@/components/crosspromo/CrossPromoBanner'
 
 export default function DashboardPage() {
   const { profile, user, loading } = useAuth()
@@ -197,6 +198,10 @@ export default function DashboardPage() {
           desc="FAQ et contact support"
         />
       </section>
+
+      <div className="mt-8">
+        <CrossPromoBanner />
+      </div>
     </div>
   )
 }

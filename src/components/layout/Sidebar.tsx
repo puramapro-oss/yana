@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, Car, MessageSquare, Users, TreeDeciduous, LogOut, Play,
   ChevronLeft, ChevronRight, Shield, HelpCircle, Gift, Wallet, Trophy, Ticket,
-  Award, Store,
+  Award, Store, BookOpen,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -27,6 +27,7 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/lottery', icon: Ticket, label: 'Tirage', testId: 'nav-lottery' },
   { href: '/achievements', icon: Award, label: 'Achievements', testId: 'nav-achievements' },
   { href: '/boutique', icon: Store, label: 'Boutique', testId: 'nav-boutique' },
+  { href: '/guide', icon: BookOpen, label: 'Guide', testId: 'nav-guide' },
   { href: '/aide', icon: HelpCircle, label: 'Aide', testId: 'nav-aide' },
 ]
 
