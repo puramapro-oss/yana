@@ -116,7 +116,7 @@ export default function Hero3DScene() {
       <ambientLight intensity={0.15} />
       <directionalLight position={[3, 2, -5]} intensity={1.0} color="#F97316" />
       <directionalLight position={[-3, 2, 5]} intensity={0.5} color="#0EA5E9" />
-      <Stars radius={80} depth={40} count={800} factor={2} saturation={0} fade speed={0.4} />
+      <Stars radius={80} depth={40} count={300} factor={2} saturation={0} fade speed={0.4} />
       <Horizon />
       <GridRoad />
     </Canvas>
