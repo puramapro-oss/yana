@@ -7,6 +7,8 @@ import { createClient } from '@/lib/supabase'
 import { Car, MessageSquare, Play, TreeDeciduous } from 'lucide-react'
 import type { Trip } from '@/types'
 import { formatDateTime } from '@/lib/utils'
+import DailyGiftCard from '@/components/rewards/DailyGiftCard'
+import AnniversaryBanner from '@/components/rewards/AnniversaryBanner'
 
 export default function DashboardPage() {
   const { profile, user, loading } = useAuth()
@@ -71,6 +73,11 @@ export default function DashboardPage() {
           Démarrer
         </Link>
       </header>
+
+      <div className="mb-6 flex flex-col gap-4">
+        <AnniversaryBanner />
+        <DailyGiftCard />
+      </div>
 
       <section
         aria-labelledby="dashboard-stats"
