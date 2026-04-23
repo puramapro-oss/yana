@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createServiceClient } from '@/lib/supabase'
+import { encode as geohashEncode } from '@/lib/geohash'
 
 export const runtime = 'nodejs'
 
@@ -12,27 +13,6 @@ const BodySchema = z.object({
   start_lat: z.number().min(-90).max(90).optional(),
   start_lng: z.number().min(-180).max(180).optional(),
 })
-
-// Geohash léger (precision ~5 km, suffisant pour stats) — libs externes overkill ici
-function geohashEncode(lat: number, lng: number, precision = 5): string {
-  const BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz'
-  let latMin = -90, latMax = 90, lngMin = -180, lngMax = 180
-  let isEven = true
-  let bit = 0, ch = 0
-  let hash = ''
-  while (hash.length < precision) {
-    if (isEven) {
-      const mid = (lngMin + lngMax) / 2
-      if (lng >= mid) { ch = (ch << 1) + 1; lngMin = mid } else { ch = ch << 1; lngMax = mid }
-    } else {
-      const mid = (latMin + latMax) / 2
-      if (lat >= mid) { ch = (ch << 1) + 1; latMin = mid } else { ch = ch << 1; latMax = mid }
-    }
-    isEven = !isEven
-    if (++bit === 5) { hash += BASE32[ch]; bit = 0; ch = 0 }
-  }
-  return hash
-}
 
 export async function POST(req: Request) {
   const sb = await createServerSupabaseClient()

@@ -17,13 +17,14 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/dashboard', icon: Home, label: 'Accueil', testId: 'nav-accueil' },
   { href: '/drive', icon: Play, label: 'SAFE DRIVE', testId: 'nav-drive' },
   { href: '/green', icon: TreeDeciduous, label: 'GREEN DRIVE', testId: 'nav-green' },
+  { href: '/carpool', icon: Users, label: 'Covoiturage', testId: 'nav-carpool' },
   { href: '/vehicles', icon: Car, label: 'Véhicules', testId: 'nav-vehicles' },
   { href: '/chat', icon: MessageSquare, label: 'NAMA-PILOTE', testId: 'nav-chat' },
   { href: '/aide', icon: HelpCircle, label: 'Aide', testId: 'nav-aide' },
 ]
 
 // Les items suivants seront activés par phase :
-//   /carpool (P2.3)
+//   /kyc (P2.3 flow, accessible directement par lien)
 //   /wallet · /referral · /missions · /settings · /profile · /concours (P3)
 //   /admin · /ambassadeur (P3-P4)
 

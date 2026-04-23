@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createServiceClient } from '@/lib/supabase'
 import { calculateTripScore } from '@/lib/scoring'
+import { encode as geohashEncode } from '@/lib/geohash'
 import { PLANS } from '@/lib/constants'
 import type { FuelType, Plan, TripEventType, TripMode } from '@/types'
 
@@ -17,26 +18,6 @@ const BodySchema = z.object({
   end_lng: z.number().min(-180).max(180).nullable().optional(),
   cancel: z.boolean().optional(),
 })
-
-function geohashEncode(lat: number, lng: number, precision = 5): string {
-  const BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz'
-  let latMin = -90, latMax = 90, lngMin = -180, lngMax = 180
-  let isEven = true
-  let bit = 0, ch = 0
-  let hash = ''
-  while (hash.length < precision) {
-    if (isEven) {
-      const mid = (lngMin + lngMax) / 2
-      if (lng >= mid) { ch = (ch << 1) + 1; lngMin = mid } else { ch = ch << 1; lngMax = mid }
-    } else {
-      const mid = (latMin + latMax) / 2
-      if (lat >= mid) { ch = (ch << 1) + 1; latMin = mid } else { ch = ch << 1; latMax = mid }
-    }
-    isEven = !isEven
-    if (++bit === 5) { hash += BASE32[ch]; bit = 0; ch = 0 }
-  }
-  return hash
-}
 
 interface TripRow {
   id: string
