@@ -84,15 +84,22 @@ export default function PricingPage() {
         ))}
       </section>
 
-      <div className="mt-10 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 text-center">
-        <p className="text-sm text-emerald-300">
-          💚 <strong>Revenus modestes ?</strong> {APP_NAME} est éligible à plusieurs aides mobilité
-          (bonus écologique, prime carburant, Forfait Mobilité Durable…).{' '}
-          <Link href="/financer" className="underline underline-offset-4 hover:text-emerald-200">
-            Vois les 45 aides disponibles
-          </Link>
-          .
+      <div className="mt-10 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-6 text-center">
+        <p className="text-sm font-medium text-emerald-300 sm:text-base">
+          💚 <strong>Combien peux-tu toucher&nbsp;?</strong>{' '}
+          <span className="text-emerald-200/90">
+            En 3 questions, on identifie les aides mobilité cumulables pour ta situation :
+            bonus écologique, prime carburant, FMD, aide permis, aides handicap, régionales&hellip;
+          </span>
         </p>
+        <Link
+          href="/financer"
+          className="mt-4 inline-flex items-center justify-center rounded-full bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+          data-testid="pricing-financer-cta"
+        >
+          Lancer le simulateur
+          <span aria-hidden className="ml-1">→</span>
+        </Link>
       </div>
     </main>
   )
