@@ -1,8 +1,8 @@
 # YANA — progress.md
 
-**Dernière update** : 2026-04-23 (fin session 4 — P3 Session A deploy groupé)
-**Phase actuelle** : 🟡 **P3 Session A TERMINÉE (P3.1→P3.4) — Session B à venir**
-**Statut global** : YANA est **live** sur https://yana.purama.dev avec 4 universels (referral/wallet/financer/contest+lottery) — 15/15 smoke tests prod verts
+**Dernière update** : 2026-04-23 (fin session 5 — P3 Session B1+B2 deploy groupé)
+**Phase actuelle** : 🟡 **P3 Session B1+B2 TERMINÉES (7 features) — Session B3 restante (4 features onboarding)**
+**Statut global** : YANA est **live** sur https://yana.purama.dev avec 11 universels — 16/16 smoke tests prod verts B1+B2
 
 ---
 
@@ -216,11 +216,72 @@ Deploy prod : commit `36affb2` → `yana-lbxlkif9d-puramapro-oss-projects.vercel
 
 ---
 
+---
+
+## 🎉 P3 SESSION B1+B2 — COMPTE USER + GAMIFICATION (2026-04-23)
+
+### Chunk B1 — Compte utilisateur (commit `10671e6`)
+
+| # | Feature | Livré |
+|---|---|---|
+| B1.0 | SQL | profiles.birthdate + profiles.locale (CHECK 16 langues) |
+| B1.1 | /achievements | /api/achievements/status avec unlocked calculé depuis stats profiles (trips/trees/co2/streak) + referrals N1 + carpool completions. Progress % par condition. 15 seeds actifs. XPLevelBar animé + filtres all/unlocked/locked + grid 3-col + AchievementCard par rareté (common/rare/epic/legendary). |
+| B1.2 | /profile | /api/profile GET/PATCH (Zod full_name, theme dark/light/oled, locale 16 langues, birthdate ≥13 ans, notifications_enabled). Édition complète + stats niveau/XP/streak. |
+| B1.3 | /settings | Hub 3 sections (Compte, Préférences, Aide & légal). Bouton déconnexion. Sidebar user card désormais clickable → /settings. |
+| B1.4 | /settings/abonnement | /api/subscription GET + plan actuel glass card + bouton portail Stripe (existing `/api/stripe/portal`) + 5 dernières factures + 8 derniers paiements + mention SASU art. 293 B. |
+| B1.5 | /notifications | /api/notifications GET + PATCH (mark_read single / mark_all_read) + inbox avec filtre all/unread + optimistic updates + icons par type (achievement/referral/wallet/tree/contest/lottery/daily_gift/birthday/mission). |
+
+### Chunk B2 — Gamification + fiscal (commit `df25afb`)
+
+| # | Feature | Livré |
+|---|---|---|
+| B2.0 | SQL | 4 tables (daily_gifts, point_shop_items, point_purchases, user_events) + 2 fn SQL atomiques lock pessimiste (redeem_shop_item, open_daily_gift) + 4 seeds shop |
+| B2.1 | /invoices | /api/invoices GET + page total année animé + lifetime + liste PDF download + footer SASU art. 293 B |
+| B2.2 | /boutique Points | /api/boutique/items + /api/boutique/redeem POST (Zod + RPC) + page grid 2-col avec progress bar + modal success coupon copiable + historique |
+| B2.3 | Daily gift | /api/daily-gift GET/POST + DailyGiftCard widget dashboard (streak flame, -10% garanti si streak≥7, anti-double-open via fn SQL ≥20h). Distribution CLAUDE.md §DAILY GIFT (40% pts, 25% coupon-5%, 15% ticket, 10% credits, 5% -20%, 3% 50-100pts, 2% -50%). |
+| B2.4 | Anniversaire | /api/user-events/today (detect birthday + signup_anniversary) + /api/user-events/claim POST (credit 500 pts birthday ou 100×N ans, anti-double-claim annuel via user_events.last_triggered_at) + AnniversaryBanner widget dashboard. |
+
+### 🧪 Tests critiques RPC B2 (6 scénarios verts)
+
+- redeem discount-10 (1000 pts) → OK + coupon généré
+- redeem boost x2 (2000 pts) → OK + coupon généré
+- redeem cash-5eur (50000 pts) sur 0 → INSUFFICIENT_POINTS
+- open daily_gift → +83 pts streak=1
+- re-open immédiate → ALREADY_OPENED_TODAY (anti ≥20h)
+- USER_NOT_FOUND sur UUID inexistant
+
+### 🌐 LIVE VALIDATION B1+B2 — 2026-04-23
+
+Deploy prod : commit `df25afb` → `yana-qw3casoos-puramapro-oss-projects.vercel.app` → aliased `yana.purama.dev`
+
+- **Routes publiques** (HTTP 200, 5/5) : /, /pricing, /financer, /login, /signup
+- **B1 API auth guards** (HTTP 401, 4/4) : /api/achievements/status, /api/profile, /api/notifications, /api/subscription
+- **B2 API auth guards** (HTTP 401, 4/4) : /api/invoices, /api/boutique/items, /api/daily-gift, /api/user-events/today
+- **Nouvelles pages auth-gated** (HTTP 307→/login, 7/7) : /achievements, /profile, /settings, /settings/abonnement, /notifications, /invoices, /boutique
+
+**Total smoke tests prod : 16/16 verts**
+
+### 🧠 LEÇONS SESSION 5 — P3 Session B1+B2
+
+| DATE | APP | LEÇON | IMPACT |
+|---|---|---|---|
+| 2026-04-23 | YANA | Dans plpgsql, SELECT INTO avec nom de colonne identique au nom de RETURN TABLE variable → "ambiguous reference". Fix : qualifier explicitement la colonne avec l'alias de table (`dg.streak_count`). Appris en testant yana.open_daily_gift. | Debug Postgres — toujours alias les colonnes quand RETURN TABLE partage des noms |
+| 2026-04-23 | YANA | Daily gift anti-double-open = check `≥20h` (pas 24h strict) pour tolérer dérive horaire + streak reset si `>48h`. Distribution random scaled via `random()` Postgres (0-1) + seuils cumulés. | Pattern reward distribution scalable |
+| 2026-04-23 | YANA | Anniversary detection = compare `(month, day)` de birthdate ou created_at vs today UTC. Année server = today.getUTCFullYear(). Anti double-claim annuel via `user_events.last_triggered_at.year === todayYear`. | Pattern détection date récurrente sans CRON |
+| 2026-04-23 | YANA | Boutique coupon code 10-char généré dans fn SQL via `upper(substring(md5(random::text || gen_random_uuid()::text) FROM 1 FOR 10))` — suffisamment unique sans table de coupons séparée. duration_days par item pour expiration flexible. | Pattern code promo ad-hoc |
+| 2026-04-23 | YANA | Sidebar avatar en bas désormais clickable → /settings (pattern ChatGPT/Linear). Profile overview + CTA settings en 1 clic. | UX compte user simplifiée |
+
+---
+
 ## HANDOFF MESSAGE
 
-**✅ P3 Session A TERMINÉE. YANA a 4 nouveaux universels live : parrainage 3 niveaux, wallet + retrait SEPA, simulateur aides 4-étapes, classement hebdo + tirage mensuel.**
+**✅ P3 Session B1+B2 TERMINÉE. YANA ajoute 7 nouveaux universels live : /achievements, /profile, /settings, /settings/abonnement, /notifications, /invoices, /boutique + daily gift + anniversaire widgets dashboard.**
 
-Session B à venir : `/achievements`, `/guide`, `/classement`, `/profile`, `/settings`, `/settings/abonnement`, `/notifications`, `/invoices`, tuto `OnboardingFlow`, cinématique intro, Points boutique, daily gift, anniversaire, cross-promo.
+**Reste Session B3 (4 features onboarding/découverte)** :
+- B3.1 Cinématique intro (3-4s, skip, cookie intro_seen)
+- B3.2 Tuto OnboardingFlow (spotlight SVG mask 7 étapes sur /dashboard)
+- B3.3 /guide (guide complet app, accordion par feature)
+- B3.4 Cross-promo (bannières `cross_promos` MIDAS/KASH/SUTRA/KAÏA, max 2/page)
 
-Pour démarrer P3 Session B → relance Claude avec :
-> "Lis progress.md + CLAUDE.md. P3 Session A terminée (commit 36affb2 live). Démarre P3 Session B : /achievements, /guide, /classement, /profile, /settings, /settings/abonnement, /notifications, /invoices, tuto OnboardingFlow, cinématique intro, Points boutique, daily gift, anniversaire, cross-promo. Plan d'abord, tous gates G1-G8 par feature, commit atomique, deploy final groupé."
+Pour démarrer P3 Session B3 → relance Claude avec :
+> "Lis progress.md + CLAUDE.md. P3 Session B1+B2 terminée (commit df25afb live). Démarre B3 : cinématique intro 3-4s + tuto OnboardingFlow spotlight + /guide + cross-promo. Plan court, gates G1-G8 par feature, commit atomique, deploy final groupé + handoff final Session B complète."
