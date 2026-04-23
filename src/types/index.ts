@@ -169,6 +169,37 @@ export interface SafeDriverMonthlyScore {
   created_at: string
 }
 
+// Résultat de lib/scoring.ts — scoring trip terminé
+export interface TripScoreResult {
+  safety_score: number          // 0-100
+  eco_score: number             // 0-100
+  co2_kg: number                // absolue, arrondi 0.001
+  seeds_earned: number          // Graines (1/km safe + bonus eco + bonus carpool)
+  badge: 'gold' | 'silver' | 'bronze' | 'learner'
+  event_counts: Partial<Record<TripEventType, number>>
+  breakdown: {
+    base: number
+    events_penalty: number
+    events_bonus: number
+    speeding_penalty: number
+  }
+}
+
+// État live d'un trajet en cours (client state hook useTrip)
+export interface LiveTripState {
+  trip_id: string | null
+  status: 'idle' | 'active' | 'paused' | 'ending'
+  started_at: number | null     // epoch ms
+  paused_ms: number             // cumul pauses
+  distance_m: number
+  duration_sec: number
+  current_speed_kmh: number
+  max_speed_kmh: number
+  events_count: number
+  last_position: { lat: number; lng: number; accuracy: number; timestamp: number } | null
+  error: string | null
+}
+
 // ──────────────────────────────────────────────────────────────────
 // COVOITURAGE (Dual Reward)
 // ──────────────────────────────────────────────────────────────────

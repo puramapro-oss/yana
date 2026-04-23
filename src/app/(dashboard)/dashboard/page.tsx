@@ -1,32 +1,75 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/hooks/useAuth'
-import { Car, MessageSquare, TreeDeciduous, Users } from 'lucide-react'
+import { createClient } from '@/lib/supabase'
+import { Car, MessageSquare, Play, TreeDeciduous } from 'lucide-react'
+import type { Trip } from '@/types'
+import { formatDateTime } from '@/lib/utils'
 
 export default function DashboardPage() {
-  const { profile, loading } = useAuth()
+  const { profile, user, loading } = useAuth()
+  const [recentTrips, setRecentTrips] = useState<Trip[] | null>(null)
+  const [tripsLoading, setTripsLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    ;(async () => {
+      setTripsLoading(true)
+      const { data } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .order('ended_at', { ascending: false })
+        .limit(5)
+      if (!cancelled) {
+        setRecentTrips((data ?? []) as Trip[])
+        setTripsLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [user, supabase])
 
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent-primary)] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--cyan)] border-t-transparent" />
       </div>
     )
   }
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'pilote'
+  const avgSafety =
+    profile && profile.total_trips > 0 && profile.total_safety_score != null
+      ? Math.round(profile.total_safety_score / profile.total_trips)
+      : null
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header className="mb-8">
-        <p className="text-sm text-[var(--text-muted)]">Bienvenue,</p>
-        <h1 className="gradient-text font-[family-name:var(--font-display)] text-3xl font-bold sm:text-4xl">
-          {firstName} 🛞
-        </h1>
-        <p className="mt-2 text-[var(--text-secondary)]">
-          Chaque trajet est un chapitre de ta légende.
-        </p>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm text-[var(--text-muted)]">Bienvenue,</p>
+          <h1 className="gradient-text font-[family-name:var(--font-display)] text-3xl font-bold sm:text-4xl">
+            {firstName} 🛞
+          </h1>
+          <p className="mt-2 text-[var(--text-secondary)]">
+            Chaque trajet est un chapitre de ta légende.
+          </p>
+        </div>
+        <Link
+          href="/drive"
+          data-testid="dashboard-drive-cta"
+          className="hidden items-center gap-2 rounded-full bg-gradient-to-r from-[var(--cyan)] to-[var(--purple)] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[var(--cyan)]/20 transition hover:brightness-110 sm:inline-flex"
+        >
+          <Play className="h-4 w-4" />
+          Démarrer
+        </Link>
       </header>
 
       <section
@@ -43,59 +86,109 @@ export default function DashboardPage() {
           value={`${Math.round(profile?.co2_offset_total_kg ?? 0)} kg`}
           icon="🌿"
         />
-        <Stat label="Arbres plantés" value={String(profile?.trees_planted_total ?? 0)} icon="🌳" />
+        <Stat
+          label="Score sécurité"
+          value={avgSafety != null ? `${avgSafety}/100` : '—'}
+          icon="🛡️"
+        />
       </section>
 
+      <Link
+        href="/drive"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[var(--cyan)] to-[var(--purple)] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[var(--cyan)]/20 transition hover:brightness-110 sm:hidden"
+      >
+        <Play className="h-4 w-4" />
+        Démarrer un trajet
+      </Link>
+
       <section
-        aria-labelledby="coming-next"
+        aria-labelledby="recent-trips"
         className="mt-10 rounded-2xl border border-[var(--border)] bg-white/[0.02] p-6"
       >
-        <h2
-          id="coming-next"
-          className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]"
-        >
-          Ton tableau de bord se construit
-        </h2>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">
-          YANA est en phase de lancement. Ces fonctionnalités arrivent très bientôt :
-        </p>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          <FeatureRow
-            icon={Car}
-            title="SAFE DRIVE"
-            desc="Scoring conduite temps réel + Graines à chaque trajet safe"
-          />
-          <FeatureRow
-            icon={TreeDeciduous}
-            title="GREEN DRIVE"
-            desc="CO₂ live et plantation d'arbres automatique"
-          />
-          <FeatureRow
-            icon={Users}
-            title="COVOITURAGE DUAL"
-            desc="Passager ET conducteur gagnent Graines + €"
-          />
-          <FeatureRow
-            icon={MessageSquare}
-            title="NAMA-PILOTE"
-            desc="Ton copilote IA : sécurité, écoconduite, sagesse du voyage"
-          />
-        </ul>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/chat"
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--accent-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--accent-primary)]/20 transition hover:brightness-110"
+        <div className="mb-4 flex items-center justify-between">
+          <h2
+            id="recent-trips"
+            className="font-[family-name:var(--font-display)] text-lg font-semibold text-[var(--text-primary)]"
           >
-            <MessageSquare className="h-4 w-4" />
-            Parler à NAMA-PILOTE
-          </Link>
+            Derniers trajets
+          </h2>
           <Link
-            href="/aide"
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] px-5 py-2.5 text-sm font-semibold text-[var(--text-primary)] transition hover:bg-white/5"
+            href="/vehicles"
+            className="text-xs text-[var(--text-secondary)] underline hover:text-[var(--text-primary)]"
           >
-            Centre d&apos;aide
+            Gérer véhicules
           </Link>
         </div>
+
+        {tripsLoading && (
+          <ul className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <li key={i} className="skeleton h-14 w-full rounded-xl" />
+            ))}
+          </ul>
+        )}
+
+        {!tripsLoading && recentTrips && recentTrips.length === 0 && (
+          <div className="rounded-xl border border-dashed border-[var(--border)] p-8 text-center">
+            <p className="text-sm text-[var(--text-secondary)]">
+              Aucun trajet encore. Démarre ton premier trajet pour gagner tes premières Graines.
+            </p>
+            <Link
+              href="/drive"
+              className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--cyan)] px-5 py-2.5 text-sm font-semibold text-white hover:brightness-110"
+            >
+              <Play className="h-4 w-4" /> Démarrer
+            </Link>
+          </div>
+        )}
+
+        {!tripsLoading && recentTrips && recentTrips.length > 0 && (
+          <ul className="space-y-2" data-testid="recent-trips-list">
+            {recentTrips.map((t) => (
+              <li
+                key={t.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-white/[0.01] p-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--cyan)]/10 text-[var(--cyan)]">
+                    <Car className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                      {Number(t.distance_km).toFixed(1)} km · {t.trip_mode === 'carpool_driver' ? 'Covoit conducteur' : t.trip_mode === 'carpool_passenger' ? 'Covoit passager' : 'Solo'}
+                    </p>
+                    <p className="text-[11px] text-[var(--text-muted)]">
+                      {t.ended_at ? formatDateTime(t.ended_at) : '—'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-right">
+                  <Badge score={t.safety_score} />
+                  {t.seeds_earned > 0 && (
+                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">
+                      +{t.seeds_earned} 🌱
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-6 grid gap-3 sm:grid-cols-2">
+        <QuickLink
+          href="/chat"
+          icon={<MessageSquare className="h-4 w-4" />}
+          title="NAMA-PILOTE"
+          desc="Copilote IA — sécurité, écoconduite, sagesse"
+        />
+        <QuickLink
+          href="/aide"
+          icon={<TreeDeciduous className="h-4 w-4" />}
+          title="Centre d'aide"
+          desc="FAQ et contact support"
+        />
       </section>
     </div>
   )
@@ -107,31 +200,53 @@ function Stat({ label, value, icon }: { label: string; value: string; icon: stri
       <div className="text-2xl" aria-hidden>
         {icon}
       </div>
-      <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{value}</p>
+      <p className="mt-2 text-2xl font-bold text-[var(--text-primary)] tabular-nums">{value}</p>
       <p className="text-xs text-[var(--text-muted)]">{label}</p>
     </div>
   )
 }
 
-function FeatureRow({
-  icon: Icon,
+function Badge({ score }: { score: number | null }) {
+  if (score == null) return null
+  const color =
+    score >= 90
+      ? 'bg-amber-400/15 text-amber-300'
+      : score >= 75
+      ? 'bg-slate-300/15 text-slate-200'
+      : score >= 60
+      ? 'bg-amber-700/20 text-amber-200'
+      : 'bg-slate-600/20 text-slate-300'
+  return (
+    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${color}`}>
+      {score}
+    </span>
+  )
+}
+
+function QuickLink({
+  href,
+  icon,
   title,
   desc,
 }: {
-  icon: typeof Car
+  href: string
+  icon: React.ReactNode
   title: string
   desc: string
 }) {
   return (
-    <li className="flex items-start gap-3 rounded-lg border border-[var(--border)] bg-white/[0.01] p-3">
-      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--accent-primary)]/10 text-[var(--accent-primary)]">
-        <Icon className="h-4 w-4" />
+    <Link
+      href={href}
+      className="flex items-start gap-3 rounded-xl border border-[var(--border)] bg-white/[0.02] p-4 transition hover:border-[var(--border-glow)] hover:bg-white/[0.04]"
+    >
+      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--cyan)]/10 text-[var(--cyan)]">
+        {icon}
       </div>
       <div className="min-w-0">
         <p className="font-semibold text-[var(--text-primary)]">{title}</p>
         <p className="text-xs text-[var(--text-secondary)]">{desc}</p>
       </div>
-    </li>
+    </Link>
   )
 }
 

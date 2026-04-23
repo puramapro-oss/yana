@@ -2,15 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Search, MessageSquare, Wallet, User } from 'lucide-react'
+import { Home, Play, Car, MessageSquare, HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [
   { href: '/dashboard', icon: Home, label: 'Accueil' },
-  { href: '/scanner', icon: Search, label: 'Scanner' },
-  { href: '/chat', icon: MessageSquare, label: 'NAMA-PILOTE' },
-  { href: '/dashboard/wallet', icon: Wallet, label: 'Wallet' },
-  { href: '/dashboard/profile', icon: User, label: 'Profil' },
+  { href: '/drive', icon: Play, label: 'Drive' },
+  { href: '/vehicles', icon: Car, label: 'Véhicules' },
+  { href: '/chat', icon: MessageSquare, label: 'NAMA' },
+  { href: '/aide', icon: HelpCircle, label: 'Aide' },
 ] as const
 
 export default function BottomTabBar() {

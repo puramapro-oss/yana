@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Home, Car, MessageSquare, Users, TreeDeciduous, LogOut,
+  Home, Car, MessageSquare, Users, TreeDeciduous, LogOut, Play,
   ChevronLeft, ChevronRight, Shield, HelpCircle,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
@@ -15,12 +15,14 @@ type NavItem = { href: string; icon: typeof Home; label: string; testId: string 
 
 const PRIMARY_NAV: NavItem[] = [
   { href: '/dashboard', icon: Home, label: 'Accueil', testId: 'nav-accueil' },
+  { href: '/drive', icon: Play, label: 'SAFE DRIVE', testId: 'nav-drive' },
+  { href: '/vehicles', icon: Car, label: 'Véhicules', testId: 'nav-vehicles' },
   { href: '/chat', icon: MessageSquare, label: 'NAMA-PILOTE', testId: 'nav-chat' },
   { href: '/aide', icon: HelpCircle, label: 'Aide', testId: 'nav-aide' },
 ]
 
 // Les items suivants seront activés par phase :
-//   /drive (P2) · /green (P2) · /carpool (P2)
+//   /green (P2.2) · /carpool (P2.3)
 //   /wallet · /referral · /missions · /settings · /profile · /concours (P3)
 //   /admin · /ambassadeur (P3-P4)
 
