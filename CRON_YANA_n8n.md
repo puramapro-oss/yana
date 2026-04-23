@@ -1,6 +1,6 @@
 # YANA — Handoff CRONs n8n
 
-Configurer 4 workflows sur `n8n.srv1286148.hstgr.cloud`.
+Configurer 5 workflows sur `n8n.srv1286148.hstgr.cloud`.
 
 ## Secrets requis
 
@@ -42,6 +42,19 @@ Configurer 4 workflows sur `n8n.srv1286148.hstgr.cloud`.
 - URL : `https://yana.purama.dev/api/cron/plant-trees`
 - Déjà documenté dans `progress.md` P2.
 
+## 5. Emails lifecycle — tous les jours 09:00 UTC
+
+- **Trigger** : `Schedule Trigger` → cron expression `0 9 * * *`
+- **HTTP Request** :
+  - Méthode : `POST`
+  - URL : `https://yana.purama.dev/api/cron/emails/daily`
+  - Headers : `Authorization: Bearer {{$env.CRON_SECRET}}`
+  - Timeout : 300000 ms
+- **Comportement** : scan profiles âgés 0→37j, envoie le template daily approprié (J0/1/3/7/14/21/30) si pas déjà envoyé. Fenêtre d'acceptation = 7j (email J7 skip si user est à J20 sans l'avoir reçu). Idempotent via `email_sequences` unique index.
+- **Réponse** : `{ ok: true, stats: { scanned, eligible, sent, skipped, errors } }`
+- **Alerting** : alerter si `stats.errors.length > 0` pendant 3 runs consécutifs (Resend down ou template cassé).
+- **Trigger events inline** (pas CRON) : `/api/email/event` est appelé depuis `/api/cron/classement-weekly` et `/api/stripe/webhook` avec body `{ kind, user_id, payload }`. Aucune config n8n séparée.
+
 ## Test manuel depuis l'admin
 
 Super-admin peut déclencher manuellement `classement-weekly` ou `tirage-monthly` depuis `/admin/contests` :
@@ -56,6 +69,7 @@ SECRET=$(grep ^CRON_SECRET= .env.local | cut -d= -f2)
 curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron/classement-weekly
 curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron/tirage-monthly
 curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron/daily-gift-reset
+curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron/emails/daily
 ```
 
 ## Observabilité

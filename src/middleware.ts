@@ -22,6 +22,7 @@ function isPublicPath(pathname: string): boolean {
   if (pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|css|js|woff|woff2|ttf|json|xml|txt)$/)) return true
   if (pathname === '/sitemap.xml' || pathname === '/robots.txt' || pathname === '/manifest.json') return true
   if (pathname === '/cookies') return true
+  if (pathname.startsWith('/email/')) return true
   return false
 }
 
