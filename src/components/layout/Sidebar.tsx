@@ -16,13 +16,14 @@ type NavItem = { href: string; icon: typeof Home; label: string; testId: string 
 const PRIMARY_NAV: NavItem[] = [
   { href: '/dashboard', icon: Home, label: 'Accueil', testId: 'nav-accueil' },
   { href: '/drive', icon: Play, label: 'SAFE DRIVE', testId: 'nav-drive' },
+  { href: '/green', icon: TreeDeciduous, label: 'GREEN DRIVE', testId: 'nav-green' },
   { href: '/vehicles', icon: Car, label: 'Véhicules', testId: 'nav-vehicles' },
   { href: '/chat', icon: MessageSquare, label: 'NAMA-PILOTE', testId: 'nav-chat' },
   { href: '/aide', icon: HelpCircle, label: 'Aide', testId: 'nav-aide' },
 ]
 
 // Les items suivants seront activés par phase :
-//   /green (P2.2) · /carpool (P2.3)
+//   /carpool (P2.3)
 //   /wallet · /referral · /missions · /settings · /profile · /concours (P3)
 //   /admin · /ambassadeur (P3-P4)
 

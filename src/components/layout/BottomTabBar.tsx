@@ -2,13 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Play, Car, MessageSquare, HelpCircle } from 'lucide-react'
+import { Home, Play, TreeDeciduous, MessageSquare, HelpCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [
   { href: '/dashboard', icon: Home, label: 'Accueil' },
   { href: '/drive', icon: Play, label: 'Drive' },
-  { href: '/vehicles', icon: Car, label: 'Véhicules' },
+  { href: '/green', icon: TreeDeciduous, label: 'Green' },
   { href: '/chat', icon: MessageSquare, label: 'NAMA' },
   { href: '/aide', icon: HelpCircle, label: 'Aide' },
 ] as const
