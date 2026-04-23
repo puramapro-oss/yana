@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home, Car, MessageSquare, Users, TreeDeciduous, LogOut, Play,
-  ChevronLeft, ChevronRight, Shield, HelpCircle, Gift,
+  ChevronLeft, ChevronRight, Shield, HelpCircle, Gift, Wallet,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -21,12 +21,13 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/vehicles', icon: Car, label: 'Véhicules', testId: 'nav-vehicles' },
   { href: '/chat', icon: MessageSquare, label: 'NAMA-PILOTE', testId: 'nav-chat' },
   { href: '/referral', icon: Gift, label: 'Parrainage', testId: 'nav-referral' },
+  { href: '/wallet', icon: Wallet, label: 'Portefeuille', testId: 'nav-wallet' },
   { href: '/aide', icon: HelpCircle, label: 'Aide', testId: 'nav-aide' },
 ]
 
 // Les items suivants seront activés par phase :
 //   /kyc (P2.3 flow, accessible directement par lien)
-//   /wallet · /referral · /missions · /settings · /profile · /concours (P3)
+//   /missions · /settings · /profile · /concours (P3)
 //   /admin · /ambassadeur (P3-P4)
 
 const ADMIN_ITEM: NavItem = { href: '/admin', icon: Shield, label: 'Admin', testId: 'nav-admin' }
