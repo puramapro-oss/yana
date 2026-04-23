@@ -1,8 +1,8 @@
 # YANA — progress.md
 
-**Dernière update** : 2026-04-23 (fin session 3 — P2 deploy groupé)
-**Phase actuelle** : ✅ **P2 COMPLÈTE — prête pour P3**
-**Statut global** : YANA est **live** sur https://yana.purama.dev (13 endpoints validés HTTP 200/307)
+**Dernière update** : 2026-04-23 (fin session 4 — P3 Session A deploy groupé)
+**Phase actuelle** : 🟡 **P3 Session A TERMINÉE (P3.1→P3.4) — Session B à venir**
+**Statut global** : YANA est **live** sur https://yana.purama.dev avec 4 universels (referral/wallet/financer/contest+lottery) — 15/15 smoke tests prod verts
 
 ---
 
@@ -175,9 +175,52 @@ Clés/comptes à fournir quand possible — le code est **stubbed ready**, 0 hal
 
 ---
 
+## 🎉 P3 SESSION A — UNIVERSELS PURAMA (2026-04-23)
+
+| # | Feature | Commit | Livré |
+|---|---|---|---|
+| 1 | P3.1 /referral | `9355707` | Route /go/[slug] → cookie HttpOnly 30j · attribution OAuth (callback) + email (API) · idempotent · 3 niveaux N1/N2/N3 · tiers bronze→légende · stats dashboard (counts + commissions pending/credited/paid_out + 20 derniers filleuls) · Sidebar nav-referral |
+| 2 | P3.2 /wallet | `41ab5de` | RPC atomique yana.request_withdrawal (lock pessimiste FOR UPDATE) · 5 codes d'erreur · /api/wallet/{balance,transactions,withdraw} · IBAN mod-97 + SHA-256 hash + masquage · WalletBalance + TransactionList (labels FR) + WithdrawModal (validation live + success screen) · Sidebar nav-wallet · 6/6 scénarios RPC + 7/7 IBAN tests |
+| 3 | P3.3 /financer | `a0f2666` | lib/aides-catalog.ts (13 profils × 15 situations × 8 régions × 8 types) · /api/aides GET avec scoring match + handicap_only filter · FinancerWizard 4 étapes URL-synced · StepProgress/Profil/Situation/Région/Results · bandeau vert /pricing reworké avec CTA "Lancer le simulateur" · 4 scénarios API vérifiés |
+| 4 | P3.4 /contest + /lottery | `36affb2` | Table yana.contest_results (JSONB winners) · /api/contest/{leaderboard,history} + /api/lottery/status · Countdown · LeaderboardTable rank 1/2/3 gradient · TicketCounter animé · NextDrawCard fallback fin de mois · TicketSourcesGuide 6 sources · PastDrawsList · Sidebar nav-contest + nav-lottery |
+
+---
+
+### 🌐 LIVE VALIDATION P3 Session A — 2026-04-23
+
+Deploy prod : commit `36affb2` → `yana-lbxlkif9d-puramapro-oss-projects.vercel.app` → aliased `yana.purama.dev`
+
+**Routes publiques** (HTTP 200, 10/10) : /, /pricing, /financer, /financer?step=4&profil=handicape&region=ile-de-france (deep link), /how-it-works, /ecosystem, /status, /login, /signup, /go/TEST1234 (307 = redirect normal)
+
+**API publiques** (HTTP 200, 3/3) : /api/contest/leaderboard, /api/contest/history, /api/aides
+
+**Auth-protected APIs** (HTTP 401 correct, 3/3) : /api/lottery/status, /api/wallet/balance, /api/referral/stats
+
+**Auth-protected pages** (HTTP 307→/login?next=, 5/5) : /dashboard, /referral, /wallet, /contest, /lottery
+
+**API aides filtre concret** : profil=handicape + region=ile-de-france → **17 aides, 43 700 €** (PCH 5000€ en tête)
+
+---
+
+## 🧠 LEÇONS SESSION 4 — P3 Session A
+
+| DATE | APP | LEÇON | IMPACT |
+|---|---|---|---|
+| 2026-04-23 | YANA | Lock pessimiste Postgres `SELECT … FOR UPDATE` dans une fonction SECURITY DEFINER = anti-double-retrait bulletproof sans Redis/Upstash. Tout se passe dans une transaction atomique (check balance + insert withdrawal + decrement + log tx). 6/6 scénarios verts sans Upstash configuré. | Pattern réutilisable pour toute opération atomique sensible (paiement, debit, etc.) |
+| 2026-04-23 | YANA | Attribution parrainage = 3 chemins cohérents : 1) cookie `yana_ref` via /go/[slug] route handler, 2) consommé par /auth/callback pour OAuth, 3) consommé par /api/referral/attribute pour email signup. Idempotent (check existing row avant insert). Single source of truth = `referral_attribution.ts`. | Flow parrainage robuste peu importe la méthode d'inscription |
+| 2026-04-23 | YANA | Wizard URL-synced via `router.replace` scroll:false = deep-link partageable + retour navigateur OK + refresh idempotent. State local + URL sync = pas besoin de store global. Hydration initiale depuis searchParams. | Pattern wizard multi-étapes |
+| 2026-04-23 | YANA | Scoring `match + bonus intersection + petit tiebreaker montant` suffit pour trier les aides par pertinence sans backend ML. Handicap_only filtré strictement. Input invalide → fallback gracieux (pas de 500). | Filtre SQL + scoring simple = UX percentile supérieur |
+| 2026-04-23 | YANA | Tables karma_draws/karma_tickets/karma_winners existantes réutilisables pour /lottery monthly_tournament — pas besoin de dupliquer le schéma. Seul manquait `contest_results` pour le classement hebdo (snapshot JSONB par période). | DRY schema — toujours check l'existant avant migration |
+| 2026-04-23 | YANA | Vercel scope correct = `puramapro-oss-projects` (pas `puramapro-oss`) — updater §17 CLAUDE.md au prochain passage. | Flag CLAUDE.md |
+| 2026-04-23 | YANA | Session A (4 features universelles) déployée en 1 session ~50% ctx. Commit atomique par feature + gates G1/G2/G3/G8 à chaque étape + deploy Vercel final groupé = workflow P3 validé identique à P2. | Workflow multi-feature single-session reproductible |
+
+---
+
 ## HANDOFF MESSAGE
 
-**✅ P2 TERMINÉ. YANA est live sur https://yana.purama.dev avec 4 features cœur (SAFE DRIVE + GREEN DRIVE + COVOITURAGE DUAL + NAMA-PILOTE).**
+**✅ P3 Session A TERMINÉE. YANA a 4 nouveaux universels live : parrainage 3 niveaux, wallet + retrait SEPA, simulateur aides 4-étapes, classement hebdo + tirage mensuel.**
 
-Pour démarrer P3 : relance Claude avec →
-> "Lis progress.md + CLAUDE.md. Démarre P3 Universels PURAMA : /referral, /wallet, /financer wizard, /contest+/lottery, /achievements, /guide, /profile, /settings. Plan d'abord, tous gates G1-G8 par feature, commit atomique, deploy final groupé."
+Session B à venir : `/achievements`, `/guide`, `/classement`, `/profile`, `/settings`, `/settings/abonnement`, `/notifications`, `/invoices`, tuto `OnboardingFlow`, cinématique intro, Points boutique, daily gift, anniversaire, cross-promo.
+
+Pour démarrer P3 Session B → relance Claude avec :
+> "Lis progress.md + CLAUDE.md. P3 Session A terminée (commit 36affb2 live). Démarre P3 Session B : /achievements, /guide, /classement, /profile, /settings, /settings/abonnement, /notifications, /invoices, tuto OnboardingFlow, cinématique intro, Points boutique, daily gift, anniversaire, cross-promo. Plan d'abord, tous gates G1-G8 par feature, commit atomique, deploy final groupé."
