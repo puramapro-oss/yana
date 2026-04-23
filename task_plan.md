@@ -190,22 +190,24 @@
 
 ---
 
-## PHASE P5 — Design polish + Anim + i18n + Éveil ⏳ PARTIELLE (2026-04-24)
+## PHASE P5 — Design polish + Anim + i18n + Éveil ✅ COMPLÈTE (2026-04-24)
 
 - [x] `next-intl` 16 langues — déjà branché P1 (16 messages/*.json + i18n/{config,request}.ts + LocaleSwitcher + /api/locale)
-- [ ] Switcher langue audit visuel FR→EN→AR (RTL) sur / /pricing /dashboard — **P5.3**
+- [x] Switcher langue audit visuel FR→EN→AR (RTL) sur / — 16/16 locales zéro MISSING_MESSAGE — commit `caad25c`
 - [x] Dark/Light + **oled** thème fonctionnel (ERRORS #4) — commit `21471e6`
 - [x] Affirmations quotidiennes mobilité — seed 15 existants + API déterministe + widget dashboard — commit `21471e6`
-- [ ] Citations voyage footer (Rumi, Basho, Lao Tseu, Saint-Exupéry) — **P5.3**
+- [x] Citations voyage footer (Rumi, Bashō, Lao Tseu, Saint-Exupéry) — rotation déterministe daysSinceEpoch % 4 — commit `caad25c`
 - [x] `/breathe` 4-7-8 — cercle animé 2/4/6/8 cycles — commit `a45b3f0`
 - [x] `/gratitude` journal — commit `a45b3f0`
 - [x] `/intention` début de trajet — commit `a45b3f0`
 - [ ] `SpiritualLayer` + `SubconsciousEngine` composants avancés — **déféré P6**
-- [ ] Homepage 3 blocs above-fold — Hero + 3 modes teaser + LiveCounters — **P5.3**
-- [ ] Hero3D R3F route infinie (npm i three @react-three/fiber @react-three/drei) — **P5.3**
+- [x] Homepage 3 blocs above-fold — Hero3D + 3 practices Safe/Green/Carpool + LiveCounters + TravelQuote — commit `caad25c`
+- [x] Hero3D R3F route infinie — shader GLSL grid orange/cyan + Stars drei + montage post-LCP requestIdleCallback — commits `f8ae3aa` `caad25c` `55a17a4`
 - [ ] 10 emails Resend sequences — **déféré P6**
 - [ ] Notifs push intelligentes engagement score — **déféré P6**
-- [ ] Anti-slop validation homepage finale — **P5.3**
+- [x] Anti-slop validation homepage — score mental 8/10 + Lighthouse Perf 97 · A11y 96 · BP 100 · SEO 100 · LCP 1719ms · CLS 0 — commit `55a17a4`
+- [ ] Polish 13 locales i18n home.* (fallback EN → natif) — **déféré P6** (es/de/it/pt/zh/ja/ko/hi/ru/tr/nl/pl/sv)
+- [x] Fix dette `--accent-primary` CSS var non définie (§ISSUES #2 progress.md) — définie dans les 3 thèmes — commit `f8ae3aa`
 
 ---
 
@@ -259,7 +261,8 @@
 | P3 Session A | ✅ | `36affb2` | live | /referral + /wallet + /financer wizard + /contest + /lottery |
 | P3 Session B | ✅ | `a90b16b` | live | /achievements, /guide, /profile, /settings, tuto, daily gift, anniversaire, cross-promo |
 | P4 | ✅ | `4cca68d` | live | Admin + Aide + FAQ + SAV chatbot NAMA + 3 CRONs n8n-ready + trigger admin |
-| P5.1+5.2 | ⏳ | `a45b3f0` | live | Theme 3 modes + Affirmation + /breathe /gratitude /intention. Reste P5.3 Hero3D + homepage + i18n audit |
+| P5.1+5.2 | ✅ | `a45b3f0` | live | Theme 3 modes + Affirmation + /breathe /gratitude /intention |
+| P5.3 | ✅ | `55a17a4` | live yana.purama.dev | Hero3D R3F + homepage 3 blocs + i18n 16 langues + Lighthouse Perf 97 |
 | P6 | ⏳ | - | - | QA + Security sub-agents + Lighthouse |
 | P7 | ⏳ | - | - | Mobile Expo + EAS + stores |
 | P8 | ❌ | - | - | Pas en version initiale |
