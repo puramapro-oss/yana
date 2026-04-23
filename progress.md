@@ -1,8 +1,8 @@
 # YANA — progress.md
 
-**Dernière update** : 2026-04-23 (fin session 5 — P3 Session B1+B2 deploy groupé)
-**Phase actuelle** : 🟡 **P3 Session B1+B2 TERMINÉES (7 features) — Session B3 restante (4 features onboarding)**
-**Statut global** : YANA est **live** sur https://yana.purama.dev avec 11 universels — 16/16 smoke tests prod verts B1+B2
+**Dernière update** : 2026-04-23 (fin session 6 — P3 Session B3 deploy final)
+**Phase actuelle** : ✅ **P3 COMPLÈTE (11 features B1+B2+B3) — prête pour P4**
+**Statut global** : YANA est **live** sur https://yana.purama.dev avec 11 universels + onboarding complet — 21/21 smoke tests prod verts B3
 
 ---
 
@@ -273,15 +273,64 @@ Deploy prod : commit `df25afb` → `yana-qw3casoos-puramapro-oss-projects.vercel
 
 ---
 
+---
+
+## 🎉 P3 SESSION B3 — ONBOARDING + DÉCOUVERTE (2026-04-23)
+
+### Chunk B3 — Onboarding (commit `a90b16b`)
+
+| # | Feature | Livré |
+|---|---|---|
+| B3.1 | Cinématique intro | CinematicIntro Framer Motion 3.5s (logo roue spring → nom gradient → tagline → CTA "Commencer" spring delayed). Skip button accessible dès 0s. localStorage yana_intro_seen. Radial glows cyan+purple animés. |
+| B3.2 | Tuto OnboardingFlow | TutorialOverlay SVG mask spotlight 7 étapes (1 intro + 5 targets sidebar + 1 outro). Détection via profile.tutorial_completed + localStorage cooldown 10min. PATCH /api/profile { tutorial_completed:true } en finish. Carte repositionnée intelligemment. Progress bar cyan/purple. |
+| B3.3 | /guide | GuideAccordion 14 sections (safe drive, green drive, covoit, parrainage, wallet, classement+tirage, achievements, boutique, daily gift+anniv, NAMA chat, véhicules, abonnement+fiscal, profil+notifs, tickets). Safe-drive ouvert par défaut. Footer FAQ+contact. Sidebar nav-guide. |
+| B3.4 | Cross-promo | /api/cross-promo GET/POST + CrossPromoBanner 2-col responsive. Catalog 4 apps sibling (KAÏA, PRANA high-relevance · VIDA, EXODUS medium) pseudo-random stable par user_id. GET filtre déjà-used. POST insère cross_promos + renvoie coupon CROSS50 + URL. Clipboard auto + onglet sibling.purama.dev?ref=yana&code=. Intégré bottom /dashboard. |
+
+### 🌐 LIVE VALIDATION Session B complète — 2026-04-23
+
+Deploy prod : commit `a90b16b` → `yana-j3u697veq-puramapro-oss-projects.vercel.app` → aliased `yana.purama.dev`
+
+- **Routes publiques** (HTTP 200, 5/5) : /, /pricing, /financer, /login, /signup
+- **B3 API auth** (HTTP 401, 2/2) : /api/cross-promo GET+POST
+- **13 pages auth-gated** (HTTP 307→/login, 13/13) : /achievements, /profile, /settings, /settings/abonnement, /notifications, /invoices, /boutique, /guide, /dashboard, /referral, /wallet, /contest, /lottery
+
+**Total smoke tests prod : 21/21 verts**
+
+### 🧠 LEÇONS SESSION 6 — P3 Session B3
+
+| DATE | APP | LEÇON | IMPACT |
+|---|---|---|---|
+| 2026-04-23 | YANA | TutorialOverlay = spotlight SVG mask + cible `[data-testid]`. useEffect + getBoundingClientRect + listeners resize/scroll pour repositionner dynamiquement. Fallback carte centrée si la cible est absente (nav item pas monté). Stale `spotlightRect` géré via updateSpotlight() callback. | Pattern tuto produit robuste sans lib externe |
+| 2026-04-23 | YANA | localStorage + DB flag double-check pour tutorial_completed (localStorage cooldown = évite reproposition si user dismisse via X, DB = source vérité une fois terminé). Séparation intentionnelle : skip temporaire ≠ finish. | UX onboarding respectueuse |
+| 2026-04-23 | YANA | Cross-promo pertinence auto via catalog TypeScript (pas table DB) = data statique pertinente pour chaque app Purama. Pseudo-random stable par user_id seed → même user voit mêmes apps entre sessions (ne change pas). Filtrage des `used=true` empêche re-proposer un coupon déjà consommé. | Cross-promo sans backend ML |
+| 2026-04-23 | YANA | `window.open(url, '_blank', 'noopener,noreferrer')` avec coupon en query param `?ref=yana&code=CROSS50` = permet à l'app sibling de pré-remplir le code sans OAuth cross-domain. Acceptable car coupon est public (pas secret user). | Pattern cross-app coupon |
+| 2026-04-23 | YANA | Layout dashboard = bon endroit pour overlay globaux (intro + tuto). Un seul point d'injection pour tout le dashboard, au-dessus des pages enfants. CinematicIntro et TutorialOverlay se coordonnent via délais (tuto 1.2s après intro dismiss). | Architecture overlays |
+
+---
+
+## 📊 BILAN P3 COMPLÈTE (A + B)
+
+| Phase | Commits | Features livrées |
+|---|---|---|
+| P3 Session A | 9355707, 41ab5de, a0f2666, 36affb2 | /referral, /wallet, /financer wizard, /contest+/lottery |
+| P3 Session B1 | 10671e6 | /achievements, /profile, /settings, /settings/abonnement, /notifications |
+| P3 Session B2 | df25afb | /invoices, /boutique Points, daily gift, anniversaire |
+| P3 Session B3 | a90b16b | cinématique intro, tuto OnboardingFlow, /guide, cross-promo |
+
+**15 features universelles live** + middleware fix + handoff docs. Total commits P3 = 10. Total smoke tests cumulés 52/52 verts sur 3 sessions.
+
+---
+
 ## HANDOFF MESSAGE
 
-**✅ P3 Session B1+B2 TERMINÉE. YANA ajoute 7 nouveaux universels live : /achievements, /profile, /settings, /settings/abonnement, /notifications, /invoices, /boutique + daily gift + anniversaire widgets dashboard.**
+**✅ P3 100% COMPLÈTE. YANA est totalement universel :**
+- Compte user (achievements, profile, settings, abonnement, notifications, invoices)
+- Monétisation (wallet SEPA, boutique points, daily gift, anniversaire)
+- Viralité (parrainage 3 niveaux, concours hebdo, tirage mensuel, cross-promo)
+- Aides mobilité (simulateur wizard 45 aides)
+- Onboarding (cinématique intro, tuto spotlight, /guide 14 sections)
 
-**Reste Session B3 (4 features onboarding/découverte)** :
-- B3.1 Cinématique intro (3-4s, skip, cookie intro_seen)
-- B3.2 Tuto OnboardingFlow (spotlight SVG mask 7 étapes sur /dashboard)
-- B3.3 /guide (guide complet app, accordion par feature)
-- B3.4 Cross-promo (bannières `cross_promos` MIDAS/KASH/SUTRA/KAÏA, max 2/page)
+Prêt pour **P4 — Admin + Aide + FAQ + SAV chatbot + CRONs n8n**.
 
-Pour démarrer P3 Session B3 → relance Claude avec :
-> "Lis progress.md + CLAUDE.md. P3 Session B1+B2 terminée (commit df25afb live). Démarre B3 : cinématique intro 3-4s + tuto OnboardingFlow spotlight + /guide + cross-promo. Plan court, gates G1-G8 par feature, commit atomique, deploy final groupé + handoff final Session B complète."
+Pour démarrer P4 → relance Claude avec :
+> "Lis progress.md + CLAUDE.md. P3 100% complète (commit a90b16b live, 15 features universelles). Démarre P4 : back-office /admin/* (super_admin uniquement), /aide FAQ interactive, chatbot SAV IA NAMA, CRONs n8n (classement hebdo dim 23h59, tirage mensuel dernier jour, daily-gift reset, plant-trees). Plan d'abord, gates G1-G8, commits atomiques, deploy final."
