@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Loader2, AlertCircle, Trophy, Ticket } from 'lucide-react'
+import { Loader2, AlertCircle, Trophy, Ticket, Zap } from 'lucide-react'
 
 interface WinnerEntry {
   user_id: string
@@ -68,6 +68,8 @@ export default function ContestsClient() {
   const [data, setData] = useState<Snapshot | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [triggering, setTriggering] = useState<'weekly' | 'monthly' | null>(null)
+  const [triggerResult, setTriggerResult] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -86,6 +88,30 @@ export default function ContestsClient() {
 
   useEffect(() => {
     load()
+  }, [load])
+
+  const trigger = useCallback(async (target: 'weekly' | 'monthly') => {
+    const label = target === 'weekly' ? 'classement hebdo' : 'tirage mensuel'
+    if (!window.confirm(`Forcer la clôture du ${label} maintenant ?\nAction IRRÉVERSIBLE — les récompenses seront distribuées.`)) return
+    setTriggering(target)
+    setTriggerResult(null)
+    setError(null)
+    try {
+      const res = await fetch('/api/admin/contests/trigger-closure', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? 'Déclenchement impossible.')
+      const resultStatus = json.result?.status ?? 'done'
+      setTriggerResult(`✅ ${label} déclenché (${resultStatus})`)
+      await load()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Déclenchement impossible.')
+    } finally {
+      setTriggering(null)
+    }
   }, [load])
 
   if (loading && !data) {
@@ -109,6 +135,11 @@ export default function ContestsClient() {
 
   return (
     <div className="space-y-6">
+      {triggerResult && (
+        <div className="rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-sm text-green-300" role="status">
+          {triggerResult}
+        </div>
+      )}
       <div className="grid gap-4 md:grid-cols-2">
         <section
           className="rounded-2xl border border-[var(--border)] bg-gradient-to-br from-[#F97316]/10 to-transparent p-6"
@@ -140,6 +171,18 @@ export default function ContestsClient() {
               {data.weekly.already_drawn ? '✅ Période clôturée' : '⏳ En cours — clôture dim 23h59 UTC par le CRON'}
             </p>
           </div>
+          {!data.weekly.already_drawn && (
+            <button
+              type="button"
+              onClick={() => trigger('weekly')}
+              disabled={triggering === 'weekly'}
+              data-testid="trigger-weekly"
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#F97316]/40 bg-[#F97316]/10 px-4 py-2 text-xs font-semibold text-[#F97316] hover:bg-[#F97316]/20 transition-colors disabled:opacity-40"
+            >
+              {triggering === 'weekly' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+              Forcer la clôture maintenant
+            </button>
+          )}
         </section>
 
         <section
@@ -176,6 +219,18 @@ export default function ContestsClient() {
                   : '⏳ En cours — tirage dernier jour du mois par le CRON'}
             </p>
           </div>
+          {!data.monthly.already_drawn && (
+            <button
+              type="button"
+              onClick={() => trigger('monthly')}
+              disabled={triggering === 'monthly'}
+              data-testid="trigger-monthly"
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#0EA5E9]/40 bg-[#0EA5E9]/10 px-4 py-2 text-xs font-semibold text-[#0EA5E9] hover:bg-[#0EA5E9]/20 transition-colors disabled:opacity-40"
+            >
+              {triggering === 'monthly' ? <Loader2 className="h-3 w-3 animate-spin" /> : <Zap className="h-3 w-3" />}
+              Forcer la clôture maintenant
+            </button>
+          )}
         </section>
       </div>
 
