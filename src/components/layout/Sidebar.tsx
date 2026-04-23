@@ -117,7 +117,11 @@ export default function Sidebar() {
           {!collapsed && <span>Déconnexion</span>}
         </button>
         {!collapsed && profile && (
-          <div className="mt-2 flex items-center gap-2 rounded-lg bg-white/5 p-2">
+          <Link
+            href="/settings"
+            data-testid="sidebar-user-card"
+            className="mt-2 flex items-center gap-2 rounded-lg bg-white/5 p-2 transition hover:bg-white/10"
+          >
             <div
               className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] text-xs font-bold text-white"
               aria-hidden
@@ -132,7 +136,7 @@ export default function Sidebar() {
                 {profile.plan === 'free' ? 'Découverte' : profile.plan}
               </p>
             </div>
-          </div>
+          </Link>
         )}
       </div>
     </aside>
