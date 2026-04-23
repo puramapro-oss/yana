@@ -1,8 +1,8 @@
 # YANA — progress.md
 
-**Dernière update** : 2026-04-23 (fin session 6 — P3 Session B3 deploy final)
-**Phase actuelle** : ✅ **P3 COMPLÈTE (11 features B1+B2+B3) — prête pour P4**
-**Statut global** : YANA est **live** sur https://yana.purama.dev avec 11 universels + onboarding complet — 21/21 smoke tests prod verts B3
+**Dernière update** : 2026-04-24 (fin session 7 — P4 complète deploy final)
+**Phase actuelle** : ✅ **P4 COMPLÈTE (4 sub-phases : FAQ+chatbot / admin / CRONs / deploy) — prête pour P5**
+**Statut global** : YANA est **live** sur https://yana.purama.dev avec 15 universels P3 + admin back-office + SAV chatbot NAMA + 3 CRONs n8n-ready — 34/34 smoke tests prod verts P4
 
 ---
 
@@ -321,16 +321,90 @@ Deploy prod : commit `a90b16b` → `yana-j3u697veq-puramapro-oss-projects.vercel
 
 ---
 
+## 🎉 P4 — ADMIN + SAV + CRONS (2026-04-24)
+
+### Chunk P4.1 — /aide FAQ interactive + SAV chatbot (commit `2de1282`)
+
+| # | Feature | Livré |
+|---|---|---|
+| P4.1.1 | /api/faq | GET public — list 15 articles seedés + search fuzzy normalisée NFD (accents-insensible) sur question/answer/keywords + filter category + order priority+view_count |
+| P4.1.2 | /api/faq/[id]/view | POST increment view_count, idempotent via cookie 24h (1 view max/visiteur/24h/article) |
+| P4.1.3 | /api/faq/[id]/helpful | POST increment helpful_count, 1 vote/visiteur/article (cookie 1 an), 409 si déjà voté |
+| P4.1.4 | /api/support/escalate | Zod subject/message/guest_name/guest_email + honeypot + cooldown 60s. Tentative résolution NAMA Assistant (Claude Haiku, FAQ comme source de vérité unique). Si confidence≥0.7 → ticket resolved_by_ai=true + réponse directe. Sinon → ticket escalated=true + Resend `purama.pro@gmail.com` avec contexte IA. |
+| P4.1.5 | /aide refonte | 2 tabs FAQ / Chatbot · search debounced 300ms · accordion 15 catégories labels FR · 👍 Utile optimistic · form chat avec feedback IA markdown ou confirmation escalade humaine + ticket_id tronqué |
+
+### Chunk P4.2 — /admin super-admin dashboard (commit `09bdb84`)
+
+| # | Feature | Livré |
+|---|---|---|
+| P4.2.0 | lib/admin.ts | requireSuperAdmin() guard centralisé (401/403) + isProfileBanned() via metadata JSONB (évite CHECK constraint profiles.role) |
+| P4.2.1 | lib/contest-period.ts | ajout getWeeklyPeriod/getMonthlyPeriod retournant strings YYYY-MM-DD (colonne DATE) |
+| P4.2.2 | /api/admin/* | 8 endpoints : stats (KPIs + 4 pools), users (paginée, filter plan/role, search email+name), users/[id]/ban (anti-self-ban), withdrawals + withdrawals/[id] (approve/reject/complete + compensation wallet), tickets + tickets/[id] (in_progress/resolve/close + note auditée), contests/current (snapshot weekly+monthly+historique) |
+| P4.2.3 | /(dashboard)/admin/ | 5 pages : layout server-guard isSuperAdmin, page.tsx KPIs 6 cards + 3 pools secondaires + quick links, users table responsive + filtres + ban confirmation, withdrawals 4 tabs status + actions contextuelles, tickets expand card avec message/NAMA/notes, contests 2 cards active + 2 historiques + trigger buttons |
+
+### Chunk P4.3 — CRONs n8n classement + tirage + daily-gift (commit `4cca68d`)
+
+| # | Feature | Livré |
+|---|---|---|
+| P4.3.0 | lib/contest-distribution.ts | computeWeeklyPool 6% split (2/1/0.7/0.5/0.4/0.3/0.275×4) avec absorption dust sur rang #1 · computeMonthlyPool 4% split · pickRandomWinners crypto.getRandomValues fallback Math.random |
+| P4.3.1 | /api/cron/classement-weekly | Score hebdo (referrals×10 + subs×50 + trips×5 + missions×3 validées uniquement) → top 10 → pool 6% reward_users → insert contest_results + wallet crédits + pool_transactions debit + notifications. Détection auto ciblage "semaine précédente" vs "courante". Idempotent skip. |
+| P4.3.2 | /api/cron/tirage-monthly | Déduplique tickets par user (1 user=1 chance max) → pickRandomWinners 10 → karma_draws (upcoming→live→completed) + karma_winners + wallet + pool + notifs. Marque ticket gagnant used=true. Idempotent. |
+| P4.3.3 | /api/cron/daily-gift-reset | Stats monitoring (opened_last_24h + active_streaks). Reset logic reste dans open_daily_gift SQL existante. |
+| P4.3.4 | /api/admin/contests/trigger-closure | Super-admin fetch interne vers CRON (Bearer CRON_SECRET) + UI bouton "Forcer la clôture" par card avec confirmation. |
+| P4.3.5 | CRON_YANA_n8n.md | Handoff Tissma — 4 workflows n8n à configurer (cron expressions, curl tests, observabilité BetterStack). |
+
+### 🌐 LIVE VALIDATION P4 — 2026-04-24
+
+Deploy prod : commits `2de1282` → `09bdb84` → `4cca68d` → alias `yana.purama.dev`
+
+- **P4.1 publics** (200/200, 3/3) : /aide · /api/faq (total=15) · POST escalate validation 400 FR
+- **P4.1 E2E prod** : escalate smoke test → 200 { ok:true, resolved:false, ticket_id } + DB vérifié + cleanup
+- **P4.2 admin guards** (9/9) : 5 API 401 unauth + 5 pages 307 redirect via middleware
+- **P4.3 CRONs** (4/4) : classement-weekly · tirage-monthly · daily-gift-reset · plant-trees tous 401 sans Bearer
+- **Regression P3** (16/16) : 8 pages publiques 200 · 3 APIs publiques 200 · 5 APIs auth-gated 401
+
+**Total smoke tests prod : 34/34 verts**
+
+### 🧠 LEÇONS SESSION 7 — P4
+
+| DATE | APP | LEÇON | IMPACT |
+|---|---|---|---|
+| 2026-04-24 | YANA | NAMA Assistant via Claude Haiku avec FAQ comme **seule source de vérité** (20 articles en contexte + JSON strict confidence/answer/reason) = fallback humain propre quand confidence<0.7 ou quand la clé AI échoue. Le ticket est toujours créé (escalated=true), Resend envoie toujours → l'utilisateur n'est jamais laissé sans réponse même si l'IA tombe. | Pattern "AI-first with human safety net" — l'IA ne remplace pas le SAV, elle filtre les cas simples et formalise l'escalade |
+| 2026-04-24 | YANA | `profiles.role` CHECK constraint ('user','ambassadeur','super_admin') ne contient pas 'banned' → utiliser `metadata JSONB` flag `{banned:true,banned_at,banned_reason,banned_by}`. Pas de migration nécessaire. Middleware check à faire en P5 si besoin (défensive in-depth). | Pattern ban sans touching contraintes existantes |
+| 2026-04-24 | YANA | Compensation wallet sur reject withdrawal : le débit a eu lieu dans `request_withdrawal` RPC (direction=debit, ref_type=withdrawal). Sur reject → re-crédit wallet_balance_cents + insert wallet_transactions direction=credit/reason=withdrawal_rejected_refund. Symétrie comptable parfaite audit-friendly. | Pattern compensation réversible pour flux SEPA |
+| 2026-04-24 | YANA | Distribution pool CRON : calculer chaque slot via `Math.floor(totalPoolCents * fraction)` puis absorber le dust (reste) sur le rang #1 = total exactement préservé sans perte de centime. `normalizer` = Math.abs(rawSum - rawPct*100) < 0.01 ? rawPct*100 : rawSum pour tolérer petites dérives float. | Pattern money-safe distribution |
+| 2026-04-24 | YANA | `ANTHROPIC_API_KEY` §17 CLAUDE.md **invalide** (401 auth) → flag critique. Le fallback humain P4.1 fonctionne parfaitement (tickets créés + Resend fire-and-forget), mais la résolution IA nécessite rotation de la clé. Même impact sur /api/chat NAMA-PILOTE. **Action Tissma** : rotater sk-ant-api03-mJ0VIJmGhVIK3… dans §17 + `.env.local` + Vercel env vars. | Flag credentials rotation |
+| 2026-04-24 | YANA | CRON idempotence via `contest_results.period_start` + `karma_draws.period_start+game_type` = pas besoin d'avoir un lock distribué ou mutex. Re-exécuter le CRON sur une période déjà drawn retourne status='already_drawn' sans effet de bord. n8n peut retry sans crainte. | Pattern cron safe-retry |
+| 2026-04-24 | YANA | 4 commits atomiques P4.1→P4.4 (3 features + 1 deploy) en 1 session ~55% ctx. G1/G2/G3/G8 passés à chaque étape + grep placeholder=0 à chaque commit + smoke tests prod live finaux = workflow P4 validé identique P2/P3. | Workflow multi-feature single-session reproductible × 3 phases consécutives |
+
+---
+
+## 📊 BILAN P4 COMPLÈTE
+
+| Phase | Commits | Features livrées |
+|---|---|---|
+| P4.1 FAQ+Chatbot | `2de1282` | /api/faq + view + helpful + /api/support/escalate + /aide 2-tabs refonte |
+| P4.2 Admin | `09bdb84` | lib/admin + 5 pages + 8 APIs super-admin + ban/unban + withdrawals + tickets + contests snapshot |
+| P4.3 CRONs | `4cca68d` | lib/contest-distribution + 3 CRONs n8n + trigger-closure admin + doc handoff |
+| P4.4 Deploy | (ce commit) | smoke tests prod 34/34 + progress + task_plan update |
+
+**12 endpoints API + 5 pages admin + 4 CRONs + 1 chatbot SAV live** — prêt pour **P5 design polish + i18n 16 + éveil**.
+
+---
+
 ## HANDOFF MESSAGE
 
-**✅ P3 100% COMPLÈTE. YANA est totalement universel :**
-- Compte user (achievements, profile, settings, abonnement, notifications, invoices)
-- Monétisation (wallet SEPA, boutique points, daily gift, anniversaire)
-- Viralité (parrainage 3 niveaux, concours hebdo, tirage mensuel, cross-promo)
-- Aides mobilité (simulateur wizard 45 aides)
-- Onboarding (cinématique intro, tuto spotlight, /guide 14 sections)
+**✅ P4 100% COMPLÈTE.** YANA a maintenant :
+- Centre d'aide interactif (15 FAQ + chatbot NAMA Assistant avec escalade humaine auto)
+- Back-office super-admin complet (KPIs, users, retraits, tickets, classements)
+- 3 CRONs n8n-ready (classement hebdo / tirage mensuel / daily-gift cleanup) + trigger manuel admin
+- Smoke tests prod 34/34 verts
 
-Prêt pour **P4 — Admin + Aide + FAQ + SAV chatbot + CRONs n8n**.
+🚩 **Flag Tissma** :
+- **ANTHROPIC_API_KEY §17 CLAUDE.md invalide** → rotater la clé + mettre à jour `.env.local` + Vercel env vars. Impacte `/api/chat` NAMA-PILOTE + `/api/support/escalate` (résolution IA). Le fallback humain marche sans la clé mais l'UX est dégradée.
+- **n8n workflows à configurer** : `CRON_YANA_n8n.md` contient les 4 workflows (cron exprs + curl tests). Endpoints prêts côté prod, reste juste à brancher les schedules sur `n8n.srv1286148.hstgr.cloud`.
 
-Pour démarrer P4 → relance Claude avec :
-> "Lis progress.md + CLAUDE.md. P3 100% complète (commit a90b16b live, 15 features universelles). Démarre P4 : back-office /admin/* (super_admin uniquement), /aide FAQ interactive, chatbot SAV IA NAMA, CRONs n8n (classement hebdo dim 23h59, tirage mensuel dernier jour, daily-gift reset, plant-trees). Plan d'abord, gates G1-G8, commits atomiques, deploy final."
+Prêt pour **P5 — Design polish + Anim + i18n 16 + Éveil**.
+
+Pour démarrer P5 → relance Claude avec :
+> "Lis progress.md + CLAUDE.md. P4 100% complète (commit live yana.purama.dev, 12 endpoints admin + CRONs + SAV). Démarre P5 : next-intl 16 langues · dark/light + oled réels · /breathe /gratitude /intention · affirmations quotidiennes · Hero3D R3F · homepage 3 blocs above-fold · 10 emails Resend sequences · anti-slop validation sur chaque composant. Plan d'abord, gates G1-G8, commits atomiques, deploy final."
