@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useAuth } from '@/hooks/useAuth'
@@ -22,7 +22,17 @@ const STRENGTH_LABELS = ['Trop court', 'Faible', 'Moyen', 'Fort', 'Excellent']
 const STRENGTH_COLORS = ['bg-red-500', 'bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500']
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupInner />
+    </Suspense>
+  )
+}
+
+function SignupInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const refParam = searchParams.get('ref')?.trim().toUpperCase() ?? null
   const { signUp, signInWithGoogle } = useAuth()
 
   const [name, setName] = useState('')
@@ -46,6 +56,19 @@ export default function SignupPage() {
 
   async function handleGoogleSignup() {
     setGoogleLoading(true)
+    // Pose le cookie ref côté serveur avant la redirection Google si ?ref= en URL
+    if (refParam) {
+      try {
+        await fetch('/api/referral/set-cookie', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: refParam }),
+        })
+      } catch {
+        // noop : best-effort
+      }
+    }
     const { error } = await signInWithGoogle()
     if (error) {
       toast.error('Erreur Google : ' + (error.message ?? 'Connexion impossible'))
@@ -58,11 +81,24 @@ export default function SignupPage() {
     if (!canSubmit) return
     setLoading(true)
     const { error } = await signUp(email, password, name.trim())
-    setLoading(false)
     if (error) {
+      setLoading(false)
       toast.error('Erreur lors de la creation du compte : ' + (error.message ?? 'Reessaie plus tard'))
       return
     }
+    // Attribution parrainage (lit cookie yana_ref posé par /go/[code])
+    // Best-effort : on n'échoue pas le signup si l'attribution échoue
+    try {
+      await fetch('/api/referral/attribute', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: refParam ?? undefined }),
+      })
+    } catch {
+      // noop
+    }
+    setLoading(false)
     toast.success('Bienvenue dans PURAMA. Ton mouvement commence 💚')
     router.push('/dashboard')
   }

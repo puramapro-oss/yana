@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home, Car, MessageSquare, Users, TreeDeciduous, LogOut, Play,
-  ChevronLeft, ChevronRight, Shield, HelpCircle,
+  ChevronLeft, ChevronRight, Shield, HelpCircle, Gift,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -20,6 +20,7 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/carpool', icon: Users, label: 'Covoiturage', testId: 'nav-carpool' },
   { href: '/vehicles', icon: Car, label: 'Véhicules', testId: 'nav-vehicles' },
   { href: '/chat', icon: MessageSquare, label: 'NAMA-PILOTE', testId: 'nav-chat' },
+  { href: '/referral', icon: Gift, label: 'Parrainage', testId: 'nav-referral' },
   { href: '/aide', icon: HelpCircle, label: 'Aide', testId: 'nav-aide' },
 ]
 
