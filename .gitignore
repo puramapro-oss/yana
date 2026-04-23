@@ -1,0 +1,19 @@
+node_modules
+.next
+.env*
+CLAUDE.md
+.vercel
+*.log
+task_plan.md
+findings.md
+progress.md
+.DS_Store
+test-results/
+playwright-report/
+tests/.auth/
+
+# Docs with secrets
+docs/
+AKASHA-BRIEF.md
+AGENT-EMAIL-BRIEF.md
+.env.local
