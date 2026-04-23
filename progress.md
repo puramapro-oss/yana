@@ -1,8 +1,8 @@
 # YANA — progress.md
 
-**Dernière update** : 2026-04-24 (fin session 7 — P4 complète deploy final)
-**Phase actuelle** : ✅ **P4 COMPLÈTE (4 sub-phases : FAQ+chatbot / admin / CRONs / deploy) — prête pour P5**
-**Statut global** : YANA est **live** sur https://yana.purama.dev avec 15 universels P3 + admin back-office + SAV chatbot NAMA + 3 CRONs n8n-ready — 34/34 smoke tests prod verts P4
+**Dernière update** : 2026-04-24 (fin session 8 — P5.1 + P5.2 deploy final, P5.3 Hero3D déféré)
+**Phase actuelle** : ⏳ **P5 partiellement livrée (5.1 Theme+Affirmation · 5.2 Éveil pages) — reste P5.3 Hero3D + i18n audit**
+**Statut global** : YANA est **live** sur https://yana.purama.dev avec theme dynamique 3 modes + affirmation quotidienne widget + 3 pages éveil (/breathe, /gratitude, /intention) — 14/14 smoke tests prod verts P5
 
 ---
 
@@ -392,19 +392,77 @@ Deploy prod : commits `2de1282` → `09bdb84` → `4cca68d` → alias `yana.pura
 
 ---
 
+## 🎉 P5 — DESIGN POLISH + ÉVEIL (partielle — 2026-04-24 session 8)
+
+### Chunk P5.1 — Theme dark/light/oled + Affirmation quotidienne (commit `21471e6`)
+
+| # | Feature | Livré |
+|---|---|---|
+| P5.1.1 | useTheme fix | localStorage key `vida_theme` → `yana_theme` (alignement inline script layout) · applyTheme() met à jour `data-theme` + meta[theme-color] iOS/Android · sync DB fire-and-forget PATCH /api/profile |
+| P5.1.2 | Inline script layout | Lit `yana_theme`, accepte dark/light/oled, catch fallback explicite dark (évite FOUC) |
+| P5.1.3 | globals.css | Ajout `[data-theme='oled']` CSS vars (noir pur #000 + text #fff + borders +10% opacité pour contraste 4.5:1) |
+| P5.1.4 | ThemeToggle | Bouton 3-way cycle dark→light→oled icônes Moon/Sun/Zap, variante compact sidebar collapsed |
+| P5.1.5 | Sidebar | Intègre ThemeToggle bas sidebar (collapsed + expanded) |
+| P5.1.6 | /api/affirmations/today | Sélection pseudo-déterministe pondérée (seed = user_id+date UTC) · 1 affirmation/jour garantie identique · frequency_weight respecté · insert awakening_events (2 XP) + bump profiles.affirmations_seen + xp |
+| P5.1.7 | AffirmationCard | Widget dashboard glass gradient purple→cyan · badge catégorie (love/power/abundance/health/wisdom/gratitude/journey/safety) · +2 XP badge si gagné jour |
+
+### Chunk P5.2 — Pages éveil /breathe + /gratitude + /intention (commit `a45b3f0`)
+
+| # | Feature | Livré |
+|---|---|---|
+| P5.2.1 | /api/gratitude | POST/GET Zod 3-500 chars · awakening +5 XP par entrée · 30 dernières |
+| P5.2.2 | /api/intentions | POST create + PATCH toggle completed + GET liste 20 · 280 chars max · +3 XP création + 5 XP honorée |
+| P5.2.3 | /api/breath | POST Zod protocol(4-7-8/box/coherence) + duration 10-3600s · XP scaled 1/30s max 30 |
+| P5.2.4 | /breathe | Protocole 4-7-8 Dr Andrew Weil · cercle gradient cyan/purple/orange qui grossit 4s inspire → fige 7s hold → rétracte 8s expire · 2/4/6/8 cycles config · stop possible · log durée réelle fin session |
+| P5.2.5 | /gratitude | Journal « 3 choses reconnaissant » · form + liste 30 dernières avec date FR · flash "+5 XP merci 🙏" |
+| P5.2.6 | /intention | Form matinal « mon intention aujourd'hui » · liste 20 + checkbox toggle honorée · strike-through completed · gradient orange→purple |
+| P5.2.7 | Sidebar nav | Ajout 3 entrées Wind / Heart / Target après /boutique, avant /guide |
+
+### 🌐 LIVE VALIDATION P5.1+P5.2 — 2026-04-24
+
+Deploy prod : commits `21471e6` → `a45b3f0` → alias `yana.purama.dev`
+
+- **P5 éveil APIs auth** (4/4) : /api/affirmations/today 401 · /api/gratitude 401 · /api/intentions 401 · /api/breath 405 (POST only)
+- **P5 éveil pages** (3/3) : /breathe 307 · /gratitude 307 · /intention 307
+- **Theme inline script** : `localStorage.getItem('yana_theme')` ✅ rendu dans HTML prod
+- **Regression P4+P3** (6/6) : / 200 · /pricing 200 · /financer 200 · /aide 200 · /api/faq 200 · /api/contest/leaderboard 200
+
+**Total smoke tests prod : 14/14 verts (pas de régression)**
+
+### 🧠 LEÇONS SESSION 8 — P5 partielle
+
+| DATE | APP | LEÇON | IMPACT |
+|---|---|---|---|
+| 2026-04-24 | YANA | Affirmation "du jour" déterministe via hash `user_id:YYYY-MM-DD` → rolling 31×char mod len = même user voit même affirmation toute la journée, change chaque jour. Pondération par duplication dans l'array weighted (poids 3 = 3 entrées). Pas besoin de table state ni de CRON reset. | Pattern daily content déterministe sans CRON |
+| 2026-04-24 | YANA | localStorage key **incohérente** entre useTheme (`vida_theme`) et inline layout script (`yana-theme` avec tiret) = thème reset à chaque reload. Fix : 1 seule clé `yana_theme` (underscore). Leçon : l'inline script de pré-hydration DOIT référencer la même clé que le hook React. | Pattern anti-FOUC theme switch |
+| 2026-04-24 | YANA | Protocole 4-7-8 implémenté sans lib externe via chaîne de `setTimeout` 1s → update state phase/secondsLeft/cycle. Transition CSS ease-in-out sur `transform: scale()` + `transition-duration` dynamique qui matche la durée de phase (4000ms/7000ms-0s/8000ms) = cercle respire vraiment à la bonne vitesse, pas juste un snap. | Pattern animation synchronisée durée-variable |
+| 2026-04-24 | YANA | XP éveil centralisé dans `awakening_events` table (plus `profiles.xp` bump) = historique auditable ET compteur agrégé pour gamification. Event types : affirmation_shown, gratitude_journal, intention_set, intention_completed, breath_session. Chaque API éveil loggue 1 event = 1 XP tracé. | Pattern observable gamification |
+
+---
+
 ## HANDOFF MESSAGE
 
-**✅ P4 100% COMPLÈTE.** YANA a maintenant :
-- Centre d'aide interactif (15 FAQ + chatbot NAMA Assistant avec escalade humaine auto)
-- Back-office super-admin complet (KPIs, users, retraits, tickets, classements)
-- 3 CRONs n8n-ready (classement hebdo / tirage mensuel / daily-gift cleanup) + trigger manuel admin
-- Smoke tests prod 34/34 verts
+**⏳ P5 PARTIELLE (5.1 + 5.2 live) — reste P5.3 Hero3D + i18n audit.** YANA a maintenant :
+- Theme dynamique 3 modes (dark / light / oled) avec toggle sidebar + persist DB + meta iOS status bar
+- Affirmation quotidienne widget dashboard avec XP éveil
+- 3 pages éveil : /breathe 4-7-8 (cercle animé), /gratitude (journal), /intention (form + toggle honorée)
+- 3 entrées sidebar nav ajoutées (Respire / Gratitude / Intention)
+- Smoke tests prod 14/14 verts (0 régression)
 
-🚩 **Flag Tissma** :
-- **ANTHROPIC_API_KEY §17 CLAUDE.md invalide** → rotater la clé + mettre à jour `.env.local` + Vercel env vars. Impacte `/api/chat` NAMA-PILOTE + `/api/support/escalate` (résolution IA). Le fallback humain marche sans la clé mais l'UX est dégradée.
-- **n8n workflows à configurer** : `CRON_YANA_n8n.md` contient les 4 workflows (cron exprs + curl tests). Endpoints prêts côté prod, reste juste à brancher les schedules sur `n8n.srv1286148.hstgr.cloud`.
+### 🚩 Flags Tissma (en attente)
+1. **ANTHROPIC_API_KEY §17 CLAUDE.md invalide** (noté P4) — toujours à rotater
+2. **n8n 4 workflows** (noté P4) — toujours à configurer
 
-Prêt pour **P5 — Design polish + Anim + i18n 16 + Éveil**.
+### ⏭️ P5.3 — À faire dans la session suivante (fresh context)
+- **Hero3D R3F sur homepage `/`** — `npm i three @react-three/fiber @react-three/drei` · scène route infinie (plane + GLSL grid + stars + lumières orange+cyan) · dynamic import ssr:false pour bundle hors SSR · preserve boutons "Commencer" + "Se connecter" fold 1
+- **3 blocs above-fold homepage** : Hero3D + tagline · 3 teasers Safe/Green/Carpool · LiveCounters depuis `pool_balances` + `trees_planted_total`
+- **Anti-slop validation** : score 0-10 mental, ressemble Tesla/Waze premium ? · si <7 refaire
+- **i18n audit** : tester switch FR → EN → AR (RTL) sur /, /pricing, /dashboard · fix clés manquantes si besoin
 
-Pour démarrer P5 → relance Claude avec :
-> "Lis progress.md + CLAUDE.md. P4 100% complète (commit live yana.purama.dev, 12 endpoints admin + CRONs + SAV). Démarre P5 : next-intl 16 langues · dark/light + oled réels · /breathe /gratitude /intention · affirmations quotidiennes · Hero3D R3F · homepage 3 blocs above-fold · 10 emails Resend sequences · anti-slop validation sur chaque composant. Plan d'abord, gates G1-G8, commits atomiques, deploy final."
+### ⏭️ Défér P6 (selon plan P5)
+- 10 emails Resend sequences (J0/J1/J3/J7/J14/J21/J30/events)
+- Notifs push intelligentes engagement score
+- SpiritualLayer + SubconsciousEngine composants avancés
+
+Pour démarrer P5.3 → relance Claude avec :
+> "Lis progress.md + CLAUDE.md. P5.1 + P5.2 live (commits 21471e6 + a45b3f0 · theme 3 modes + affirmation + 3 pages éveil). Termine P5.3 : Hero3D R3F homepage / (npm i three @react-three/fiber @react-three/drei, dynamic ssr:false, scène route infinie) + 3 blocs above-fold + anti-slop validation. Puis i18n audit FR/EN/AR sur 3 pages clés + fix clés manquantes. Plan d'abord, gates G1-G8, commits atomiques, deploy final."

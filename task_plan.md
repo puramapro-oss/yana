@@ -190,22 +190,22 @@
 
 ---
 
-## PHASE P5 — Design polish + Anim + i18n + Éveil
+## PHASE P5 — Design polish + Anim + i18n + Éveil ⏳ PARTIELLE (2026-04-24)
 
-- [ ] `next-intl` 16 langues (fr/en/es/de/it/pt/ar/zh/ja/ko/hi/ru/tr/nl/pl/sv)
-- [ ] Switcher langue fonctionnel (+ test visuel FR→EN change vraiment)
-- [ ] Dark/Light théme fonctionnel (ERRORS #4)
-- [ ] Affirmations quotidiennes mobilité (seed + random)
-- [ ] Citations voyage : Rumi, Basho, Lao Tseu, Saint-Exupéry
-- [ ] `/breathe` 4-7-8 avant démarrage
-- [ ] `/gratitude` journal fin de trajet
-- [ ] `/intention` début de trajet
-- [ ] `SpiritualLayer` + `SubconsciousEngine` (skill spiritual)
-- [ ] **Homepage 3 blocs above-fold** : Hero + 3 modes teaser (Safe/Green/Carpool) + LiveCounters dynamiques
-- [ ] Hero3D R3F route infinie
-- [ ] 10 emails Resend (J0 bienvenue, J1 astuce, J3 relance, J7 tips, J14 upgrade, J21 témoignage, J30 win-back, events)
-- [ ] Notifs push intelligentes (engagement score, tuning heure/jour)
-- [ ] **Anti-slop validation** sur chaque composant : "Ressemble Tesla/Waze/BlaBlaCar premium?" → si non REFAIRE
+- [x] `next-intl` 16 langues — déjà branché P1 (16 messages/*.json + i18n/{config,request}.ts + LocaleSwitcher + /api/locale)
+- [ ] Switcher langue audit visuel FR→EN→AR (RTL) sur / /pricing /dashboard — **P5.3**
+- [x] Dark/Light + **oled** thème fonctionnel (ERRORS #4) — commit `21471e6`
+- [x] Affirmations quotidiennes mobilité — seed 15 existants + API déterministe + widget dashboard — commit `21471e6`
+- [ ] Citations voyage footer (Rumi, Basho, Lao Tseu, Saint-Exupéry) — **P5.3**
+- [x] `/breathe` 4-7-8 — cercle animé 2/4/6/8 cycles — commit `a45b3f0`
+- [x] `/gratitude` journal — commit `a45b3f0`
+- [x] `/intention` début de trajet — commit `a45b3f0`
+- [ ] `SpiritualLayer` + `SubconsciousEngine` composants avancés — **déféré P6**
+- [ ] Homepage 3 blocs above-fold — Hero + 3 modes teaser + LiveCounters — **P5.3**
+- [ ] Hero3D R3F route infinie (npm i three @react-three/fiber @react-three/drei) — **P5.3**
+- [ ] 10 emails Resend sequences — **déféré P6**
+- [ ] Notifs push intelligentes engagement score — **déféré P6**
+- [ ] Anti-slop validation homepage finale — **P5.3**
 
 ---
 
@@ -259,7 +259,7 @@
 | P3 Session A | ✅ | `36affb2` | live | /referral + /wallet + /financer wizard + /contest + /lottery |
 | P3 Session B | ✅ | `a90b16b` | live | /achievements, /guide, /profile, /settings, tuto, daily gift, anniversaire, cross-promo |
 | P4 | ✅ | `4cca68d` | live | Admin + Aide + FAQ + SAV chatbot NAMA + 3 CRONs n8n-ready + trigger admin |
-| P5 | ⏳ | - | - | Design polish + Anim + i18n 16 + éveil |
+| P5.1+5.2 | ⏳ | `a45b3f0` | live | Theme 3 modes + Affirmation + /breathe /gratitude /intention. Reste P5.3 Hero3D + homepage + i18n audit |
 | P6 | ⏳ | - | - | QA + Security sub-agents + Lighthouse |
 | P7 | ⏳ | - | - | Mobile Expo + EAS + stores |
 | P8 | ❌ | - | - | Pas en version initiale |
