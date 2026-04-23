@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home, Car, MessageSquare, Users, TreeDeciduous, LogOut, Play,
-  ChevronLeft, ChevronRight, Shield, HelpCircle, Gift, Wallet,
+  ChevronLeft, ChevronRight, Shield, HelpCircle, Gift, Wallet, Trophy, Ticket,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
@@ -22,6 +22,8 @@ const PRIMARY_NAV: NavItem[] = [
   { href: '/chat', icon: MessageSquare, label: 'NAMA-PILOTE', testId: 'nav-chat' },
   { href: '/referral', icon: Gift, label: 'Parrainage', testId: 'nav-referral' },
   { href: '/wallet', icon: Wallet, label: 'Portefeuille', testId: 'nav-wallet' },
+  { href: '/contest', icon: Trophy, label: 'Classement', testId: 'nav-contest' },
+  { href: '/lottery', icon: Ticket, label: 'Tirage', testId: 'nav-lottery' },
   { href: '/aide', icon: HelpCircle, label: 'Aide', testId: 'nav-aide' },
 ]
 
