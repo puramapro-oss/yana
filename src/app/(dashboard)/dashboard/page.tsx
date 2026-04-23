@@ -10,6 +10,7 @@ import { formatDateTime } from '@/lib/utils'
 import DailyGiftCard from '@/components/rewards/DailyGiftCard'
 import AnniversaryBanner from '@/components/rewards/AnniversaryBanner'
 import CrossPromoBanner from '@/components/crosspromo/CrossPromoBanner'
+import AffirmationCard from '@/components/shared/AffirmationCard'
 
 export default function DashboardPage() {
   const { profile, user, loading } = useAuth()
@@ -76,6 +77,7 @@ export default function DashboardPage() {
       </header>
 
       <div className="mb-6 flex flex-col gap-4">
+        <AffirmationCard />
         <AnniversaryBanner />
         <DailyGiftCard />
       </div>

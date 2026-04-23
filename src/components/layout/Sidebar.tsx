@@ -11,6 +11,7 @@ import {
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/hooks/useAuth'
 import { SUPER_ADMIN_EMAIL, APP_SHORT_NAME } from '@/lib/constants'
+import ThemeToggle from './ThemeToggle'
 
 type NavItem = { href: string; icon: typeof Home; label: string; testId: string }
 
@@ -108,6 +109,19 @@ export default function Sidebar() {
       </nav>
 
       <div className="border-t border-[var(--border)] p-2">
+        {!collapsed && (
+          <div className="mb-2 flex items-center justify-between gap-2 px-2 py-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+              Thème
+            </span>
+            <ThemeToggle />
+          </div>
+        )}
+        {collapsed && (
+          <div className="mb-2 flex justify-center">
+            <ThemeToggle compact />
+          </div>
+        )}
         <button
           type="button"
           onClick={signOut}

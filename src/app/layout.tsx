@@ -82,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem('yana-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t}else{document.documentElement.dataset.theme='dark'}}catch(e){}`,
+            __html: `try{var t=localStorage.getItem('yana_theme');if(t==='light'||t==='dark'||t==='oled'){document.documentElement.dataset.theme=t}else{document.documentElement.dataset.theme='dark'}}catch(e){document.documentElement.dataset.theme='dark'}`,
           }}
         />
       </head>
