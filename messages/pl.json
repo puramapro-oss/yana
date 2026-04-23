@@ -464,5 +464,61 @@
     "loginCta": "Zaloguj się",
     "trialCta": "14 dni gratis",
     "trialNote": "14 dni próbne · 9,99 €/mies. · Bez zobowiązań · Francuska AI"
+  },
+  "home": {
+    "brand": "PURAMA · Mobility Wellness",
+    "appName": "YANA",
+    "tagline": "The road as practice.",
+    "pitch": "Every trip becomes a meditation in motion — and a real reward. Drive safely, clean the planet, share the road.",
+    "cta": {
+      "start": "Get started",
+      "login": "Sign in"
+    },
+    "features": {
+      "headline": "Three practices, one road.",
+      "safe": {
+        "title": "Safe Drive",
+        "desc": "Your driving score in real time — focus, anticipation, eco-driving. NAMA-PILOTE watches over your peace of mind."
+      },
+      "green": {
+        "title": "Green Drive",
+        "desc": "Every clean kilometer plants a tree. OpenTimestamps blockchain certificate. The planet breathes with you."
+      },
+      "carpool": {
+        "title": "Carpool",
+        "desc": "Local matching, fair 80/15/5 split, shared Safe Walk. The road together, always."
+      }
+    },
+    "counters": {
+      "heading": "The YANA community in motion",
+      "trips": "Trips completed",
+      "trees": "Trees planted",
+      "users": "Travelers"
+    },
+    "quotes": {
+      "rumi": {
+        "text": "What you seek is seeking you.",
+        "author": "Rumi"
+      },
+      "basho": {
+        "text": "Do not follow in the footsteps of the ancients — seek what they sought.",
+        "author": "Matsuo Bashō"
+      },
+      "laozi": {
+        "text": "A journey of a thousand miles begins with a single step.",
+        "author": "Lao Tzu"
+      },
+      "saint_exupery": {
+        "text": "Make of your life a dream, and of a dream a reality.",
+        "author": "Antoine de Saint-Exupéry"
+      }
+    },
+    "footer": {
+      "copyright": "© {year} SASU PURAMA · VAT exempt, French CGI art. 293 B",
+      "legal": "Legal notice",
+      "privacy": "Privacy",
+      "cgu": "Terms",
+      "pricing": "Plans"
+    }
   }
 }

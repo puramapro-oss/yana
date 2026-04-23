@@ -464,5 +464,61 @@
     "loginCta": "Connexion",
     "trialCta": "Essai gratuit 14j",
     "trialNote": "Essai 14 jours · 9,99 €/mois · Sans engagement · IA française"
+  },
+  "home": {
+    "brand": "PURAMA · Mobility Wellness",
+    "appName": "YANA",
+    "tagline": "La route comme pratique.",
+    "pitch": "Chaque trajet devient une méditation en mouvement — et récompense réelle. Conduis en sécurité, dépollue la planète, partage la route.",
+    "cta": {
+      "start": "Commencer",
+      "login": "Se connecter"
+    },
+    "features": {
+      "headline": "Trois pratiques, une seule route.",
+      "safe": {
+        "title": "Safe Drive",
+        "desc": "Ton score de conduite en temps réel — attention, anticipation, écoconduite. NAMA-PILOTE veille sur ta sérénité."
+      },
+      "green": {
+        "title": "Green Drive",
+        "desc": "Chaque kilomètre propre plante un arbre. Certificat OpenTimestamps blockchain. La planète respire avec toi."
+      },
+      "carpool": {
+        "title": "Covoiturage",
+        "desc": "Matching local, split équitable 80/15/5, Safe Walk partagé. La route ensemble, toujours."
+      }
+    },
+    "counters": {
+      "heading": "La communauté YANA en mouvement",
+      "trips": "Trajets accomplis",
+      "trees": "Arbres plantés",
+      "users": "Voyageurs"
+    },
+    "quotes": {
+      "rumi": {
+        "text": "Ce que tu cherches te cherche aussi.",
+        "author": "Rumi"
+      },
+      "basho": {
+        "text": "Ne suis pas les pas des anciens — cherche ce qu'ils cherchaient.",
+        "author": "Matsuo Bashō"
+      },
+      "laozi": {
+        "text": "Le voyage de mille lieues commence par un seul pas.",
+        "author": "Lao Tseu"
+      },
+      "saint_exupery": {
+        "text": "Fais de ta vie un rêve, et d'un rêve une réalité.",
+        "author": "Antoine de Saint-Exupéry"
+      }
+    },
+    "footer": {
+      "copyright": "© {year} SASU PURAMA · TVA non applicable, art. 293 B du CGI",
+      "legal": "Mentions légales",
+      "privacy": "Confidentialité",
+      "cgu": "CGU",
+      "pricing": "Abonnements"
+    }
   }
 }
