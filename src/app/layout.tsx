@@ -29,8 +29,9 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "YANA — Récupère tout l'argent qui te revient",
-  description: "Aides, remboursements, droits oubliés, optimisation fiscale. NAMA-PILOTE scanne ta situation en 2 minutes et lance les démarches pour toi.",
+  title: 'YANA — Chaque trajet devient une méditation en mouvement',
+  description:
+    "Conduis en sécurité, dépollue, partage la route. SAFE DRIVE + GREEN DRIVE + Covoiturage. NAMA-PILOTE, ton copilote IA pour la sécurité routière et l'écoconduite.",
   metadataBase: new URL('https://yana.purama.dev'),
   manifest: '/manifest.json',
   icons: {
@@ -39,8 +40,9 @@ export const metadata: Metadata = {
     shortcut: '/favicon.svg',
   },
   openGraph: {
-    title: "YANA — L'argent que tu laisses sur la table",
-    description: 'Aides sociales, optimisation fiscale, argent oublié, droits du travail. NAMA-PILOTE fait les démarches pour toi.',
+    title: 'YANA — Mobility Wellness',
+    description:
+      'Chaque trajet compte. Conduis en sécurité, dépollue la planète, partage la route. Des récompenses réelles pour une mobilité consciente.',
     url: 'https://yana.purama.dev',
     siteName: 'YANA',
     locale: 'fr_FR',
@@ -50,14 +52,14 @@ export const metadata: Metadata = {
         url: '/api/og',
         width: 1200,
         height: 630,
-        alt: 'YANA — récupère ce qui te revient',
+        alt: 'YANA — la route comme pratique',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'YANA',
-    description: "Récupère tout l'argent que tu laisses sur la table.",
+    title: 'YANA — Mobility Wellness',
+    description: 'La route comme pratique. SAFE DRIVE · GREEN DRIVE · Covoiturage.',
     images: ['/api/og'],
   },
   robots: { index: true, follow: true },
@@ -67,7 +69,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#10B981',
+  themeColor: '#F97316',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
