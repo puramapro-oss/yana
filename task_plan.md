@@ -203,22 +203,56 @@
 - [ ] `SpiritualLayer` + `SubconsciousEngine` composants avancés — **déféré P6**
 - [x] Homepage 3 blocs above-fold — Hero3D + 3 practices Safe/Green/Carpool + LiveCounters + TravelQuote — commit `caad25c`
 - [x] Hero3D R3F route infinie — shader GLSL grid orange/cyan + Stars drei + montage post-LCP requestIdleCallback — commits `f8ae3aa` `caad25c` `55a17a4`
-- [ ] 10 emails Resend sequences — **déféré P6**
-- [ ] Notifs push intelligentes engagement score — **déféré P6**
+- [x] 10 emails Resend sequences — **P6.C1 ✅** — commit `4804917`
+- [ ] Notifs push intelligentes engagement score — **P6.C2 en cours**
 - [x] Anti-slop validation homepage — score mental 8/10 + Lighthouse Perf 97 · A11y 96 · BP 100 · SEO 100 · LCP 1719ms · CLS 0 — commit `55a17a4`
 - [ ] Polish 13 locales i18n home.* (fallback EN → natif) — **déféré P6** (es/de/it/pt/zh/ja/ko/hi/ru/tr/nl/pl/sv)
 - [x] Fix dette `--accent-primary` CSS var non définie (§ISSUES #2 progress.md) — définie dans les 3 thèmes — commit `f8ae3aa`
 
 ---
 
-## PHASE P6 — QA + Security sub-agents
+## PHASE P6 — Éveil + Lifecycle (scope redéfini 2026-04-24)
 
-- [ ] Playwright 21 SIM complet
-- [ ] 113 tests si applicable (§testing.md)
-- [ ] Lighthouse ≥90 sur 4 pages clés (home, dashboard, pricing, carpool list)
-- [ ] qa-agent.md exécuté (22 points)
-- [ ] security-agent.md exécuté (niveaux sévérité)
-- [ ] Fix max 10, au-delà `/clear`
+> QA/Security/Lighthouse sub-agents décalés en P7.
+
+### C1 — Emails Resend 10 séquences ✅ (commit `4804917`)
+- [x] Migration SQL `email_templates` + `email_sequences` + `email_unsubscribes` + GRANTs
+- [x] Seed 10 templates FR YANA mobilité (7 daily + 3 events)
+- [x] `src/lib/email/{layout,resend,schedule}.ts`
+- [x] `POST /api/cron/emails/daily` Bearer CRON_SECRET
+- [x] `POST /api/email/event` Bearer + Zod 3 kinds
+- [x] `GET/POST /api/email/unsubscribe?token=` RFC 8058
+- [x] Page publique `/email/unsubscribed`
+- [x] Middleware `/email/*` public
+- [x] Doc CRON_YANA_n8n.md workflow #5 (n8n 09:00 UTC)
+- [x] Live test 4/4 : 401 · 3/3 envoyés resend_id · idempotence 2ᵉ run 0 · unsubscribe GET 302 + row DB
+
+### C2 — Notifs push engagement-score (à faire)
+- [ ] Tables `user_notification_profile` + `notification_preferences` + `push_log` + extension web_push_subscription sur `push_tokens`
+- [ ] `web-push` npm + VAPID keys auto `.env.local` + Vercel env
+- [ ] Service worker `public/sw.js`
+- [ ] `src/lib/notifications/{engagement,schedule}.ts` (score 0-100, ton new/active/inactive)
+- [ ] `POST /api/push/subscribe` + `/api/push/unsubscribe`
+- [ ] `POST /api/cron/push/daily` Bearer CRON_SECRET
+- [ ] `/settings/notifications` UI toggle/type + jours + horaire + fréquence + pause
+- [ ] CRON_YANA_n8n.md workflow #6 push-daily 10:00 UTC
+
+### C3 — SpiritualLayer.tsx (à faire)
+- [ ] Composant global layout dashboard
+- [ ] Affirmation modal 1× par login (reuse `/api/affirmations/today`)
+- [ ] Pauses cœur 25min → overlay "Respire." 3s
+- [ ] Citations footer rotatives 30min (pattern TravelQuote)
+- [ ] Sons 432Hz pentatonique opt-in Howler.js
+- [ ] Loading subliminaux mots AMOUR/PUISSANCE/ABONDANCE/PAIX/CONFIANCE (>2s, opacity 3-5%)
+- [ ] Célébrations lotus + bol tibétain sur achievements
+
+### C4 — SubconsciousEngine.tsx (à faire)
+- [ ] Reformulation i18n strings empowering (Chargement → Ton espace se prépare)
+- [ ] Hook `useEmpowerment`
+- [ ] Ratios dorés Fibonacci 8/13/21/34/55px
+- [ ] Fleur de vie SVG background opacity 3%
+- [ ] Fréquences couleurs CSS `--frequency-current` (888/963/528/639 Hz glow)
+- [ ] Deploy final + progress.md P6 100%
 
 ---
 
@@ -263,6 +297,8 @@
 | P4 | ✅ | `4cca68d` | live | Admin + Aide + FAQ + SAV chatbot NAMA + 3 CRONs n8n-ready + trigger admin |
 | P5.1+5.2 | ✅ | `a45b3f0` | live | Theme 3 modes + Affirmation + /breathe /gratitude /intention |
 | P5.3 | ✅ | `55a17a4` | live yana.purama.dev | Hero3D R3F + homepage 3 blocs + i18n 16 langues + Lighthouse Perf 97 |
-| P6 | ⏳ | - | - | QA + Security sub-agents + Lighthouse |
+| P6.C1 | ✅ | `4804917` | live yana.purama.dev | Emails Resend 10 séquences (daily J0/1/3/7/14/21/30 + 3 events) — 4/4 live smoke tests |
+| P6.C2-C4 | ⏳ | - | - | Notifs push engagement · SpiritualLayer · SubconsciousEngine |
+| P7 (ex-P6) | ⏳ | - | - | QA + Security sub-agents + Lighthouse |
 | P7 | ⏳ | - | - | Mobile Expo + EAS + stores |
 | P8 | ❌ | - | - | Pas en version initiale |

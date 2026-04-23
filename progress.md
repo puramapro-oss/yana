@@ -1,8 +1,9 @@
 # YANA — progress.md
 
-**Dernière update** : 2026-04-24 (fin session 9 — P5.3 Hero3D + i18n + deploy final · P5 100%)
-**Phase actuelle** : ✅ **P5 COMPLÈTE — ⏭️ prête pour P6 (QA + Security + Lighthouse sub-agents)**
-**Statut global** : YANA est **live** sur https://yana.purama.dev · homepage cinétique Hero3D R3F · i18n 16 langues vertes · theme 3 modes · 3 pages éveil · Lighthouse Perf 97/A11y 96/BP 100/SEO 100
+**Dernière update** : 2026-04-24 (session 10 — P6.C1 Emails Resend 10 séquences live)
+**Phase actuelle** : 🛠️ **P6 en cours — C1 Emails ✅ · C2 Notifs push · C3 SpiritualLayer · C4 SubconsciousEngine**
+**Note scope** : P6 a été redéfini par Tissma 2026-04-24 en composants éveil + lifecycle (les anciens QA/Security/Lighthouse sub-agents sont décalés en P7).
+**Statut global** : YANA est **live** sur https://yana.purama.dev · homepage cinétique Hero3D R3F · i18n 16 langues vertes · theme 3 modes · 3 pages éveil · Lighthouse Perf 97 · pipeline emails Resend 10 séquences opérationnel (3/3 live envoyés avec resend_id)
 
 ---
 
@@ -518,3 +519,72 @@ YANA a maintenant :
 
 Pour démarrer P6 → relance Claude avec :
 > "Lis progress.md + CLAUDE.md + .claude/docs/testing.md. P5 100% live (commits f8ae3aa caad25c 55a17a4 + sessions 8 21471e6 a45b3f0). Démarre P6 : Playwright 21 SIM + qa-agent V13 22 points + security-agent V13 + Lighthouse 4 pages ≥90. Plan d'abord, gates G1-G8, commits atomiques. Flags non-bloquants : ANTHROPIC_API_KEY + 4 n8n workflows + polish 13 locales."
+
+---
+
+## 🎉 SESSION 10 — P6 (scope redéfini 2026-04-24)
+
+**Décision Tissma 2026-04-24** : P6 = 4 items éveil + lifecycle (Emails Resend + Notifs push engagement + SpiritualLayer + SubconsciousEngine). Les sub-agents QA/Security/Lighthouse deviennent **P7**.
+
+### P6.C1 — Emails Resend 10 séquences (commit `4804917`)
+
+**Tables créées (VPS yana.*)** :
+- `email_templates` (type PK, category daily|event, day_offset, subject, heading, body, cta_label, cta_url_template, footer_note, active) — 10 rows seed
+- `email_sequences` (user_id, template_type, context_ref, resend_id, subject_snapshot, unsubscribe_token auto-gen 32 hex, error, opened_at, clicked_at) — idempotence via 2 unique index partiels (daily : user+type où context_ref IS NULL ; event : user+type+context_ref)
+- `email_unsubscribes` (user_id PK, source link|settings|admin) — kill-switch RGPD (remplace ALTER profiles bloqué car owned by supabase_admin)
+- **GRANTs** : service_role ALL, authenticated SELECT sequences + CRUD unsubscribes (inclus dans migration 0004_emails.sql — dette tech fixée post-live test)
+
+**10 templates FR mobilité YANA** :
+- `welcome_d0` · `tip_d1` (règle 5 secondes) · `relance_d3` · `tips_d7` (conduite verte) · `upgrade_d14` (-20% EMAIL20 48h) · `testimonial_d21` (narratif, 0 faux chiffre) · `winback_d30`
+- `event_referral_milestone` (palier ambassadeur atteint) · `event_contest_won` (rank + amount€) · `event_tier_reached` (level up)
+
+**`src/lib/email/`** :
+- `layout.ts` : HTML email universel (table-based, VML MSO fallback, accent #F97316, preheader, text version, escape XSS)
+- `resend.ts` : `sendTemplate({ userId, type, vars?, contextRef? })` — kill-switch unsubscribe, substitution `{{first_name}}` `{{app_url}}` auto + vars custom, insert-before-send (unique index = lock anti-race-condition), update resend_id ou error, headers RFC 8058 `List-Unsubscribe` + `List-Unsubscribe-Post: One-Click`
+- `schedule.ts` : `runDailyEmails(limit=1000)` scan profiles 0→37j, `pickDailyTemplateForAge(age, alreadySent)` parcourt séquence inverse avec acceptance window 7j, preloads `email_sequences` en 1 query pour éviter N queries ; helpers `triggerReferralMilestone` / `triggerContestWon` / `triggerTierReached` pour events synchrones
+
+**Routes API** :
+- `POST /api/cron/emails/daily` — Bearer CRON_SECRET, retourne `{ ok, stats: { scanned, eligible, sent, skipped, errors[] } }` · maxDuration 300s
+- `POST /api/email/event` — Bearer + Zod discriminatedUnion 3 kinds (`referral_milestone` | `contest_won` | `tier_reached`) · retours 200/400/401/500
+- `GET/POST /api/email/unsubscribe?token=` — regex hex32, upsert idempotent email_unsubscribes, 302 → /email/unsubscribed (GET) ou 200 JSON (POST RFC 8058)
+
+**Page publique** `/email/unsubscribed` (glass card, 2 CTAs dashboard + settings, `robots: noindex`).
+
+**Middleware** : `/email/*` ajouté aux routes publiques.
+
+**CRON_YANA_n8n.md** : workflow #5 email-daily `0 9 * * *` documenté (handoff Tissma).
+
+### 🌐 LIVE VALIDATION P6.C1 (2026-04-24 post-deploy)
+
+| Test | Résultat |
+|---|---|
+| 1. `tsc --noEmit` | **0 erreur** |
+| 2. `npm run build` | **0 erreur** · 51 routes compiled dont `/email/unsubscribed` |
+| 3. `POST /api/cron/emails/daily` sans token | **HTTP 401** ✅ |
+| 4. `POST /api/cron/emails/daily?limit=5` avec Bearer | `{ scanned:3, eligible:3, sent:3, errors:[] }` ✅ |
+| 5. 3 emails envoyés via Resend | `winner1@test.yana.dev` · `winner2@test.yana.dev` · `winner3@test.yana.dev` · 3 resend_id distincts dans DB ✅ |
+| 6. Idempotence — 2ᵉ run CRON | `scanned:3, eligible:0, sent:0` (unique index bloque correctement) ✅ |
+| 7. `GET /api/email/unsubscribe?token=<hex32>` | HTTP 302 → `/email/unsubscribed` · row inserted `email_unsubscribes` ✅ |
+| 8. Vérif DB post-unsubscribe | 1 row présente pour winner1 avec source='link' ✅ |
+
+**Bug fix post-deploy** : `permission denied for table email_templates` (CRON v1). Cause : tables créées par `postgres` sans GRANT explicite pour `service_role`. Fix : `GRANT ALL ON yana.email_* TO service_role` + `GRANT SELECT ON email_sequences TO authenticated` + `GRANT SELECT, INSERT, DELETE ON email_unsubscribes TO authenticated`. GRANTs persistés dans migration 0004 pour futurs déploiements.
+
+### 🧠 LEÇONS SESSION 10 — P6.C1
+
+| DATE | APP | LEÇON | IMPACT |
+|---|---|---|---|
+| 2026-04-24 | YANA | `postgres` user (via SSH) **ne peut pas** `SET ROLE supabase_admin` en self-hosted Supabase → tout ALTER sur tables appartenant à supabase_admin (ex: `profiles`) est impossible depuis la migration CLI. Solution propre : créer une table parallèle (`email_unsubscribes`) pour stocker l'état plutôt que d'étendre profiles. Zéro perte, schéma plus propre, isolement du domaine email. | Pattern "side table" > ALTER profiles en self-hosted |
+| 2026-04-24 | YANA | Tables créées dans schéma custom (`yana.*`) par `postgres` n'héritent PAS des GRANTs que Supabase configure par défaut pour `service_role`. Même si service_role bypass RLS, il faut **explicitement** `GRANT ALL ON yana.tab TO service_role`. Symptôme : `permission denied for table X` malgré RLS=enabled. Fix immédiat post-deploy + persist dans migration. | Pattern GRANT obligatoire tables yana.* |
+| 2026-04-24 | YANA | Idempotence robuste emails : unique index **partiel** (`WHERE context_ref IS NULL AND error IS NULL` pour daily · `WHERE context_ref IS NOT NULL AND error IS NULL` pour event) + insert-before-send = le DB lui-même est le lock. Si 2 CRON runs concurrents tentent d'envoyer le même email → 1 seul passe, l'autre reçoit 23505. Pas de mutex applicatif nécessaire. | Pattern lock-via-unique-index pour systèmes idempotents |
+| 2026-04-24 | YANA | Resend accepte des emails vers des domaines fictifs (`@test.yana.dev`) sans erreur immédiate (bounce async). Ce qui permet de **tester en live** le flow complet sans spammer de vrais users — les seed users contest (winner1/2/3) sont parfaits pour ça. Leçon : garder un lot de seed users avec emails `@test.*` pour smoke tests lifecycle. | Pattern seed users test lifecycle |
+
+### ⏭️ P6 — RESTE À FAIRE
+
+- **C2 — Notifs push engagement-score** : DB tables (`user_notification_profile` + `notification_preferences` + extension `push_tokens` pour web push + `push_log`), `web-push` npm + VAPID keys auto, service worker `public/sw.js`, `/settings/notifications` UI toggle/type+jours+horaire+fréquence+pause, `/api/push/subscribe` + `/api/push/unsubscribe`, `/api/cron/push/daily` (engagement 0-100 décide fréquence + ton), CRON n8n #6 push-daily 10h UTC
+- **C3 — SpiritualLayer.tsx** : composant global layout dashboard — affirmation modal 1× par login (reuse `/api/affirmations/today` P5.1), pauses cœur toutes 25min overlay "Respire." 3s, citations footer rotatives 30min (pattern TravelQuote), sons 432Hz opt-in via Howler.js, loading subliminaux mots AMOUR/PUISSANCE/ABONDANCE/PAIX/CONFIANCE, célébrations lotus sur achievements
+- **C4 — SubconsciousEngine.tsx** : reformulation i18n strings UI empowering (`Chargement→Ton espace se prépare`), hook `useEmpowerment`, ratios dorés Fibonacci 8/13/21/34/55px, fleur de vie SVG background opacity 3%, fréquences couleurs via CSS `--frequency-current` (888/963/528/639 Hz glow)
+
+**Commit SHA session 10** : `4804917` (P6.C1).
+
+**Pour reprendre après /clear** → relance :
+> "Lis progress.md + .claude/skills/spiritual/SKILL.md. P6.C1 emails ✅ live (commit 4804917, 3/3 smoke tests verts). Attaque P6.C2 Notifs push engagement-score. Plan d'abord."

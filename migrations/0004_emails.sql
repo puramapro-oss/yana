@@ -98,3 +98,11 @@ DROP TRIGGER IF EXISTS trg_email_templates_touch ON yana.email_templates;
 CREATE TRIGGER trg_email_templates_touch
   BEFORE UPDATE ON yana.email_templates
   FOR EACH ROW EXECUTE FUNCTION yana.email_templates_touch_updated_at();
+
+-- 6. GRANTs (obligatoire — tables créées par postgres sans privilèges implicites)
+GRANT USAGE ON SCHEMA yana TO service_role, authenticated, anon;
+GRANT ALL       ON yana.email_templates    TO service_role;
+GRANT ALL       ON yana.email_sequences    TO service_role;
+GRANT ALL       ON yana.email_unsubscribes TO service_role;
+GRANT SELECT    ON yana.email_sequences    TO authenticated;
+GRANT SELECT, INSERT, DELETE ON yana.email_unsubscribes TO authenticated;
