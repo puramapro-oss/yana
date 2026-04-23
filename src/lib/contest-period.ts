@@ -21,3 +21,24 @@ export function getCurrentMonthBounds(now: Date = new Date()): { start: Date; en
 export function secondsUntil(target: Date, now: Date = new Date()): number {
   return Math.max(0, Math.floor((target.getTime() - now.getTime()) / 1000))
 }
+
+// Format YYYY-MM-DD en UTC depuis une Date.
+function toIsoDate(d: Date): string {
+  const y = d.getUTCFullYear()
+  const m = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// Période hebdo (lundi → dimanche) au format string YYYY-MM-DD,
+// compatible avec la colonne `date` PostgreSQL.
+export function getWeeklyPeriod(now: Date = new Date()): { start: string; end: string } {
+  const { start, end } = getCurrentWeekBounds(now)
+  return { start: toIsoDate(start), end: toIsoDate(end) }
+}
+
+// Période mensuelle (1er → dernier jour) au format string YYYY-MM-DD.
+export function getMonthlyPeriod(now: Date = new Date()): { start: string; end: string } {
+  const { start, end } = getCurrentMonthBounds(now)
+  return { start: toIsoDate(start), end: toIsoDate(end) }
+}
