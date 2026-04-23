@@ -113,9 +113,23 @@ export const SEEDS_TO_EUR = 0.01     // 1 Graine = 0,01€
 export const WALLET_MIN_WITHDRAWAL = 5 // euros — anti-double-retrait LEARNINGS #24
 export const SUBSCRIPTION_WITHDRAW_LOCK_DAYS = 30 // L221-28 §21
 
-// Anti-fraude : limites free/paid
-export const CHAT_DAILY_LIMIT_FREE = 3
+// Anti-fraude : limites quotidiennes NAMA-PILOTE chat par plan (reset minuit UTC)
+// free 5 (démo) · essentiel 20 · infini 100 · legende illimité (Number.POSITIVE_INFINITY)
+export const CHAT_DAILY_LIMIT_FREE = 5
 export const CHAT_DAILY_LIMIT_ESSENTIEL = 20
+export const CHAT_DAILY_LIMIT_INFINI = 100
+// Typé inline pour éviter un import circulaire avec '@/types' (Plan provient lui-même d'ici).
+export const CHAT_DAILY_LIMITS: {
+  free: number
+  essentiel: number
+  infini: number
+  legende: number
+} = {
+  free: CHAT_DAILY_LIMIT_FREE,
+  essentiel: CHAT_DAILY_LIMIT_ESSENTIEL,
+  infini: CHAT_DAILY_LIMIT_INFINI,
+  legende: Number.POSITIVE_INFINITY,
+}
 export const CARPOOL_MONTHLY_LIMIT_FREE = 1
 
 // ──────────────────────────────────────────────────────────────────

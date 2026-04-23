@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createServiceClient } from '@/lib/supabase'
 import { streamNamaPilote, type NamaPiloteContext } from '@/lib/claude'
+import { CHAT_DAILY_LIMITS } from '@/lib/constants'
 import type { Plan } from '@/types'
 
 export const runtime = 'nodejs'
@@ -19,42 +20,65 @@ const BodySchema = z.object({
   vehicle_type: z.string().optional(),
 })
 
+function jsonError(status: number, error: string, extra?: Record<string, unknown>) {
+  return new Response(JSON.stringify({ error, ...(extra ?? {}) }), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  })
+}
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+}
+
 export async function POST(req: Request) {
   const sb = await createServerSupabaseClient()
   const { data: { user } } = await sb.auth.getUser()
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'Connexion requise.' }), {
-      status: 401,
-      headers: { 'content-type': 'application/json' },
-    })
-  }
+  if (!user) return jsonError(401, 'Connexion requise.')
 
   const json = await req.json().catch(() => ({}))
   const parsed = BodySchema.safeParse(json)
   if (!parsed.success) {
-    return new Response(
-      JSON.stringify({ error: parsed.error.issues[0]?.message ?? 'Données invalides.' }),
-      { status: 400, headers: { 'content-type': 'application/json' } },
-    )
+    return jsonError(400, parsed.error.issues[0]?.message ?? 'Données invalides.')
   }
 
   const admin = createServiceClient()
   const { data: profile } = await admin
     .from('profiles')
     .select(
-      'id, plan, role, full_name, sanskrit_level, seeds_balance, co2_offset_total_kg, trees_planted_total',
+      'id, plan, role, full_name, sanskrit_level, seeds_balance, co2_offset_total_kg, trees_planted_total, daily_questions, daily_questions_reset_at',
     )
     .eq('id', user.id)
     .maybeSingle()
-  if (!profile) {
-    return new Response(JSON.stringify({ error: 'Profil introuvable.' }), {
-      status: 404,
-      headers: { 'content-type': 'application/json' },
-    })
-  }
+  if (!profile) return jsonError(404, 'Profil introuvable.')
 
   // Super admin = plan legende (multiplicateur max)
   const plan: Plan = profile.role === 'super_admin' ? 'legende' : (profile.plan as Plan)
+
+  // Rate limit quotidien (reset à minuit UTC via champ date)
+  const today = todayIso()
+  const limit = CHAT_DAILY_LIMITS[plan] ?? CHAT_DAILY_LIMITS.free
+  const isSameDay = profile.daily_questions_reset_at === today
+  const usedToday = isSameDay ? (profile.daily_questions ?? 0) : 0
+  if (Number.isFinite(limit) && usedToday >= limit) {
+    return jsonError(
+      429,
+      plan === 'free'
+        ? `Limite quotidienne atteinte (${limit} messages gratuits/jour). Passe à Essentiel pour 20/jour.`
+        : `Limite quotidienne atteinte (${limit} messages). Reviens demain ou passe à Legende (illimité).`,
+      { plan, used: usedToday, limit },
+    )
+  }
+
+  // Incrémenter avant stream (optimiste — si Claude fail, le compteur reste +1
+  // pour éviter abus retry). Reset si jour différent.
+  await admin
+    .from('profiles')
+    .update({
+      daily_questions: usedToday + 1,
+      daily_questions_reset_at: today,
+    })
+    .eq('id', profile.id)
 
   // Contexte NAMA-PILOTE (injecté dans le system prompt)
   const ctx: NamaPiloteContext = {
@@ -70,9 +94,20 @@ export async function POST(req: Request) {
 
   // Persist user message (append mode or create new conversation)
   const lastUserMsg = parsed.data.messages[parsed.data.messages.length - 1]
+  if (!lastUserMsg) return jsonError(400, 'Aucun message à envoyer.')
   let conversationId = parsed.data.conversation_id
 
-  if (!conversationId) {
+  if (conversationId) {
+    // Sécurité : vérifier ownership de la conversation (anti-injection cross-user)
+    const { data: conv } = await admin
+      .from('conversations')
+      .select('id, user_id')
+      .eq('id', conversationId)
+      .maybeSingle()
+    if (!conv || conv.user_id !== profile.id) {
+      return jsonError(403, 'Conversation introuvable ou accès refusé.')
+    }
+  } else {
     const { data: conv } = await admin
       .from('conversations')
       .insert({ user_id: profile.id, title: lastUserMsg.content.slice(0, 60) })
@@ -87,6 +122,11 @@ export async function POST(req: Request) {
       role: 'user',
       content: lastUserMsg.content,
     })
+    // Touch conversation updated_at pour tri liste
+    await admin
+      .from('conversations')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', conversationId)
   }
 
   // Stream SSE (pattern LEARNINGS #21 VIDA-ASSOC)
