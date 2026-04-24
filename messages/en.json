@@ -37,7 +37,16 @@
     "signup": "Create account",
     "level": "Lvl.",
     "points": "points",
-    "credits": "credits"
+    "credits": "credits",
+    "poetic": {
+      "loading": "Your space is getting ready",
+      "error": "Small detour, we come back stronger",
+      "empty": "The space of all possibilities",
+      "welcome": "Welcome home",
+      "logout": "See you very soon, beautiful soul",
+      "congrats": "See? You are capable of anything.",
+      "retry": "Let's try again, gently"
+    }
   },
   "nav": {
     "chat": "AI Chat",

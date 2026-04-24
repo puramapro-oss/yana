@@ -37,7 +37,16 @@
     "signup": "创建账户",
     "level": "等级",
     "points": "积分",
-    "credits": "额度"
+    "credits": "额度",
+    "poetic": {
+      "loading": "你的空间正在准备",
+      "error": "小小绕路,我们会更坚强归来",
+      "empty": "一切可能性的空间",
+      "welcome": "欢迎回家",
+      "logout": "很快再见,美丽的灵魂",
+      "congrats": "看到了吗?你无所不能。",
+      "retry": "我们温柔地再试一次"
+    }
   },
   "nav": {
     "chat": "AI 聊天",

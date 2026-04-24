@@ -37,7 +37,16 @@
     "signup": "Utwórz konto",
     "level": "Poz.",
     "points": "punkty",
-    "credits": "kredyty"
+    "credits": "kredyty",
+    "poetic": {
+      "loading": "Twoja przestrzeń się przygotowuje",
+      "error": "Mały objazd, wracamy silniejsi",
+      "empty": "Przestrzeń wszystkich możliwości",
+      "welcome": "Witaj w domu",
+      "logout": "Do zobaczenia wkrótce, piękna duszo",
+      "congrats": "Widzisz? Jesteś zdolny do wszystkiego.",
+      "retry": "Spróbujmy jeszcze raz, łagodnie"
+    }
   },
   "nav": {
     "chat": "Chat AI",

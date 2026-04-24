@@ -37,7 +37,16 @@
     "signup": "Skapa konto",
     "level": "Niv.",
     "points": "poäng",
-    "credits": "krediter"
+    "credits": "krediter",
+    "poetic": {
+      "loading": "Ditt utrymme förbereds",
+      "error": "Liten omväg, vi kommer tillbaka starkare",
+      "empty": "Utrymmet för alla möjligheter",
+      "welcome": "Välkommen hem",
+      "logout": "Ses snart, vackra själ",
+      "congrats": "Ser du? Du klarar allt.",
+      "retry": "Vi försöker igen, varsamt"
+    }
   },
   "nav": {
     "chat": "AI-chatt",

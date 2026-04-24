@@ -37,7 +37,16 @@
     "signup": "Konto erstellen",
     "level": "Stufe",
     "points": "Punkte",
-    "credits": "Guthaben"
+    "credits": "Guthaben",
+    "poetic": {
+      "loading": "Dein Raum bereitet sich vor",
+      "error": "Kleiner Umweg, wir kommen stärker zurück",
+      "empty": "Der Raum aller Möglichkeiten",
+      "welcome": "Willkommen zu Hause",
+      "logout": "Bis ganz bald, schöne Seele",
+      "congrats": "Siehst du? Du bist zu allem fähig.",
+      "retry": "Wir versuchen es sanft noch einmal"
+    }
   },
   "nav": {
     "chat": "KI-Chat",

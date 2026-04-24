@@ -37,7 +37,16 @@
     "signup": "Crea un account",
     "level": "Liv.",
     "points": "punti",
-    "credits": "crediti"
+    "credits": "crediti",
+    "poetic": {
+      "loading": "Il tuo spazio si sta preparando",
+      "error": "Piccola deviazione, torniamo più forti",
+      "empty": "Lo spazio di tutte le possibilità",
+      "welcome": "Benvenuto a casa",
+      "logout": "A prestissimo, anima bella",
+      "congrats": "Vedi? Sei capace di tutto.",
+      "retry": "Riproviamo, con dolcezza"
+    }
   },
   "nav": {
     "chat": "Chat IA",

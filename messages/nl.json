@@ -37,7 +37,16 @@
     "signup": "Account aanmaken",
     "level": "Niv.",
     "points": "punten",
-    "credits": "credits"
+    "credits": "credits",
+    "poetic": {
+      "loading": "Jouw ruimte bereidt zich voor",
+      "error": "Kleine omweg, we komen sterker terug",
+      "empty": "De ruimte van alle mogelijkheden",
+      "welcome": "Welkom thuis",
+      "logout": "Tot heel gauw, mooie ziel",
+      "congrats": "Zie je wel? Je bent tot alles in staat.",
+      "retry": "We proberen het opnieuw, zachtjes"
+    }
   },
   "nav": {
     "chat": "AI Chat",

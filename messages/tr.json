@@ -37,7 +37,16 @@
     "signup": "Hesap oluştur",
     "level": "Sev.",
     "points": "puan",
-    "credits": "kredi"
+    "credits": "kredi",
+    "poetic": {
+      "loading": "Alanın hazırlanıyor",
+      "error": "Küçük bir sapma, daha güçlü döneriz",
+      "empty": "Tüm olasılıkların alanı",
+      "welcome": "Evine hoş geldin",
+      "logout": "Çok yakında görüşürüz, güzel ruh",
+      "congrats": "Gördün mü? Her şeye kadirsin.",
+      "retry": "Tekrar deneyelim, nazikçe"
+    }
   },
   "nav": {
     "chat": "AI Sohbet",
