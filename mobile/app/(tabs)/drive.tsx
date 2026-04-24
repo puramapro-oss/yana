@@ -5,12 +5,15 @@ import * as Haptics from 'expo-haptics'
 import { useRouter } from 'expo-router'
 import { GlassCard } from '@/components/GlassCard'
 import { PrimaryButton } from '@/components/PrimaryButton'
+import { FatigueModal } from '@/components/FatigueModal'
 import { colors, typography, fib, radii } from '@/lib/theme'
 import { WEB_URL } from '@/lib/constants'
 import { useVehicles } from '@/hooks/useVehicles'
 import { useTrip } from '@/hooks/useTrip'
 import { TripTrackerRN } from '@/lib/trip-tracker'
 import type { VehicleRow } from '@/lib/trip-api'
+import { apiFatigueLog } from '@/lib/trip-api'
+import { getFatigueSignal, fatigueColor, fatigueLabel, type FatigueSignal } from '@/lib/health'
 
 function formatDuration(sec: number): string {
   const h = Math.floor(sec / 3600)
@@ -36,17 +39,16 @@ export default function Drive() {
   const { state, start, stop, cancel } = useTrip()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [fatigueSignal, setFatigueSignal] = useState<FatigueSignal | null>(null)
+  const [fatigueModalVisible, setFatigueModalVisible] = useState(false)
+  const [pendingStartVehicleId, setPendingStartVehicleId] = useState<string | null>(null)
 
   const vehicleId = useMemo(
     () => selectedId ?? primary?.id ?? null,
     [selectedId, primary],
   )
 
-  async function handleStart() {
-    if (!vehicleId) {
-      Alert.alert('Véhicule requis', 'Ajoute un véhicule depuis le site web pour démarrer un trajet.')
-      return
-    }
+  async function launchTrip(finalVehicleId: string) {
     setBusy(true)
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     const perms = await TripTrackerRN.requestPermissions(false)
@@ -55,12 +57,61 @@ export default function Drive() {
       Alert.alert('Géolocalisation', perms.errorMessage ?? 'Permission refusée.')
       return
     }
-    const { error } = await start({ vehicle_id: vehicleId, trip_mode: 'solo' })
+    const { error } = await start({ vehicle_id: finalVehicleId, trip_mode: 'solo' })
     setBusy(false)
     if (error) {
       Alert.alert('Démarrage impossible', error)
+    }
+  }
+
+  async function handleStart() {
+    if (!vehicleId) {
+      Alert.alert('Véhicule requis', 'Ajoute un véhicule depuis le site web pour démarrer un trajet.')
       return
     }
+    setBusy(true)
+    // NAMA check fatigue avant de lancer.
+    const signal = await getFatigueSignal()
+    setFatigueSignal(signal)
+    // Log non-bloquant pour historique.
+    void apiFatigueLog({
+      trip_id: null,
+      level: signal.level,
+      hrv_ms: signal.hrv_ms,
+      sleep_hours: signal.sleep_hours,
+      source: signal.source,
+      acknowledged: signal.level < 2,
+    })
+    if (signal.level >= 2) {
+      setBusy(false)
+      setPendingStartVehicleId(vehicleId)
+      setFatigueModalVisible(true)
+      return
+    }
+    setBusy(false)
+    await launchTrip(vehicleId)
+  }
+
+  async function handleFatigueAcknowledge() {
+    setFatigueModalVisible(false)
+    const vId = pendingStartVehicleId
+    setPendingStartVehicleId(null)
+    if (fatigueSignal) {
+      void apiFatigueLog({
+        trip_id: null,
+        level: fatigueSignal.level,
+        hrv_ms: fatigueSignal.hrv_ms,
+        sleep_hours: fatigueSignal.sleep_hours,
+        source: fatigueSignal.source,
+        acknowledged: true,
+      })
+    }
+    if (vId) await launchTrip(vId)
+  }
+
+  function handleFatigueCancel() {
+    setFatigueModalVisible(false)
+    setPendingStartVehicleId(null)
   }
 
   async function handleStop() {
@@ -109,6 +160,12 @@ export default function Drive() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.dark.bgVoid }}>
+      <FatigueModal
+        visible={fatigueModalVisible}
+        signal={fatigueSignal}
+        onAcknowledge={handleFatigueAcknowledge}
+        onCancel={handleFatigueCancel}
+      />
       <ScrollView contentContainerStyle={{ padding: fib.md, gap: fib.md, paddingBottom: fib.xl }}>
         <View style={{ gap: 4 }}>
           <Text style={{ color: colors.dark.textMuted, fontSize: typography.body.sm }}>

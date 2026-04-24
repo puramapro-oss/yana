@@ -115,6 +115,19 @@ export async function apiTripCancel(input: { trip_id: string }): Promise<void> {
   await post('/end', { trip_id: input.trip_id, cancel: true })
 }
 
+export interface FatigueLogInput {
+  trip_id: string | null
+  level: 0 | 1 | 2 | 3
+  hrv_ms: number | null
+  sleep_hours: number | null
+  source: 'healthkit' | 'health_connect' | 'manual' | 'computed' | 'none'
+  acknowledged?: boolean
+}
+
+export async function apiFatigueLog(input: FatigueLogInput): Promise<void> {
+  await post('/fatigue', input).catch(() => null)
+}
+
 export interface VehicleRow {
   id: string
   vehicle_type: 'car' | 'moto' | 'scooter' | 'ev_car' | 'ev_moto' | 'hybrid'

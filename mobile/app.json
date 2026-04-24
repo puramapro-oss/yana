@@ -106,7 +106,15 @@
           "isIosBackgroundLocationEnabled": true,
           "isAndroidBackgroundLocationEnabled": true
         }
-      ]
+      ],
+      [
+        "react-native-health",
+        {
+          "healthSharePermission": "YANA lit ton sommeil et ta variabilité cardiaque pour détecter la fatigue et t'éviter un trajet risqué.",
+          "healthUpdatePermission": "YANA n'écrit pas dans ton Santé — cette permission n'est pas utilisée."
+        }
+      ],
+      "react-native-health-connect"
     ],
     "extra": {
       "appSlug": "yana",
