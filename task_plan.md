@@ -204,7 +204,7 @@
 - [x] Homepage 3 blocs above-fold — Hero3D + 3 practices Safe/Green/Carpool + LiveCounters + TravelQuote — commit `caad25c`
 - [x] Hero3D R3F route infinie — shader GLSL grid orange/cyan + Stars drei + montage post-LCP requestIdleCallback — commits `f8ae3aa` `caad25c` `55a17a4`
 - [x] 10 emails Resend sequences — **P6.C1 ✅** — commit `4804917`
-- [ ] Notifs push intelligentes engagement score — **P6.C2 en cours**
+- [x] Notifs push intelligentes engagement score — **P6.C2 ✅** — commit `d6137de` (backend 100% green, browser test post VAPID env)
 - [x] Anti-slop validation homepage — score mental 8/10 + Lighthouse Perf 97 · A11y 96 · BP 100 · SEO 100 · LCP 1719ms · CLS 0 — commit `55a17a4`
 - [ ] Polish 13 locales i18n home.* (fallback EN → natif) — **déféré P6** (es/de/it/pt/zh/ja/ko/hi/ru/tr/nl/pl/sv)
 - [x] Fix dette `--accent-primary` CSS var non définie (§ISSUES #2 progress.md) — définie dans les 3 thèmes — commit `f8ae3aa`
@@ -227,15 +227,17 @@
 - [x] Doc CRON_YANA_n8n.md workflow #5 (n8n 09:00 UTC)
 - [x] Live test 4/4 : 401 · 3/3 envoyés resend_id · idempotence 2ᵉ run 0 · unsubscribe GET 302 + row DB
 
-### C2 — Notifs push engagement-score (à faire)
-- [ ] Tables `user_notification_profile` + `notification_preferences` + `push_log` + extension web_push_subscription sur `push_tokens`
-- [ ] `web-push` npm + VAPID keys auto `.env.local` + Vercel env
-- [ ] Service worker `public/sw.js`
-- [ ] `src/lib/notifications/{engagement,schedule}.ts` (score 0-100, ton new/active/inactive)
-- [ ] `POST /api/push/subscribe` + `/api/push/unsubscribe`
-- [ ] `POST /api/cron/push/daily` Bearer CRON_SECRET
-- [ ] `/settings/notifications` UI toggle/type + jours + horaire + fréquence + pause
-- [ ] CRON_YANA_n8n.md workflow #6 push-daily 10:00 UTC
+### C2 — Notifs push engagement-score ✅ (commit `d6137de`)
+- [x] Migration SQL 0005_push : `web_push_subscriptions` (side table, push_tokens owned by supabase_admin) + `user_notification_profile` + `notification_preferences` + `push_log` (sent_day DATE dédié pour index immutable) + GRANTs
+- [x] `web-push` npm installé
+- [x] Service worker `public/sw.js` (push + notificationclick + beacon /api/push/opened + SKIP_WAITING)
+- [x] `src/lib/notifications/{web-push,engagement,schedule}.ts` + `notifications-client/push.ts` (browser helpers)
+- [x] 7 routes API : vapid-public-key · subscribe · unsubscribe · opened · test · preferences (GET/PATCH) · cron/push/daily
+- [x] `/settings/notifications` UI master toggle + 6 types × days L-D + frequency low/normal/high + hour_start/end + pause date picker + test button
+- [x] Entrée ajoutée dans hub `/settings`
+- [x] CRON_YANA_n8n.md workflow #6 push-daily 10:00 UTC + test curl
+- [x] Live test 11/11 : 401 endpoints sans auth · 503 vapid sans env · 400 opened Zod invalide · 307 settings auth-gated · 200 sw.js · 200 cron Bearer stats verts · regression emails + /api/stats/public + homepage + pricing + faq + contest/leaderboard + dashboard 5/5
+- [ ] **Flag Tissma** : ajouter 3 env vars Vercel (`VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` + `VAPID_SUBJECT`) + browser test réel (login → /settings/notifications → Activer → Test)
 
 ### C3 — SpiritualLayer.tsx (à faire)
 - [ ] Composant global layout dashboard
@@ -298,7 +300,8 @@
 | P5.1+5.2 | ✅ | `a45b3f0` | live | Theme 3 modes + Affirmation + /breathe /gratitude /intention |
 | P5.3 | ✅ | `55a17a4` | live yana.purama.dev | Hero3D R3F + homepage 3 blocs + i18n 16 langues + Lighthouse Perf 97 |
 | P6.C1 | ✅ | `4804917` | live yana.purama.dev | Emails Resend 10 séquences (daily J0/1/3/7/14/21/30 + 3 events) — 4/4 live smoke tests |
-| P6.C2-C4 | ⏳ | - | - | Notifs push engagement · SpiritualLayer · SubconsciousEngine |
+| P6.C2 | ✅ | `d6137de` | live yana.purama.dev | Notifs push engagement-score (backend 100%, flag Tissma = 3 VAPID env vars + browser test) |
+| P6.C3-C4 | ⏳ | - | - | SpiritualLayer.tsx · SubconsciousEngine.tsx |
 | P7 (ex-P6) | ⏳ | - | - | QA + Security sub-agents + Lighthouse |
 | P7 | ⏳ | - | - | Mobile Expo + EAS + stores |
 | P8 | ❌ | - | - | Pas en version initiale |

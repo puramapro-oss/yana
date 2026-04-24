@@ -578,13 +578,135 @@ Pour démarrer P6 → relance Claude avec :
 | 2026-04-24 | YANA | Idempotence robuste emails : unique index **partiel** (`WHERE context_ref IS NULL AND error IS NULL` pour daily · `WHERE context_ref IS NOT NULL AND error IS NULL` pour event) + insert-before-send = le DB lui-même est le lock. Si 2 CRON runs concurrents tentent d'envoyer le même email → 1 seul passe, l'autre reçoit 23505. Pas de mutex applicatif nécessaire. | Pattern lock-via-unique-index pour systèmes idempotents |
 | 2026-04-24 | YANA | Resend accepte des emails vers des domaines fictifs (`@test.yana.dev`) sans erreur immédiate (bounce async). Ce qui permet de **tester en live** le flow complet sans spammer de vrais users — les seed users contest (winner1/2/3) sont parfaits pour ça. Leçon : garder un lot de seed users avec emails `@test.*` pour smoke tests lifecycle. | Pattern seed users test lifecycle |
 
+---
+
+## 🎉 SESSION 11 — P6.C2 NOTIFS PUSH ENGAGEMENT-SCORE (2026-04-24)
+
+### P6.C2 — Notifs push (commit `d6137de`)
+
+**Migration 0005_push.sql — 4 tables yana.*** (avec GRANTs obligatoires) :
+- `web_push_subscriptions` (side table — `push_tokens` owned by supabase_admin, non ALTERable · UNIQUE endpoint · p256dh/auth/user_agent/enabled/failure_count/last_active)
+- `user_notification_profile` (engagement_score 0-100 CHECK · notification_style informative|encouraging|warm · preferred_hour/days · avg_open_rate numeric)
+- `notification_preferences` (user × 6 types UNIQUE · enabled · days_of_week int[] · hour_start/end · frequency low|normal|high · paused_until)
+- `push_log` (title/body/url snapshot + sent_day DATE dédié anti-idempotence · opened_at · failed · error · engagement_score_at_send · endpoint_hash sha256/16 · token_invalidated)
+- Unique index partiel `(user_id, type='daily', sent_day) WHERE failed=false` = mutex DB anti-double-send
+
+**Libs `src/lib/notifications/`** :
+- `web-push.ts` : lazy configure VAPID singleton, `sendPush` retourne `{ok}` ou `{ok:false, invalidated, status, error}` (410/404 = subscription morte), `hashEndpoint` sha256
+- `engagement.ts` : `computeScore({lastActive, avgOpenRate, streak})` score 0-100 composite · `decideStyle/Frequency/messagesPerWeek` · `recomputeEngagement` upsert profile · `buildDailyContent` 3 tons × daily
+- `schedule.ts` : `runDailyPushes(limit)` stats = `{scanned, eligible, sent, skipped:{no_subscription, out_of_window, paused, already_sent_today, disabled}, invalidated, errors}` · fenêtre `inWindow` traverse minuit OK · insert push_log BEFORE send (lock DB) · `triggerEventPush` synchrone achievement/referral/wallet/contest/lottery bypass frequency
+
+**Client lib `src/lib/notifications-client/push.ts`** :
+- `detectCapability` distingue sw/push/notification manquants
+- `registerServiceWorker` idempotent (getRegistration + fallback register)
+- `subscribeToPush` : requestPermission → getVapidPublicKey → pushManager.subscribe({applicationServerKey: ArrayBuffer}) → POST /api/push/subscribe
+- `unsubscribeFromPush` : pushManager.getSubscription → unsubscribe → POST /api/push/unsubscribe
+- `sendTestPush` : POST /api/push/test
+
+**Routes API (7)** :
+- `GET /api/push/vapid-public-key` (503 si non configuré, 200 {publicKey} sinon)
+- `POST /api/push/subscribe` Zod endpoint+keys + upsert par endpoint + seed preferences daily défaut
+- `POST /api/push/unsubscribe` Zod endpoint + delete row owner
+- `POST /api/push/opened` Zod logId UUID → update push_log.opened_at (beacon SW sans JWT — logId = token opacité)
+- `POST /api/push/test` auth user → envoi sur toutes ses subs actives, log + invalidate si 410/404
+- `GET/PATCH /api/push/preferences` merge defaults pour 6 types, upsert par `user_id,type`
+- `POST /api/cron/push/daily` Bearer CRON_SECRET, `maxDuration 300`
+
+**Service Worker `public/sw.js`** :
+- skipWaiting + clients.claim (install/activate)
+- `push` event: parse payload JSON, showNotification(title, {body, icon, badge, data, tag, renotify:false})
+- `notificationclick`: close + fetch POST /api/push/opened (keepalive) + focus existing tab ou openWindow
+- `message` SKIP_WAITING pour update live
+
+**Page `/settings/notifications`** :
+- Master toggle subscribe/unsubscribe + Test button (envoi immédiat)
+- 6 types × toggle enabled · 7 day pills L-D (0-6) · radio Basse/Normale/Haute · 2 inputs hour_start/hour_end (0-23 UTC) · date picker pause_until
+- UI feedback optimiste + rollback fetchPrefs si PATCH échoue
+- Warning `Safari iOS nécessite iOS 16.4+ en PWA installée` si non supporté
+- Toast success/error 3.5s auto-dismiss
+
+**Hub `/settings`** : entrée "Notifications push" ajoutée à la section Préférences.
+
+**Doc** : `CRON_YANA_n8n.md` section #6 push-daily `0 10 * * *` + test curl.
+
+### 🌐 LIVE VALIDATION P6.C2 (commit `d6137de` → deploy `yana-jd1rx2ojc-puramapro-oss-projects.vercel.app`)
+
+| Test | Résultat |
+|---|---|
+| 1. `tsc --noEmit` | **0 erreur** |
+| 2. `npm run build` | **0 erreur** · 58 routes dont 7 push |
+| 3. `GET /api/push/vapid-public-key` | 503 `{"error":"vapid_not_configured"}` (attendu — env vars à ajouter) |
+| 4. `POST /api/push/subscribe` sans auth | **HTTP 401** |
+| 5. `GET /api/push/preferences` sans auth | **HTTP 401** |
+| 6. `POST /api/cron/push/daily` sans Bearer | **HTTP 401** |
+| 7. `POST /api/push/test` sans auth | **HTTP 401** |
+| 8. `POST /api/push/opened` logId invalide | **HTTP 400** |
+| 9. `GET /settings/notifications` auth-gated | **HTTP 307** |
+| 10. `GET /sw.js` | **HTTP 200** |
+| 11. `POST /api/cron/push/daily` Bearer, 0 sub | `{ok:true, stats:{scanned:0, eligible:0, sent:0, errors:[]}}` |
+| 12. Regression emails CRON | `{scanned:2, eligible:0, sent:0, errors:[]}` ✅ |
+| 13. Regression `/api/stats/public` | `{users:3, trips:0, ...}` ✅ |
+| 14. Regression homepage + /pricing + /api/faq + /api/contest/leaderboard + /dashboard 307 | **5/5 verts** |
+
+**Backend push = 100% vert. Reste : Tissma ajoute 3 env vars VAPID + browser test.**
+
+### 🚩 FLAG TISSMA — ACTIONS MANUELLES
+
+**1. Générer les VAPID keys (si pas déjà fait) :**
+```bash
+npx web-push generate-vapid-keys
+```
+
+**2. Ajouter les 3 env vars à Vercel prod (scope `puramapro-oss-projects`) :**
+| Variable | Valeur | Exposition |
+|---|---|---|
+| `VAPID_PUBLIC_KEY` | clé publique (~87 chars Base64 URL-safe) | server-only (relayée via `/api/push/vapid-public-key`) |
+| `VAPID_PRIVATE_KEY` | clé privée (~43 chars Base64 URL-safe) | server-only |
+| `VAPID_SUBJECT` | `mailto:contact@purama.dev` | server-only |
+
+Commande :
+```bash
+vercel env add VAPID_PUBLIC_KEY production --scope puramapro-oss-projects --token $VERCEL_TOKEN
+vercel env add VAPID_PRIVATE_KEY production --scope puramapro-oss-projects --token $VERCEL_TOKEN
+vercel env add VAPID_SUBJECT production --scope puramapro-oss-projects --token $VERCEL_TOKEN
+# Puis redéployer pour que les envs soient actifs
+vercel --prod --token $VERCEL_TOKEN --scope puramapro-oss-projects --yes
+```
+
+**3. Test browser (60 secondes) :**
+- Ouvrir https://yana.purama.dev/login (Chrome/Firefox Desktop — pas Safari iOS sans PWA installée)
+- Se connecter avec un compte auth (matiss.frasne@gmail.com ou test user)
+- Aller sur `/settings/notifications`
+- Cliquer **Activer** → accepter la permission navigateur
+- Cliquer **Test** → une notification système apparaît dans les 2s
+- Cliquer la notification → redirige vers `/settings/notifications` (ou /dashboard)
+- Vérifier en DB : `SELECT * FROM yana.web_push_subscriptions;` (1 row) · `SELECT * FROM yana.push_log WHERE type='test' ORDER BY sent_at DESC LIMIT 1;` (opened_at peuplé après click)
+
+**4. Configurer workflow n8n #6 push-daily :**
+```
+Schedule Trigger: 0 10 * * *
+POST https://yana.purama.dev/api/cron/push/daily
+Header: Authorization: Bearer $CRON_SECRET
+Timeout: 300000ms
+Alerting: stats.errors.length > 0 ou stats.invalidated > 10 × 3 runs
+```
+
+### 🧠 LEÇONS SESSION 11 — P6.C2
+
+| DATE | APP | LEÇON | IMPACT |
+|---|---|---|---|
+| 2026-04-24 | YANA | `push_tokens` (P1) appartient à supabase_admin → `ALTER ADD COLUMN web_push_subscription JSONB` rejected "must be owner of table". Même pattern que session 10 emails. Solution : nouvelle table `web_push_subscriptions` dédiée (endpoint + keys + telemetry), laisser push_tokens pour Expo mobile P7. Séparation propre web vs mobile = pas de bloat sur la table P7. | Pattern side table confirmé pour 2ᵉ fois — vérifier owner AVANT de planifier un ALTER |
+| 2026-04-24 | YANA | Postgres refuse `date_trunc('day', timestamptz)` dans un index : "functions in index expression must be marked IMMUTABLE". `date_trunc` sur timestamptz est STABLE (dépend du timezone server). Solution propre : colonne dédiée `sent_day DATE NOT NULL DEFAULT CURRENT_DATE` + index simple (user_id, type, sent_day). Plus clair et IMMUTABLE par construction. | Pattern colonne jour dédiée pour idempotence quotidienne |
+| 2026-04-24 | YANA | PushManager.subscribe attend `BufferSource` mais TypeScript 5.7+ a resserré `Uint8Array<ArrayBufferLike>` ≠ `ArrayBuffer`. Fix : construire l'ArrayBuffer directement (`new ArrayBuffer(len)` + `new Uint8Array(buffer)` comme view pour écriture) et retourner le buffer. Ou cast `.buffer as ArrayBuffer`. | Pattern Web Crypto / Push API sur TS 5.7+ |
+| 2026-04-24 | YANA | Service Worker `notificationclick` → beacon POST `/api/push/opened` avec `keepalive: true` survit à la fermeture de la page + l'onglet. Pas besoin de Navigator.sendBeacon(). Le logId UUID fait office de token d'opacité : qui connaît l'UUID peut marquer l'opened — risque nul car aucune action destructive. | Pattern beacon SW simple |
+| 2026-04-24 | YANA | Backend push testable à 100% sans VAPID configuré : `configure()` est appelé seulement dans `sendPush`, donc CRON sur 0 sub = 0 appel, OK. Permet de déployer + smoke test + ajouter env vars après, sans bloquer le pipeline. | Pattern lazy config = deploy découplé de provisioning secret |
+
 ### ⏭️ P6 — RESTE À FAIRE
 
-- **C2 — Notifs push engagement-score** : DB tables (`user_notification_profile` + `notification_preferences` + extension `push_tokens` pour web push + `push_log`), `web-push` npm + VAPID keys auto, service worker `public/sw.js`, `/settings/notifications` UI toggle/type+jours+horaire+fréquence+pause, `/api/push/subscribe` + `/api/push/unsubscribe`, `/api/cron/push/daily` (engagement 0-100 décide fréquence + ton), CRON n8n #6 push-daily 10h UTC
 - **C3 — SpiritualLayer.tsx** : composant global layout dashboard — affirmation modal 1× par login (reuse `/api/affirmations/today` P5.1), pauses cœur toutes 25min overlay "Respire." 3s, citations footer rotatives 30min (pattern TravelQuote), sons 432Hz opt-in via Howler.js, loading subliminaux mots AMOUR/PUISSANCE/ABONDANCE/PAIX/CONFIANCE, célébrations lotus sur achievements
 - **C4 — SubconsciousEngine.tsx** : reformulation i18n strings UI empowering (`Chargement→Ton espace se prépare`), hook `useEmpowerment`, ratios dorés Fibonacci 8/13/21/34/55px, fleur de vie SVG background opacity 3%, fréquences couleurs via CSS `--frequency-current` (888/963/528/639 Hz glow)
 
-**Commit SHA session 10** : `4804917` (P6.C1).
+**Commits session 10-11** : `4804917` (C1 emails) · `0dc400a` (C1 docs/GRANT) · `d6137de` (C2 push).
 
 **Pour reprendre après /clear** → relance :
-> "Lis progress.md + .claude/skills/spiritual/SKILL.md. P6.C1 emails ✅ live (commit 4804917, 3/3 smoke tests verts). Attaque P6.C2 Notifs push engagement-score. Plan d'abord."
+> "Lis progress.md + .claude/skills/spiritual/SKILL.md. P6.C1 emails + P6.C2 push ✅ live (commits 4804917 0dc400a d6137de, backend 100% green, flag Tissma = ajouter 3 VAPID env vars à Vercel + test browser). Attaque P6.C3 SpiritualLayer.tsx. Plan d'abord."
