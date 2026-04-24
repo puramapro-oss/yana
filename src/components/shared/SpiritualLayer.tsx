@@ -31,10 +31,13 @@ function todayKey(): string {
 
 const OPEN_DELAY_MS = 2200
 const AUTO_DISMISS_MS = 12000
+const RESPIRE_INTERVAL_MS = 25 * 60 * 1000 // 25 minutes
+const RESPIRE_AUTO_DISMISS_MS = 3000
 
 export default function SpiritualLayer() {
   const [affirmation, setAffirmation] = useState<Affirmation | null>(null)
   const [visible, setVisible] = useState(false)
+  const [respireVisible, setRespireVisible] = useState(false)
 
   const close = useCallback(() => {
     setVisible(false)
@@ -43,6 +46,10 @@ export default function SpiritualLayer() {
     } catch {
       // localStorage bloqué — on masque pour la session uniquement
     }
+  }, [])
+
+  const closeRespire = useCallback(() => {
+    setRespireVisible(false)
   }, [])
 
   useEffect(() => {
@@ -79,9 +86,69 @@ export default function SpiritualLayer() {
     }
   }, [close])
 
+  // Pause cœur : overlay "Respire." toutes les 25min, auto-dismiss 3s.
+  useEffect(() => {
+    let autoDismiss: ReturnType<typeof setTimeout> | null = null
+
+    const triggerRespire = () => {
+      setRespireVisible(true)
+      try {
+        if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+          navigator.vibrate([120, 80, 120])
+        }
+      } catch {
+        // vibrate bloqué / non supporté — silencieux
+      }
+      if (autoDismiss) clearTimeout(autoDismiss)
+      autoDismiss = setTimeout(() => setRespireVisible(false), RESPIRE_AUTO_DISMISS_MS)
+    }
+
+    const interval = setInterval(triggerRespire, RESPIRE_INTERVAL_MS)
+
+    return () => {
+      clearInterval(interval)
+      if (autoDismiss) clearTimeout(autoDismiss)
+    }
+  }, [])
+
   return (
-    <AnimatePresence>
-      {visible && affirmation && (
+    <>
+      <AnimatePresence>
+        {respireVisible && (
+          <motion.div
+            key="yana-spiritual-respire"
+            role="status"
+            aria-live="polite"
+            className="fixed inset-0 z-[75] flex cursor-pointer items-center justify-center bg-black/85 backdrop-blur-2xl"
+            onClick={closeRespire}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <motion.div
+              className="pointer-events-none select-none text-center"
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <motion.p
+                className="bg-gradient-to-br from-[#7C3AED] via-white to-[#0EA5E9] bg-clip-text font-[family-name:var(--font-display)] text-6xl font-light tracking-wide text-transparent sm:text-7xl"
+                animate={{ opacity: [0.6, 1, 0.6] }}
+                transition={{ duration: 3, ease: 'easeInOut', repeat: Infinity }}
+              >
+                Respire.
+              </motion.p>
+              <p className="mt-4 text-xs uppercase tracking-[0.4em] text-white/40">
+                Une pause pour toi
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {visible && affirmation && (
         <motion.div
           key="yana-spiritual-affirmation"
           className="fixed inset-0 z-[80] flex items-center justify-center p-4"
@@ -151,6 +218,7 @@ export default function SpiritualLayer() {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   )
 }
