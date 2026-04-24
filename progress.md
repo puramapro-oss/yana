@@ -896,3 +896,88 @@ Rien à faire côté Tissma pour P7.A. Les 3 éléments qui exigeront une action
 
 **Pour reprendre après /clear** → relance :
 > "Lis progress.md + `mobile/README.md`. P7.A Foundation Mobile ✅ live (7 gates : Expo 54 scaffold + Supabase SecureStore + expo-router + auth flow + tabs × 5 live data + NativeWind v4 + app.json full + eas.json 3 profils + README). Smoke tests passés : tsc 0, expo export iOS 4.38 MB, Android OK. Attaque P7.B Features Natives — 7 gates (expo-location fg+bg + expo-sensors + HealthKit/Health Connect + FamilyControls/UsageStats + Moto Mode UI 3 gros boutons + icônes Pollinations+sharp + deep links .well-known/apple-app-site-association). Plan d'abord, feature par feature, 1 commit par gate, tsc 0 à chaque gate."
+
+---
+
+## 🎉 SESSION 15 — P7.B FEATURES NATIVES (2026-04-24)
+
+### P7.B — 7 gates atomiques livrées (mobile + web)
+
+| # | Gate | Commit | Livré |
+|---|---|---|---|
+| B1 | expo-location fg+bg + queue persistée | `8e26ed6` | `src/lib/supabase-server.ts` accepte `Request` optionnel et lit `Authorization: Bearer` → auth mobile unifiée (cookies web + Bearer mobile dans les mêmes routes). 4 API routes patched (`/api/trips/start|event|end`, `/api/vehicles`) · mobile : `src/lib/trip-api.ts` (wrappers fetch WEB_URL + Bearer auto-refresh), `src/lib/event-queue.ts` (AsyncStorage debounce 500ms, 0 perte > 3s), `src/lib/trip-tracker.ts` (TripTrackerRN porte algo web : haversine, seuils -3/+3 m/s², cooldown 3s, watchPositionAsync foreground + `startLocationUpdatesAsync` + `TaskManager.defineTask('YANA_TRIP_TRACK')` background avec notification permanente FR), `src/hooks/useTrip.ts` (start/pause/resume/stop/cancel, flush 3s), `src/hooks/useVehicles.ts`, `drive.tsx` refactor avec sélection véhicule + stats live distance/durée/vitesse/events. `app.json` plugin expo-location avec permission strings FR. |
+| B2 | expo-sensors accel+gyro fusion | `f976e37` | `src/lib/sensor-buffer.ts` ring buffer 500 pts (50 Hz × 10 s) Accelerometer + Gyroscope. Fenêtre glissante 240 ms (12 samples), seuil ≥ 50% des samples en dépassement. Seuils : accel.y ≤ -3 m/s² → harsh_brake, accel.y ≥ +3 m/s² → harsh_accel, \|gyro.z\| ≥ 1.5 rad/s → sharp_turn. Cooldown 3s partagé via `TripTrackerRN.injectSensorEvent`. Conversion g→m/s² via G_TO_MS2=9.81. GPS met à jour le contexte position+vitesse dans le buffer. `useTrip` expose `sensors_active`, drive.tsx affiche badge vert "SENSORS ON". |
+| B3 | HealthKit + Health Connect → NAMA | `03b505b` | `src/lib/health.ts` abstraction cross-platform (react-native-health iOS, react-native-health-connect Android). Retourne `FatigueSignal { level 0..3, hrv_ms, sleep_hours, source }`. Heuristique : sleep<5h ou hrv<20ms → 3, <6.5h/35ms → 2, <7.5h/50ms → 1. Fallback neutre sans lib/device/perm. Route web `/api/trips/fatigue` POST → insert `fatigue_sessions` (hrv_score + sleep_score dérivés). Composant `FatigueModal` bloquant si level≥2, 2 actions "Reporter" ou "Je reste vigilant" avec log acknowledged=true. `handleStart` consulte fatigue AVANT démarrage trajet. `app.json` plugins react-native-health + react-native-health-connect avec permission strings FR. |
+| B4 | Screen Time No-Phone-While-Driving | `211cef8` | `src/lib/screen-time.ts` MVP cross-platform via AppState listener : pendant trajet actif, si app passe background ≥ 5s, enqueue event `phone_use` (severity 3..5 selon durée). Rate-limit 12 events/heure. Opt-in via AsyncStorage `STORAGE_KEYS.NO_PHONE_WHILE_DRIVING`. iOS : `requestScreenTimeAuth()` tente `react-native-device-activity` (installée mais plugin retiré app.json : @kingstinct/expo-apple-targets crash SDK 54 → extension Swift P7.C via prebuild). Android : AppState suffit, UsageStats intent reporté P7.C. `useTrip.start()` démarre watcher si opt-in ON, nettoie sur stop/cancel/cleanup. `profile.tsx` ajoute carte "Conduite" avec Switch + alert FR. |
+| B5 | Moto Mode UI 3 gros boutons | `1d45c38` | `app/moto.tsx` route `fullScreenModal` slide-from-bottom. OLED pur #000000, 3 boutons XXL (160×160 min) : 🛵 DÉMARRER (accent primary) / ⚠️ OBSTACLE (warning, enqueue event focus_maintained) / ⏹ ARRÊTER (rouge, alerte score). Chaque press = Haptics.Heavy + `expo-speech` TTS FR "Trajet démarré" etc. StatusBar hidden + `expo-keep-awake` tag `yana-moto-mode` au mount. Bouton "Quitter" avec confirmation si trajet actif. `_layout.tsx` AuthGate autorise désormais routes authentifiées standalone (moto). Textes iOS-safe (§23). Accessibility complète (role="button", labels FR, hitSlop 24). |
+| B6 | Icônes Pollinations+sharp | `bff5e46` | `scripts/gen-icons.mjs` Node ESM : 1 source Pollinations 1024² (prompt Y stylisé en route #F97316 → #0EA5E9 sur bg #03040a, seed 42), puis sharp → 5 formats : icon.png 1024² (App Store), adaptive-icon.png 1024² foreground pad 100px (Android 8+), splash-icon.png 1284×2778 centré icône 600×600, favicon.png 48², feature-graphic.png 1024×500 (Play Store listing). Fallback procédural SVG 100% offline si Pollinations rate-limit. Assets mobile/assets/ remplacés. |
+| B7 | Universal links + assetlinks.json | `139cdc1` + `e5e6c68` | `public/.well-known/apple-app-site-association` (JSON sans extension) avec appID placeholder `TO_FILL_AFTER_EAS_BUILD_P7C.dev.purama.yana` et paths /activate*, /trip/*, /moto*, /wallet*, /subscribe*, /drive*. `public/.well-known/assetlinks.json` avec package_name=dev.purama.yana et sha256 placeholder `TO_FILL_AFTER_EAS_BUILD_P7C_PLAY_UPLOAD_KEY_SHA256`. `public/.well-known/README.md` explique comment récupérer Team ID et SHA-256 Play Upload Key. `next.config.ts` headers() : Content-Type application/json + Cache-Control max-age=86400 sur les 2 fichiers. Fix middleware : `/.well-known/*` et `/activate` passent isPublicPath (sinon redirect /login → 307 casse iOS). `src/app/activate/page.tsx` landing Stripe return style YANA + deep link yana://activate. `mobile/app/_layout.tsx` DeepLinkListener parse initial URL + runtime events : activate → /(tabs)/wallet + toast confetti, wallet/drive → onglets, moto → push /moto, trip → drive. |
+
+### 🌐 LIVE VALIDATION P7.B — 2026-04-24 session 15
+
+Deploy prod : commit `e5e6c68` → `yana.purama.dev` (Vercel `yana` project `prj_QFkAyhBbr1Lz27iIMfF6UVO4wY8t`).
+
+```bash
+$ curl -sI https://yana.purama.dev/.well-known/apple-app-site-association
+HTTP/2 200
+content-type: application/json
+cache-control: public, max-age=86400  ✅
+
+$ curl -sI https://yana.purama.dev/.well-known/assetlinks.json
+HTTP/2 200
+content-type: application/json  ✅
+
+$ curl -sI https://yana.purama.dev/activate
+HTTP/2 200  ✅ (public sans auth)
+
+# Mobile
+$ cd mobile && npx tsc --noEmit
+0 erreur ✅
+
+$ npx expo export --platform ios
+✅ Hermes bundle 4.56 MB (+180KB vs P7.A par 4 libs natives)
+
+$ node scripts/gen-icons.mjs
+✅ Pollinations Flux + sharp : 5 icônes régénérées (icon, adaptive, splash, favicon, feature-graphic)
+
+$ npm run build  # web
+✅ 0 warning, /activate routé, middleware OK
+```
+
+### 🚩 FLAG TISSMA — P7.B
+
+**Aucune action Tissma requise pour P7.B**. Tout est push + deploy prod.
+
+Les 2 placeholders dans `.well-known/` seront remplis **en P7.C** automatiquement par le premier EAS build :
+- `TO_FILL_AFTER_EAS_BUILD_P7C` (apple-app-site-association) → Apple Team ID récupéré via `eas credentials --platform ios`
+- `TO_FILL_AFTER_EAS_BUILD_P7C_PLAY_UPLOAD_KEY_SHA256` (assetlinks.json) → SHA-256 Play Upload Key récupéré via `eas credentials --platform android`
+
+Doc complète : `public/.well-known/README.md`.
+
+### 🧠 LEÇONS SESSION 15 — P7.B
+
+| Date | App | Leçon | Impact |
+|---|---|---|---|
+| 2026-04-24 | YANA | **`createServerSupabaseClient(req?)` avec Bearer fallback** : en ajoutant un paramètre `Request` optionnel et en lisant `Authorization: Bearer` → passage à `global.headers.Authorization` du client Supabase, la même route API sert cookies web ET Bearer mobile sans duplication. 4 routes migrées en 4 edits d'1 ligne. Pattern réutilisable sur toutes les routes /api/* d'une app Purama web+mobile. | Pattern auth unifiée web/mobile Supabase ssr |
+| 2026-04-24 | YANA | **Queue events persistée AsyncStorage debounce 500ms** : 1 push debouncé + drain immédiat quand API répond. Un crash app / kill OS / reboot device ne perd jamais plus de 500ms d'events. Pattern simple supérieur à tout "offline sync" lourd. | Pattern resilience mobile trip events |
+| 2026-04-24 | YANA | **expo-sensors v54 exports type `Subscription` via `EventSubscription` expo-modules-core**. L'alias `Subscription` n'est plus re-exporté par `expo-sensors` root — importer `EventSubscription` depuis `expo-modules-core` directement. | Pattern types stabilisés SDK 54 |
+| 2026-04-24 | YANA | **react-native-device-activity plugin crash SDK 54** via chaîne @kingstinct/expo-apple-targets → @expo/prebuild-config (internal path `icons/AssetContents` absent). Garder la lib installée (lazy `require()` fonctionne pour FamilyControls auth) mais **ne pas enregistrer le plugin** dans app.json. L'extension DeviceActivityMonitor Swift = scope EAS prebuild P7.C (résout la chaîne). | Pattern plugin Expo cassé → require() runtime + différer entitlement |
+| 2026-04-24 | YANA | **react-native-usage-stats-manager n'expose que isAppInactive** → useless pour "getForegroundApp pendant trajet". AppState RN natif est strictement supérieur pour notre MVP et 0 dep. Désinstallée. | Pattern vérifier surface d'une lib AVANT de l'adopter |
+| 2026-04-24 | YANA | **Middleware Next.js bloque `.well-known/*` par défaut** → iOS reçoit 307 et universal links cassés. TOUJOURS whitelist `/.well-known/*` dans `isPublicPath()` + `/activate` pour retour Stripe. Mobiler ne présente pas de cookie de session, ni user-agent détectable fiable. | Pattern middleware-exceptions pour deep linking |
+| 2026-04-24 | YANA | **expo-keep-awake `activateKeepAwakeAsync(tag)` idempotent avec tags** → permet plusieurs features de keep-awake sans conflit (moto + potentiellement trip bg). Appeler `deactivateKeepAwake(tag)` précisément au unmount, pas `deactivateKeepAwakeAsync()` sans arg qui release tout. | Pattern keep-awake tag-scoped |
+| 2026-04-24 | YANA | **Pollinations `seed=42` déterministe** : régénérer `gen-icons.mjs` produit la même icône tant que prompt+seed inchangés → permet de re-run le script sans perte de cohérence visuelle (utile si Tissma veut tester une petite variation du prompt). Fallback procédural SVG rend aussi un Y stylisé acceptable sans réseau. | Pattern génération idempotente icônes + fallback offline |
+
+### ⏭️ P7.C — RESTE À FAIRE (6 gates stores + CI)
+
+- **C1** Maestro 10 flows YAML : auth (signup + login email + Google OAuth), drive (start/stop/cancel/moto), fatigue modal, carpool list, wallet balance, profile signout, responsive rotation, deep link activate, notifications, erreur réseau. Tous les testID sont déjà posés (drive-*, moto-*, fatigue-*, profile-*, auth-*).
+- **C2** `store.config.json` × 16 langues (fr, en, es, de, it, pt, ar, zh, ja, ko, hi, ru, tr, nl, pl, sv) : title/subtitle/keywords/short + full description adaptées Apple (neutres) vs Android (prix OK). EAS metadata push.
+- **C3** `GOOGLE_PLAY_SETUP.md` personnalisé YANA : 3 min de clics pour Tissma, screenshots attendus, certificat upload key.
+- **C4** GitHub Actions `.eas/workflows/full-deploy.yaml` : push main → tsc + build Next + eas build iOS preview + eas build Android preview → tests Maestro → eas submit. Secrets EXPO_TOKEN + VERCEL_TOKEN en inputs workflow.
+- **C5** 1er `eas build --profile production` iOS + Android → récupérer Team ID + SHA-256 Play Upload Key → remplacer les 2 placeholders dans `public/.well-known/*` et push + redeploy.
+- **C6** Screenshots Maestro : iPhone 6.7" (1290×2796), iPhone 5.5" (1242×2208), iPad 12.9" (2048×2732), Android (1080×1920). EAS submit → Apple Review + Play Review internal track.
+
+**Commits session 15** : `8e26ed6` (B1) · `f976e37` (B2) · `03b505b` (B3) · `211cef8` (B4) · `1d45c38` (B5) · `bff5e46` (B6) · `139cdc1` (B7) · `e5e6c68` (middleware fix).
+
+**Pour reprendre après /clear** → relance :
+> "Lis progress.md session 15. P7.B Features Natives ✅ live (7 gates : expo-location fg+bg + queue persistée AsyncStorage · expo-sensors 50Hz buffer 10s fusion GPS · HealthKit+HealthConnect abstraction health.ts + FatigueModal NAMA bloquant · screen-time.ts AppState No-Phone-While-Driving opt-in · Moto Mode 3 gros boutons voix+haptique+keep-awake · icônes Pollinations+sharp 5 formats · universal links .well-known/* + /activate). Deploy yana.purama.dev live, curl 200 sur les 3 endpoints, tsc 0 partout, expo export iOS 4.56 MB. Attaque P7.C Stores + CI — 6 gates : Maestro 10 flows avec testID déjà posés · store.config.json 16 langues · GOOGLE_PLAY_SETUP.md · GitHub Actions full-deploy.yaml · 1er EAS build iOS+Android → Team ID + SHA-256 → remplace placeholders .well-known (auto via CI si possible) · screenshots Maestro 4 tailles. Apple Team ID manquant dans .env.local → Tissma le renseignera. Plan d'abord, 1 commit par gate, tsc 0 à chaque gate, push+deploy à la fin."
+
