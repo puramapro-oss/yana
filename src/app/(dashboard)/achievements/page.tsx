@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Award } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import AchievementCard, { type AchievementCardItem } from '@/components/achievements/AchievementCard'
@@ -8,6 +8,29 @@ import XPLevelBar from '@/components/achievements/XPLevelBar'
 import ErrorState from '@/components/ui/ErrorState'
 import Skeleton from '@/components/ui/Skeleton'
 import EmptyState from '@/components/ui/EmptyState'
+
+const SEEN_STORAGE_KEY = 'yana-achievements-seen'
+
+function loadSeenSet(): Set<string> {
+  if (typeof window === 'undefined') return new Set()
+  try {
+    const raw = window.localStorage.getItem(SEEN_STORAGE_KEY)
+    if (!raw) return new Set()
+    const parsed = JSON.parse(raw) as string[]
+    return Array.isArray(parsed) ? new Set(parsed) : new Set()
+  } catch {
+    return new Set()
+  }
+}
+
+function persistSeenSet(ids: Set<string>): void {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(SEEN_STORAGE_KEY, JSON.stringify(Array.from(ids)))
+  } catch {
+    // silencieux — perte de persistence acceptable
+  }
+}
 
 interface Stats {
   unlockedCount: number
@@ -25,12 +48,33 @@ interface AchievementsResponse {
 
 type Filter = 'all' | 'unlocked' | 'locked'
 
+function celebrateNewAchievements(
+  newlyUnlocked: AchievementCardItem[],
+  seen: Set<string>,
+): void {
+  if (newlyUnlocked.length === 0) return
+  const updated = new Set(seen)
+  newlyUnlocked.forEach((a, index) => {
+    updated.add(a.id)
+    // Espace les célébrations de 4.4s pour ne pas superposer si plusieurs unlock simultanés.
+    window.setTimeout(() => {
+      window.dispatchEvent(
+        new CustomEvent('yana:achievement-unlocked', {
+          detail: { title: a.title, rarity: a.rarity },
+        }),
+      )
+    }, index * 4400)
+  })
+  persistSeenSet(updated)
+}
+
 export default function AchievementsPage() {
   const { loading: authLoading, user } = useAuth()
   const [data, setData] = useState<AchievementsResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<Filter>('all')
+  const firstLoadRef = useRef(true)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -44,6 +88,28 @@ export default function AchievementsPage() {
       }
       const body: AchievementsResponse = await res.json()
       setData(body)
+
+      // Détection delta : compare aux IDs débloqués déjà "vus" en localStorage.
+      // Dispatch CustomEvent pour chaque nouvellement débloqué (LotusCelebration écoute).
+      // Skip le tout premier chargement de la session pour éviter un flood de célébrations
+      // si l'user avait déjà des achievements avant cette feature.
+      const seen = loadSeenSet()
+      const currentUnlocked = body.achievements.filter((a) => a.unlocked)
+      const newlyUnlocked = currentUnlocked.filter((a) => !seen.has(a.id))
+
+      if (firstLoadRef.current) {
+        firstLoadRef.current = false
+        if (seen.size === 0) {
+          // Bootstrap seen set : on mémorise sans célébrer (rattrapage initial).
+          const bootstrap = new Set(currentUnlocked.map((a) => a.id))
+          persistSeenSet(bootstrap)
+        } else {
+          // Celebrate newly unlocked since last visit.
+          celebrateNewAchievements(newlyUnlocked, seen)
+        }
+      } else if (newlyUnlocked.length > 0) {
+        celebrateNewAchievements(newlyUnlocked, seen)
+      }
     } catch {
       setError('Erreur réseau. Vérifie ta connexion.')
     } finally {

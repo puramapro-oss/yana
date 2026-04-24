@@ -5,6 +5,7 @@ import CinematicIntro from '@/components/onboarding/CinematicIntro'
 import TutorialOverlay from '@/components/onboarding/TutorialOverlay'
 import SpiritualLayer from '@/components/shared/SpiritualLayer'
 import FloatingQuote from '@/components/shared/FloatingQuote'
+import LotusCelebration from '@/components/shared/LotusCelebration'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <TutorialOverlay />
       <SpiritualLayer />
       <FloatingQuote />
+      <LotusCelebration />
     </div>
   )
 }
