@@ -760,11 +760,78 @@ Tout le backend est live et les assets sont accessibles. Pour valider l'expérie
 | 2026-04-24 | YANA | CustomEvent + localStorage = système de célébrations achievements zero-backend. Client compare l'état "seen" à l'état courant, dispatch event pour chaque nouveau. Bootstrap silencieux au 1er chargement évite le flood. Événements timeoutés (4.4s) si plusieurs unlocks simultanés. | Pattern delta detection client-side sans changement DB |
 | 2026-04-24 | YANA | Dashboard layout 'use client' pattern : SpiritualLayer + FloatingQuote + LotusCelebration + SubliminalLoader = 4 composants overlay client-only mount une fois dans `(dashboard)/layout.tsx`. Pas de prop-drilling, pas de state global. Chaque composant se gère en autonomie via localStorage + CustomEvents. | Pattern UI layer indépendante pour dashboard |
 
-### ⏭️ P6 — RESTE À FAIRE
-
-- **C4 — SubconsciousEngine.tsx** : reformulation i18n strings UI empowering (`Chargement → Ton espace se prépare`), hook `useEmpowerment`, ratios dorés Fibonacci 8/13/21/34/55px tokens Tailwind, fleur de vie SVG background opacity 3% en layout, fréquences couleurs CSS `--frequency-current` (888/963/528/639 Hz glow box-shadow selon route active)
-
 **Commits session 12** : `8f447e8` (C3.1) · `c026860` (C3.2) · `7a4bf66` (C3.3) · `05beffb` (C3.4) · `4b1b71d` (C3.5) · `58243f8` (C3.6) · `243e381` (fix middleware audio).
 
+---
+
+## 🎉 SESSION 13 — P6.C4 SUBCONSCIOUS ENGINE (2026-04-24)
+
+### P6.C4 — 6 gates atomiques livrées + déployées prod
+
+| # | Gate | Commit | Livré |
+|---|---|---|---|
+| C4.1 | i18n common.poetic 16 locales | `12ecbf6` | `messages/*.json` × 16 (fr/en/es/de/it/pt/ar/zh/ja/ko/hi/ru/tr/nl/pl/sv) — ajout bloc `common.poetic.{loading,error,empty,welcome,logout,congrats,retry}` avec traductions natives (pas Google Translate) culturellement adaptées. FR : "Ton espace se prépare" / "Petit détour, on revient plus fort" / "L'espace de toutes les possibilités" / "Bienvenue chez toi" / "À très vite, belle âme" / "Tu vois ? Tu es capable de tout." / "On recommence, doucement". Clés techniques originales `common.loading/error/retry` intactes pour rétrocompat (56 appels existants). |
+| C4.2 | Hook `useEmpowerment` | `7e4ec16` | `src/hooks/useEmpowerment.ts` client hook exposant `{ messages, frequency, color, fib, spring }`. Fonction `routeFrequency(pathname)` exportée : regex mapping 4 familles routes → 4 fréquences (888 Or wallet/referral/boutique/invoices/contest/lottery · 963 Violet achievements/breathe/gratitude/intention/spiritual · 528 Vert dashboard/green/drive/carpool/vehicles/kyc/profile défaut · 639 Rose chat/notifications/admin/guide/settings/aide). Fibonacci tokens `{xs:8, sm:13, md:21, lg:34, xl:55, xxl:89}` px + preset framer-motion `{ type:'spring', stiffness:300, damping:30 }` = cohérence cardiaque. |
+| C4.3 | Fibonacci CSS tokens + fleur de vie SVG | `3c780d6` | `src/app/globals.css` : variables `--fib-8|13|21|34|55|89` + `--phi` (1.618) + `--frequency-current` (528 défaut) + `--glow-frequency` + sélecteurs `[data-frequency="888|963|528|639"]`. `@layer utilities` : 14 classes `.p-fib-* .gap-fib-* .rounded-fib-* .aspect-phi` pilotées par variables CSS. `public/flower-of-life.svg` géométrie sacrée standard **19 cercles** hexagonaux (1 centre + ring 1 à r + ring 2 à r√3 + ring 3 à 2r), viewBox 1200×1200, stroke currentColor (hérite theme), aria-hidden. 1037 bytes. |
+| C4.4 | Fréquences CSS glow | `d36cb4a` | `main[data-frequency]::before` overlay radial fixed fullscreen avec var(--glow-frequency) → transparent 65%, opacity 0.7, z-0, pointer-events:none, transition 1200ms cubic-bezier(0.33,1,0.68,1) respectant `@media (prefers-reduced-motion: reduce)`. Classe `.subconscious-flower` : background-image /flower-of-life.svg, opacity 0.03, color var(--text-primary), mask radial pour fade doux depuis le centre (pas de rectangle dur). Totalement additif, non-breaking. |
+| C4.5 | SubconsciousEngine.tsx | `8007b04` | `src/components/shared/SubconsciousEngine.tsx` client component (42 lignes). 3 jobs : (1) mark `<html class="subconscious-ready">` au 1er mount anti-FOUC, (2) écoute `usePathname()` → `routeFrequency()` → `setAttribute('data-frequency')` sur `<main>` avec cleanup removeAttribute au démontage, (3) render `<div class="subconscious-flower" aria-hidden>`. Mount dans `src/app/(dashboard)/layout.tsx` après LotusCelebration (ordre P6.C3 préservé). Zéro state interne, zéro prop-drilling, zéro fetch. |
+| C4.6 | Intégration empowering pages | `217622e` | `src/app/error.tsx` (client) : `useTranslations('common.poetic')` → "Erreur"→t('error'), "Reessayer"→t('retry'). `src/app/not-found.tsx` (async server) : `getTranslations` → "Cette page n'existe pas"→t('empty'), "Retour a l'accueil"→t('welcome'). `src/app/(dashboard)/loading.tsx` (async server) : ajout `<p>t('loading')</p>` au-dessus des skeletons. Titre "404" conservé (marqueur visuel). |
+
+### 🌐 LIVE VALIDATION P6.C4 (commit `217622e` → deploy `yana-av2z8bu72-puramapro-oss-projects.vercel.app` aliased `yana.purama.dev`, build 26s)
+
+| # | Test | Résultat |
+|---|---|---|
+| 1 | `GET /` homepage | 200 ✅ |
+| 2 | `GET /pricing` | 200 ✅ |
+| 3 | `GET /aide` | 200 ✅ |
+| 4 | `GET /login` | 200 ✅ |
+| 5 | `GET /flower-of-life.svg` | **200 (1037 bytes)** ✅ |
+| 6 | `GET /sounds/432hz-pentatonic.wav` (régr C3.4) | 200 ✅ |
+| 7 | `GET /sounds/tibetan-bowl.wav` (régr C3.6) | 200 ✅ |
+| 8 | `GET /dashboard` middleware redirect | 307 ✅ |
+| 9 | `GET /achievements` middleware redirect | 307 ✅ |
+| 10 | `GET /wallet` middleware redirect | 307 ✅ |
+| 11 | `GET /settings/notifications` redirect | 307 ✅ |
+| 12 | `GET /api/stats/public` | 200 ✅ |
+| 13 | `GET /api/faq` | 200 ✅ |
+| 14 | `GET /api/contest/leaderboard` | 200 ✅ |
+| 15 | `GET /api/affirmations/today` auth guard | 401 ✅ |
+| 16 | `GET /how-it-works` public | 200 ✅ |
+| 17 | `GET /changelog` public | 200 ✅ |
+| 18 | C1 régression — `POST /api/cron/emails/daily` Bearer | `{ok:true, stats:{scanned:3, eligible:0, sent:0, errors:[]}}` ✅ |
+| 19 | C2 régression — `POST /api/cron/push/daily` Bearer | `{ok:true, stats:{scanned:0, eligible:0, sent:0, errors:[]}}` ✅ |
+| 20 | C3 régression — assets audio | 200+200 ✅ |
+
+**20/20 verts**. Régression totale : 3 flows critiques + C1 emails + C2 push + C3 sounds intacts.
+
+### 🚩 FLAG TISSMA — P6.C4 (tests visuels manuels à faire)
+
+Tout le backend + assets sont live. Pour valider la couche subliminale :
+
+1. **Fleur de vie bg** : `/dashboard` → sur un écran sombre, regarder attentivement au centre → géométrie sacrée à 3% opacity (fade radial depuis le centre, pas de rectangle visible). Même pattern sur toutes les routes du dashboard.
+2. **Fréquence glow par route** : naviguer `/dashboard → /wallet` → teinte Vert 528 Hz → Or 888 Hz, transition 1.2s cubic-bezier. Idem `/achievements` = Violet 963 Hz, `/chat` = Rose 639 Hz. Glow radial très subtil (5%).
+3. **Empowering 404** : visiter `https://yana.purama.dev/some-route-qui-nexiste-pas-totalement` (besoin d'être déjà connecté ou sur path public) → titre "404" + sous-titre "L'espace de toutes les possibilités" + CTA "Bienvenue chez toi".
+4. **Empowering error** : provoquer une erreur (DevTools throttling + offline en middle of request) → page `/error` affiche "Petit détour, on revient plus fort" + bouton "On recommence, doucement".
+5. **Loading poétique** : navigation lente vers `/dashboard` (DevTools Slow 3G) → au-dessus des skeletons apparaît "Ton espace se prépare" (sous SubliminalLoader AMOUR/PUISSANCE/…).
+6. **Fibonacci tokens disponibles** : future utilisation dans composants via classes `.p-fib-21 .gap-fib-13 .rounded-fib-8 .aspect-phi` — tokens prêts pour P7 mobile + futures refactos visuelles.
+
+### 🧠 LEÇONS SESSION 13 — P6.C4
+
+| Date | App | Leçon | Impact |
+|---|---|---|---|
+| 2026-04-24 | YANA | **i18n poetic via sous-clé `common.poetic.*`** : garder les clés techniques (`common.loading`, `common.error`, `common.retry`) intactes permet la rétro-compat avec 56 appels existants. Les versions empowering vivent dans `common.poetic.*` et sont opt-in via `useTranslations('common.poetic')`. Zéro breaking change, migration incrémentale possible composant par composant. | Pattern sous-namespace i18n pour refonte progressive |
+| 2026-04-24 | YANA | **routeFrequency(pathname) exporté depuis le hook** : permet à `SubconsciousEngine` (server-adjacent) d'utiliser la même logique de mapping route→fréquence que tout composant client sans dupliquer la regex. Une seule source de vérité. Changer le mapping = toucher 1 fichier (`useEmpowerment.ts`). | Pattern utility export depuis hook pour logique partagée |
+| 2026-04-24 | YANA | **SubconsciousEngine = 3 jobs cleanement séparés** : (1) marker `<html class>` au 1er mount pour anti-FOUC transitions, (2) setAttribute + removeAttribute dans useEffect dépendant de pathname, (3) render div flower-of-life fixed aria-hidden. Aucun state React interne, tout vit via attributs DOM + CSS. Composant de 42 lignes hautement testable. | Pattern "DOM attribute orchestrator" pour couches CSS dynamiques |
+| 2026-04-24 | YANA | **`transition: --glow-frequency` sur variable CSS** = le moteur de transitions du navigateur interpole automatiquement le rgba() (intermédiaires entre #FFD700/05 et #39FF14/05). Pas de JS animation nécessaire, 0 coût CPU. La transition 1200ms cubic-bezier(0.33,1,0.68,1) donne une sensation de "respiration" naturelle entre routes. `@media (prefers-reduced-motion: reduce)` désactive tout. | Pattern transition CSS variables = animations gratuites |
+| 2026-04-24 | YANA | **Fleur de vie 19 cercles via coords hexagonales exactes** : 1 centre + 6 ring 1 (distance r, angles 0/60/120/180/240/300°) + 6 ring 2 (r√3, angles 30/90/150/210/270/330°) + 6 ring 3 (2r, angles 0/60/…). Généré par script Python 15 lignes, stroke currentColor → hérite automatiquement du thème (dark/light/oled). 1037 bytes seulement, aucune image bitmap. | Pattern géométrie sacrée SVG = asset procédural léger |
+| 2026-04-24 | YANA | **async loading.tsx avec getTranslations** : Next.js App Router accepte parfaitement les loading.tsx serveur async. getTranslations de 'next-intl/server' fonctionne dans ce contexte. Permet d'injecter le micro-texte poétique sans faire basculer la page en client component (évite la perte de SSR + le FOUC). | Pattern async SSR loading avec i18n sans client boundary |
+
+### ⏭️ P6 — RESTE À FAIRE
+
+- **C5** : aucun (P6 complet à l'issue de C4). Prochaine étape = **P7 Mobile Expo** (wrapper React Native, EAS build iOS+Android, deep links universels, Haptics/SafeArea, tests Maestro).
+- Flag Tissma résiduel de P6 : ajouter les 3 env vars VAPID pour activation des push navigateur (détail bloc Session 11 P6.C2).
+
+**Commits session 13** : `12ecbf6` (C4.1) · `7e4ec16` (C4.2) · `3c780d6` (C4.3) · `d36cb4a` (C4.4) · `8007b04` (C4.5) · `217622e` (C4.6).
+
 **Pour reprendre après /clear** → relance :
-> "Lis progress.md + .claude/skills/spiritual/SKILL.md. P6.C3 SpiritualLayer ✅ live (6 sous-features + fix middleware audio, 15/15 smoke tests verts, commits 8f447e8 c026860 7a4bf66 05beffb 4b1b71d 58243f8 243e381). Flag Tissma = tests visuels manuels 6 features (affirmation modal, respire overlay, bulle citation, toggle sons, subliminaux, lotus célébration). Attaque P6.C4 SubconsciousEngine.tsx — reformulation i18n empowering + hook useEmpowerment + Fibonacci tokens + fleur de vie SVG bg + fréquences CSS. Plan d'abord."
+> "Lis progress.md. P6 complet (C1 emails + C2 push + C3 SpiritualLayer 6 sous-features + C4 SubconsciousEngine 6 gates, 20/20 smoke tests verts live). Flag Tissma résiduel = 3 env vars VAPID pour P6.C2 push browser + tests visuels manuels P6.C3/C4. Attaque P7 Mobile Expo (wrapper RN, EAS iOS+Android, deep links, Maestro tests). Plan d'abord."
