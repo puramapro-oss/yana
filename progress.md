@@ -833,5 +833,66 @@ Tout le backend + assets sont live. Pour valider la couche subliminale :
 
 **Commits session 13** : `12ecbf6` (C4.1) · `7e4ec16` (C4.2) · `3c780d6` (C4.3) · `d36cb4a` (C4.4) · `8007b04` (C4.5) · `217622e` (C4.6).
 
+---
+
+## 🎉 SESSION 14 — P7.A MOBILE FOUNDATION (2026-04-24)
+
+### P7.A — 7 gates atomiques Foundation Expo livrées
+
+| # | Gate | Commit | Livré |
+|---|---|---|---|
+| A1 | Init Expo 54 scaffold + deps | `8ddc624` | `create-expo-app --template blank-typescript` dans `mobile/` · Expo SDK 54.0.33, React 19.1, RN 0.81.5, TS strict. Deps navigation/auth/animation : expo-router 6.0.23 · expo-secure-store 15.0.8 · expo-linking 8.0.11 · expo-constants · expo-system-ui · expo-haptics · expo-linear-gradient · react-native-safe-area-context · react-native-screens · react-native-reanimated 4.1.1 · react-native-gesture-handler 2.28 · react-native-url-polyfill 3.0 · @supabase/supabase-js 2.104 · zustand 5.0.12. Scaffold bootable via `expo start`. mobile/ déjà dans tsconfig root exclude. |
+| A2 | Supabase adapter + theme + constants | `9f36705` | `src/lib/supabase.ts` adapter SupportedStorage cross-platform (iOS/Android SecureStore, web localStorage fallback) + resolve env Constants.expoConfig.extra fallback + throw FR si manquant · `src/lib/constants.ts` APP_SLUG, BUNDLE_ID "dev.purama.yana", WEB_URL, DEEP_LINK_SCHEME, SUPER_ADMIN_EMAIL, WALLET_MIN_WITHDRAWAL_EUR, AI_MODELS, SUPPORTED_LOCALES × 16, STORAGE_KEYS namespacés · `src/lib/theme.ts` colors dark/light/oled + accent YANA (#F97316/#0EA5E9/#7C3AED) + semantic + radii + fib 8/13/21/34/55/89 + phi 1.618 + spring 300/30 + typography incl "moto" · `.env.local` + tsconfig baseUrl+paths @/*. |
+| A3 | expo-router + auth flow | `50c8e96` | Bascule entry `"main": "expo-router/entry"` + suppression App.tsx/index.ts · `app/_layout.tsx` GestureHandlerRootView + SafeAreaProvider + StatusBar + AuthGate (useAuth+useSegments→replace conditionnel dashboard/login anti-loop) · `app/index.tsx` spinner sécurité · `app/(auth)/_layout.tsx` Stack slide · `app/(auth)/login.tsx` signInWithPassword + Haptics + frenchifyAuthError (invalid creds / not confirmed / rate limit) + testID Maestro · `app/(auth)/signup.tsx` signUp avec full_name trigger profile auto + detect session immediate vs mail confirm · `app/(auth)/forgot.tsx` resetPasswordForEmail redirectTo=WEB_URL/forgot-password + UI sent-state · 3 composants partagés GlassCard + PrimaryButton (primary/secondary/ghost, 48px min, hitSlop 8) + AuthInput (focus cyan, error rouge) · `src/hooks/useAuth.ts` source vérité + signOut helper. |
+| A4 | Tabs × 5 avec données Supabase live | `e709b64` | `app/(tabs)/_layout.tsx` 5 screens avec glyphes Unicode ⌂⚡◍€☉ + tabBarButtonTestID + bg deep + accent primary active · `dashboard.tsx` useProfile → 3 stat cards (points, level, streak) + wallet solde XL + card NAMA-PILOTE + pull-to-refresh · `drive.tsx` 3 cards SAFE/GREEN DRIVE + Prochaine étape (tracking natif P7.B) + Linking.openURL web fallback + haptic selection · `carpool.tsx` fetch `carpool_bookings` passenger_id + empty state + liste avec status colorisé + refresh · `wallet.tsx` balance XL + bouton retrait activé ssi ≥5€ + historique 20 txns via `wallet_transactions` + refresh combiné · `profile.tsx` avatar initiales + stats XP/points/streak + Alert.alert confirmation signOut · `src/hooks/useProfile.ts` source vérité via supabase direct · `src/lib/supabase.ts` ajout `db.schema: 'yana'`. |
+| A5 | NativeWind v4 + Tailwind 3.4 | `43ae513` | `tailwind.config.js` content `./app/**/*.{ts,tsx}` + `./src/**/*.{ts,tsx}`, preset nativewind, theme.extend.colors palette YANA complète (accent + bg + text), spacing fib-8/13/21/34/55/89, radius fib, aspectRatio phi · `global.css` @tailwind base/components/utilities · `babel.config.js` preset babel-preset-expo+jsxImportSource + preset nativewind/babel + plugin react-native-worklets/plugin · `metro.config.js` withNativeWind wrapper input global.css inlineRem 16 · `nativewind-env.d.ts` types className · `tsconfig` include nativewind-env · `app/_layout.tsx` import '../global.css' en tête. |
+| A6 | app.json full + eas.json 3 profils | `22d98de` | `app.json` name "YANA", slug "yana", bundleIdentifier + package `dev.purama.yana`, scheme "yana", userInterfaceStyle "dark", primaryColor #F97316, jsEngine hermes, newArchEnabled, splash bg #03040a, iOS associatedDomains `applinks:yana.purama.dev`+`applinks:purama.dev`, UIBackgroundModes location/fetch/remote-notification, Info.plist 6 descriptions FR natives (Location/Motion/Camera/Photo/Tracking), Android versionCode 1 + adaptiveIcon + edgeToEdge + 10 permissions + intentFilters `https://yana.purama.dev/*` autoVerify + `yana://` scheme, plugins expo-router + expo-secure-store, extra appSlug+webUrl+eas.projectId, owner puramapro-oss, updates u.expo.dev, runtimeVersion appVersion · `eas.json` 3 profils cli>=13 : development (simulator iOS + APK debug), preview (device iOS + APK release), production (autoIncrement + AAB Android) + submit.production iOS Apple ID + Android google-service-account.json track internal draft + ENV EXPO_PUBLIC_* toutes profils. |
+| A7 | README + smoke test + handoff | `<this>` | `mobile/README.md` stack/structure/roadmap P7.B/C + commandes smoke tests · fix babel.config.js : reanimated v4 utilise `react-native-worklets/plugin` (migration SDK 54) · install `babel-preset-expo` en devDep · smoke tests `npx expo export --platform ios` → **4.38 MB Hermes bundle** + `--platform android` ok · progress.md session 14 + LEARNINGS global. |
+
+### 🌐 SMOKE TESTS P7.A
+
+```bash
+$ npx tsc --noEmit
+# 0 erreur (à chaque gate)
+
+$ npx expo config --type public
+# name: YANA, slug: yana, plugins: expo-router + expo-secure-store, OK
+
+$ npx expo export --platform ios --output-dir /tmp/yana-ios
+# ✅ iOS bundle 4.38 MB .hbc exporté
+
+$ npx expo export --platform android --output-dir /tmp/yana-android
+# ✅ Android bundle exporté
+```
+
+Pas de build EAS cette session (P7.C scope). Scaffold est bootable via
+`npx expo start --ios` / `--android` / `--web` depuis `mobile/`.
+
+### 🚩 FLAG TISSMA — P7.A
+
+Rien à faire côté Tissma pour P7.A. Les 3 éléments qui exigeront une action sont reportés :
+
+- **P7.C** : Apple Team ID + ascAppId (remplir `eas.json` submit.production.ios)
+- **P7.C** : `google-service-account.json` pour submit Android Play Console
+- **P7.B** : signature universal links `.well-known/apple-app-site-association` (déploiement côté web `yana.purama.dev`)
+
+### 🧠 LEÇONS SESSION 14 — P7.A
+
+| Date | App | Leçon | Impact |
+|---|---|---|---|
+| 2026-04-24 | YANA | **Reanimated v4 + Expo SDK 54 migration** : le plugin Babel a migré de `react-native-reanimated/plugin` vers `react-native-worklets/plugin`. Ancien chemin donne "Cannot find module 'react-native-worklets/plugin'" au bundle. Fix : `npx expo install react-native-worklets` + update babel.config.js. Le plugin DOIT rester en dernier dans plugins[]. | Pattern upgrade reanimated v4 → worklets séparés |
+| 2026-04-24 | YANA | **babel-preset-expo nécessite install explicite en devDep** avec Expo SDK 54 pour `expo export` (vs expo start où il est résolu implicitement). Erreur "Cannot find module 'babel-preset-expo'" au bundle. `npm install --legacy-peer-deps --save-dev babel-preset-expo` résout. | Pattern devDep explicite pour toolchain CLI Expo |
+| 2026-04-24 | YANA | **Supabase mobile schema via `db: { schema: 'yana' }`** comme en web. Permet `.from('profiles')` dans l'app mobile au lieu de `.from('yana.profiles')`. Évite la divergence de code entre web et mobile + fait que les hooks réutilisables (useProfile) ont la même signature DB. | Pattern unifié db.schema web+mobile pour schéma custom |
+| 2026-04-24 | YANA | **AuthGate via usePathname + useSegments + useRouter.replace** anti-loop : compare aux segments courants (`segments[0] === '(auth)'`) avant redirect. Sans cette garde, chaque rerender session=null redirige vers /login en boucle infinie. Le useEffect dépend [session, loading, segments, router] pour capturer tous les changements. | Pattern garde anti-loop pour AuthGate expo-router |
+| 2026-04-24 | YANA | **SecureStore cross-platform via SupportedStorage** : Supabase accepte n'importe quel storage qui implémente getItem/setItem/removeItem async. Adapter = 12 lignes. iOS Keychain / Android EncryptedSharedPrefs survivent redémarrage. Fallback web = localStorage pour Expo web preview. Zéro lib supplémentaire. | Pattern adapter minimal = lisibilité max |
+| 2026-04-24 | YANA | **Expo exclut déjà `mobile/` dans tsconfig web root** (`exclude: ["node_modules", "mobile"]` via `tsconfig.json` principal pré-P7). Résultat : `tsc --noEmit` web ne touche pas mobile, et tsc mobile (avec ses propres `extends: "expo/tsconfig.base"` + `baseUrl+paths`) est indépendant. Zéro conflit de config strict. | Pattern isolation tsconfig web+mobile monorepo-light |
+
+### ⏭️ P7 — RESTE À FAIRE (P7.B + P7.C)
+
+- **P7.B** — Features natives (7 gates) : `expo-location` foreground+background task + queue trip events · `expo-sensors` accéléromètre+gyroscope buffer 10s · `react-native-health` iOS + `react-native-health-connect` Android (fatigue HRV/sleep → NAMA warning) · FamilyControls iOS + UsageStats Android (No-Phone-While-Driving opt-in) · **Moto Mode** UI 3 gros boutons voix haptique · icônes Pollinations+sharp (icon 1024² + adaptive + splash 1284×2778 + feature 1024×500) · deep links `.well-known/apple-app-site-association` côté web + `assetlinks.json` Android
+- **P7.C** — Stores + CI (6 gates) : Maestro 10 flows + testID · `store.config.json` 16 langues · `GOOGLE_PLAY_SETUP.md` personnalisé · GitHub Actions `.eas/workflows/full-deploy.yaml` · 1er EAS build iOS preview + screenshots Maestro iPhone 6.7"/5.5" + iPad 12.9" + Android · handoff final P7
+
+**Commits session 14** : `8ddc624` (A1) · `9f36705` (A2) · `50c8e96` (A3) · `e709b64` (A4) · `43ae513` (A5) · `22d98de` (A6) · `<A7 ci-dessous>`.
+
 **Pour reprendre après /clear** → relance :
-> "Lis progress.md. P6 complet (C1 emails + C2 push + C3 SpiritualLayer 6 sous-features + C4 SubconsciousEngine 6 gates, 20/20 smoke tests verts live). Flag Tissma résiduel = 3 env vars VAPID pour P6.C2 push browser + tests visuels manuels P6.C3/C4. Attaque P7 Mobile Expo (wrapper RN, EAS iOS+Android, deep links, Maestro tests). Plan d'abord."
+> "Lis progress.md + `mobile/README.md`. P7.A Foundation Mobile ✅ live (7 gates : Expo 54 scaffold + Supabase SecureStore + expo-router + auth flow + tabs × 5 live data + NativeWind v4 + app.json full + eas.json 3 profils + README). Smoke tests passés : tsc 0, expo export iOS 4.38 MB, Android OK. Attaque P7.B Features Natives — 7 gates (expo-location fg+bg + expo-sensors + HealthKit/Health Connect + FamilyControls/UsageStats + Moto Mode UI 3 gros boutons + icônes Pollinations+sharp + deep links .well-known/apple-app-site-association). Plan d'abord, feature par feature, 1 commit par gate, tsc 0 à chaque gate."
