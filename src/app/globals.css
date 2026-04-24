@@ -24,6 +24,53 @@
   --radius-md: 14px;
   --radius-lg: 20px;
   --radius-xl: 28px;
+  /* P6.C4 — Fibonacci tokens (ratios dorés) */
+  --fib-8: 8px;
+  --fib-13: 13px;
+  --fib-21: 21px;
+  --fib-34: 34px;
+  --fib-55: 55px;
+  --fib-89: 89px;
+  --phi: 1.618;
+  /* P6.C4 — Fréquences sacrées (SubconsciousEngine G5 pilote data-frequency) */
+  --frequency-current: 528;
+  --glow-frequency: rgba(57, 255, 20, 0.05);
+}
+
+/* P6.C4 — Fréquences sacrées par route (data-frequency sur <main>) */
+[data-frequency="888"] {
+  --frequency-current: 888;
+  --glow-frequency: rgba(255, 215, 0, 0.05);
+}
+[data-frequency="963"] {
+  --frequency-current: 963;
+  --glow-frequency: rgba(168, 85, 247, 0.05);
+}
+[data-frequency="528"] {
+  --frequency-current: 528;
+  --glow-frequency: rgba(57, 255, 20, 0.05);
+}
+[data-frequency="639"] {
+  --frequency-current: 639;
+  --glow-frequency: rgba(255, 107, 157, 0.05);
+}
+
+/* P6.C4 — Tailwind utilities ratios dorés */
+@layer utilities {
+  .p-fib-13 { padding: var(--fib-13); }
+  .p-fib-21 { padding: var(--fib-21); }
+  .p-fib-34 { padding: var(--fib-34); }
+  .px-fib-21 { padding-left: var(--fib-21); padding-right: var(--fib-21); }
+  .py-fib-13 { padding-top: var(--fib-13); padding-bottom: var(--fib-13); }
+  .gap-fib-8 { gap: var(--fib-8); }
+  .gap-fib-13 { gap: var(--fib-13); }
+  .gap-fib-21 { gap: var(--fib-21); }
+  .gap-fib-34 { gap: var(--fib-34); }
+  .rounded-fib-8 { border-radius: var(--fib-8); }
+  .rounded-fib-13 { border-radius: var(--fib-13); }
+  .rounded-fib-21 { border-radius: var(--fib-21); }
+  .aspect-phi { aspect-ratio: var(--phi); }
+  .aspect-phi-v { aspect-ratio: calc(1 / var(--phi)); }
 }
 
 [data-theme='light'] {
