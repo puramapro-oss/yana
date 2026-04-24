@@ -127,16 +127,39 @@ export default function Drive() {
 
         {isActive ? (
           <GlassCard style={{ gap: fib.sm }}>
-            <Text
-              style={{
-                color: colors.accent.primary,
-                fontSize: typography.body.sm,
-                fontWeight: '700',
-                textTransform: 'uppercase',
-              }}
-            >
-              Trajet en cours
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: fib.xs }}>
+              <Text
+                style={{
+                  color: colors.accent.primary,
+                  fontSize: typography.body.sm,
+                  fontWeight: '700',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Trajet en cours
+              </Text>
+              {state.sensors_active ? (
+                <View
+                  testID="drive-sensors-badge"
+                  style={{
+                    backgroundColor: 'rgba(16,185,129,0.15)',
+                    borderRadius: radii.sm,
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.semantic.success,
+                      fontSize: typography.body.xs,
+                      fontWeight: '700',
+                    }}
+                  >
+                    SENSORS ON
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             <View style={{ flexDirection: 'row', gap: fib.md }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.dark.textMuted, fontSize: typography.body.xs }}>

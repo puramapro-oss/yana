@@ -19,6 +19,7 @@ import * as TaskManager from 'expo-task-manager'
 import { Platform } from 'react-native'
 import { BACKGROUND_LOCATION_TASK } from './constants'
 import { enqueueEvent } from './event-queue'
+import { SensorBuffer } from './sensor-buffer'
 import type { DetectedEventPayload, TripEventType } from './trip-api'
 
 const EARTH_RADIUS_M = 6_371_000
@@ -108,6 +109,8 @@ export class TripTrackerRN {
   private cooldowns = new Map<TripEventType, number>()
   private tickTimer: ReturnType<typeof setInterval> | null = null
   private cbs: TrackerCallbacks = {}
+  private sensors: SensorBuffer | null = null
+  private sensorsActive = false
 
   isRunning(): boolean {
     return this.sub !== null
@@ -115,6 +118,10 @@ export class TripTrackerRN {
 
   isPaused(): boolean {
     return this.pauseStartedMs !== null
+  }
+
+  areSensorsActive(): boolean {
+    return this.sensorsActive
   }
 
   /**
@@ -199,6 +206,15 @@ export class TripTrackerRN {
     }
 
     this.tickTimer = setInterval(() => this.emitTick(), 1000)
+
+    // Sensors ON — fusion accel+gyro avec GPS. Silence si device sans IMU (rare).
+    this.sensors = new SensorBuffer()
+    this.sensorsActive = await this.sensors.start({
+      onEvent: (event) => this.injectSensorEvent(event),
+    })
+    if (!this.sensorsActive) {
+      this.sensors = null
+    }
   }
 
   pause(): void {
@@ -216,6 +232,11 @@ export class TripTrackerRN {
     if (this.sub) {
       this.sub.remove()
       this.sub = null
+    }
+    if (this.sensors) {
+      this.sensors.stop()
+      this.sensors = null
+      this.sensorsActive = false
     }
     if (this.backgroundActive) {
       try {
@@ -270,6 +291,10 @@ export class TripTrackerRN {
     }
 
     this.lastLoc = loc
+    this.sensors?.updateContext(
+      { lat: loc.coords.latitude, lng: loc.coords.longitude },
+      currentSpeedKmh,
+    )
   }
 
   private tryEmitEvent(

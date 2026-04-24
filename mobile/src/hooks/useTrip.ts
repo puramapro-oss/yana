@@ -43,6 +43,7 @@ export interface LiveTripState {
   max_speed_kmh: number
   events_count: number
   queue_size: number
+  sensors_active: boolean
   error: string | null
 }
 
@@ -56,6 +57,7 @@ const INITIAL: LiveTripState = {
   max_speed_kmh: 0,
   events_count: 0,
   queue_size: 0,
+  sensors_active: false,
   error: null,
 }
 
@@ -177,6 +179,7 @@ export function useTrip() {
         trip_id: tripId,
         status: 'active',
         started_at: Date.now(),
+        sensors_active: tracker.areSensorsActive(),
       })
       return { error: null }
     },
