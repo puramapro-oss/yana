@@ -55,6 +55,50 @@
   --glow-frequency: rgba(255, 107, 157, 0.05);
 }
 
+/* P6.C4 — Glow fréquence (overlay subtile sur <main>) */
+main[data-frequency] {
+  position: relative;
+  transition:
+    --glow-frequency 1200ms cubic-bezier(0.33, 1, 0.68, 1),
+    --frequency-current 1200ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+main[data-frequency]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      ellipse at center,
+      var(--glow-frequency) 0%,
+      transparent 65%
+    );
+  opacity: 0.7;
+  transition: background 1200ms cubic-bezier(0.33, 1, 0.68, 1);
+  will-change: background;
+}
+@media (prefers-reduced-motion: reduce) {
+  main[data-frequency]::before { transition: none; }
+  main[data-frequency] { transition: none; }
+}
+
+/* P6.C4 — Fleur de vie background (injectée par SubconsciousEngine G5) */
+.subconscious-flower {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.03;
+  color: var(--text-primary);
+  background-image: url("/flower-of-life.svg");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: min(90vw, 90vh);
+  mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+}
+
 /* P6.C4 — Tailwind utilities ratios dorés */
 @layer utilities {
   .p-fib-13 { padding: var(--fib-13); }
