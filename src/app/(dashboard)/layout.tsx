@@ -3,6 +3,7 @@ import Topbar from '@/components/layout/Topbar'
 import BottomTabBar from '@/components/layout/BottomTabBar'
 import CinematicIntro from '@/components/onboarding/CinematicIntro'
 import TutorialOverlay from '@/components/onboarding/TutorialOverlay'
+import SpiritualLayer from '@/components/shared/SpiritualLayer'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <BottomTabBar />
       <CinematicIntro />
       <TutorialOverlay />
+      <SpiritualLayer />
     </div>
   )
 }
