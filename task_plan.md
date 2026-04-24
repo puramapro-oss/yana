@@ -239,14 +239,15 @@
 - [x] Live test 11/11 : 401 endpoints sans auth · 503 vapid sans env · 400 opened Zod invalide · 307 settings auth-gated · 200 sw.js · 200 cron Bearer stats verts · regression emails + /api/stats/public + homepage + pricing + faq + contest/leaderboard + dashboard 5/5
 - [ ] **Flag Tissma** : ajouter 3 env vars Vercel (`VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` + `VAPID_SUBJECT`) + browser test réel (login → /settings/notifications → Activer → Test)
 
-### C3 — SpiritualLayer.tsx (à faire)
-- [ ] Composant global layout dashboard
-- [ ] Affirmation modal 1× par login (reuse `/api/affirmations/today`)
-- [ ] Pauses cœur 25min → overlay "Respire." 3s
-- [ ] Citations footer rotatives 30min (pattern TravelQuote)
-- [ ] Sons 432Hz pentatonique opt-in Howler.js
-- [ ] Loading subliminaux mots AMOUR/PUISSANCE/ABONDANCE/PAIX/CONFIANCE (>2s, opacity 3-5%)
-- [ ] Célébrations lotus + bol tibétain sur achievements
+### C3 — SpiritualLayer.tsx ✅ (7 commits atomiques 2026-04-24)
+- [x] C3.1 `SpiritualLayer.tsx` squelette + affirmation modal quotidienne localStorage UTC — commit `8f447e8`
+- [x] C3.2 Pauses cœur 25min → overlay "Respire." 3s + haptic vibrate — commit `c026860`
+- [x] C3.3 `FloatingQuote.tsx` bulle bas-droit 280px rotation 30min 4 auteurs i18n — commit `7a4bf66`
+- [x] C3.4 Sons 432Hz pentatonique (30s loop WAV procédural) + bol tibétain via Howler lazy + toggle `/settings` section Spirituel + autoplay unlock — commit `05beffb`
+- [x] C3.5 `SubliminalLoader.tsx` loading >2s seulement, mots FR/EN/ES rotation 3s opacity 4.5%, `(dashboard)/loading.tsx` Next.js segment — commit `4b1b71d`
+- [x] C3.6 `LotusCelebration.tsx` CustomEvent `yana:achievement-unlocked`, lotus SVG 8+8 pétales + bol tibétain + haptic, dispatch client localStorage delta — commit `58243f8`
+- [x] Fix middleware audio assets (wav/mp3/ogg/m4a/flac) — commit `243e381`
+- [x] Deploy prod + 15/15 smoke tests verts (homepage/routes/auth-gate/assets/CRONs régression C1+C2)
 
 ### C4 — SubconsciousEngine.tsx (à faire)
 - [ ] Reformulation i18n strings empowering (Chargement → Ton espace se prépare)
@@ -301,7 +302,8 @@
 | P5.3 | ✅ | `55a17a4` | live yana.purama.dev | Hero3D R3F + homepage 3 blocs + i18n 16 langues + Lighthouse Perf 97 |
 | P6.C1 | ✅ | `4804917` | live yana.purama.dev | Emails Resend 10 séquences (daily J0/1/3/7/14/21/30 + 3 events) — 4/4 live smoke tests |
 | P6.C2 | ✅ | `d6137de` | live yana.purama.dev | Notifs push engagement-score (backend 100%, flag Tissma = 3 VAPID env vars + browser test) |
-| P6.C3-C4 | ⏳ | - | - | SpiritualLayer.tsx · SubconsciousEngine.tsx |
+| P6.C3 | ✅ | `243e381` | live yana.purama.dev | SpiritualLayer 6 sous-features (affirmation modal + Respire 25min + FloatingQuote + 432Hz Howler + Subliminaux + Lotus achievements) + fix middleware audio — 15/15 smoke tests verts |
+| P6.C4 | ⏳ | - | - | SubconsciousEngine.tsx (reformulation empowering + Fibonacci + fleur de vie + fréquences) |
 | P7 (ex-P6) | ⏳ | - | - | QA + Security sub-agents + Lighthouse |
 | P7 | ⏳ | - | - | Mobile Expo + EAS + stores |
 | P8 | ❌ | - | - | Pas en version initiale |

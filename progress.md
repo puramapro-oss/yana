@@ -1,7 +1,7 @@
 # YANA — progress.md
 
-**Dernière update** : 2026-04-24 (session 10 — P6.C1 Emails Resend 10 séquences live)
-**Phase actuelle** : 🛠️ **P6 en cours — C1 Emails ✅ · C2 Notifs push · C3 SpiritualLayer · C4 SubconsciousEngine**
+**Dernière update** : 2026-04-24 (session 12 — P6.C3 SpiritualLayer 6 sous-features live)
+**Phase actuelle** : 🛠️ **P6 en cours — C1 Emails ✅ · C2 Notifs push ✅ · C3 SpiritualLayer ✅ · C4 SubconsciousEngine**
 **Note scope** : P6 a été redéfini par Tissma 2026-04-24 en composants éveil + lifecycle (les anciens QA/Security/Lighthouse sub-agents sont décalés en P7).
 **Statut global** : YANA est **live** sur https://yana.purama.dev · homepage cinétique Hero3D R3F · i18n 16 langues vertes · theme 3 modes · 3 pages éveil · Lighthouse Perf 97 · pipeline emails Resend 10 séquences opérationnel (3/3 live envoyés avec resend_id)
 
@@ -701,12 +701,70 @@ Alerting: stats.errors.length > 0 ou stats.invalidated > 10 × 3 runs
 | 2026-04-24 | YANA | Service Worker `notificationclick` → beacon POST `/api/push/opened` avec `keepalive: true` survit à la fermeture de la page + l'onglet. Pas besoin de Navigator.sendBeacon(). Le logId UUID fait office de token d'opacité : qui connaît l'UUID peut marquer l'opened — risque nul car aucune action destructive. | Pattern beacon SW simple |
 | 2026-04-24 | YANA | Backend push testable à 100% sans VAPID configuré : `configure()` est appelé seulement dans `sendPush`, donc CRON sur 0 sub = 0 appel, OK. Permet de déployer + smoke test + ajouter env vars après, sans bloquer le pipeline. | Pattern lazy config = deploy découplé de provisioning secret |
 
+---
+
+## 🎉 SESSION 12 — P6.C3 SPIRITUAL LAYER (2026-04-24)
+
+### P6.C3 — 6 sous-features atomiques livrées + déployées
+
+| # | Feature | Commit | Livré |
+|---|---|---|---|
+| C3.1 | SpiritualLayer squelette + affirmation modal quotidienne | `8f447e8` | `src/components/shared/SpiritualLayer.tsx` client-only, mount dans `(dashboard)/layout.tsx`, modal 1×/jour (localStorage `yana-spiritual-affirmation-YYYYMMDD` UTC), reuse `/api/affirmations/today` P5.1, framer-motion fade+scale, backdrop blur, auto-dismiss 12s, delay 2.2s pour ne pas chevaucher CinematicIntro, z-[80] sous intro z-2000 |
+| C3.2 | Pauses "Respire." 25min overlay | `c026860` | setInterval 25min depuis mount layout, overlay bg-black/85 backdrop-blur-2xl, gradient 6xl "Respire." + pulse opacity infini 3s, auto-dismiss 3s + clic dismiss, haptic `navigator.vibrate([120,80,120])` si dispo, z-[75] |
+| C3.3 | Citations footer rotatives 30min bulle flottante | `7a4bf66` | `src/components/shared/FloatingQuote.tsx`, bulle bas-droit 280px (mobile bottom-24 safe BottomTabBar, lg bottom-6), rotation 30min Rumi→Bashō→Lao Tseu→Saint-Exupéry, index initial déterministe `daysSinceEpoch % 4`, fade 800ms `AnimatePresence mode="wait"`, delay 6s post-mount, close X persist localStorage, i18n `home.quotes.*` 16 locales |
+| C3.4 | Sons 432Hz opt-in Howler + bol tibétain | `05beffb` | `npm i howler @types/howler`, `scripts/gen-sounds.mjs` génère 2 WAV procéduraux (sinus math = domaine public), `public/sounds/432hz-pentatonic.wav` (1.3MB 30s loop 432/486/648Hz pentatonique), `public/sounds/tibetan-bowl.wav` (151KB 3.5s decay 4 harmoniques), `src/lib/sacred-sound.ts` singleton lazy-import Howler (enableSound/disableSound/resumeLoopIfEnabled/playBowl), `src/hooks/useSacredSound.ts` hook client, toggle inline `/settings` section Spirituel role="switch", SpiritualLayer unlock loop au 1er pointerdown/keydown (autoplay policy) |
+| C3.5 | Loading subliminaux AMOUR/PUISSANCE/ABONDANCE/PAIX/CONFIANCE | `4b1b71d` | `src/components/shared/SubliminalLoader.tsx` composant client, prop `active` + `delayMs`, apparait seulement si loading >2s, rotation mot /3s, opacity 4.5%, text-[min(22vw,18rem)] font-thin uppercase tracking-[0.28em], détection locale via `document.documentElement.lang` (FR/EN/ES fallback FR), `(dashboard)/loading.tsx` Next.js segment loading auto-monté |
+| C3.6 | Célébrations lotus + bol tibétain sur achievements | `58243f8` | `src/components/shared/LotusCelebration.tsx` écoute `yana:achievement-unlocked` CustomEvent, lotus SVG inline (8 pétales ext + 8 int + coeur doré gradient), rotation douce 2.8s, fade-in/out 600ms, durée totale 4s, z-[85], `playBowl()` si sound enabled, haptic `[40,60,120]`, dispatch côté achievements page (compare localStorage `yana-achievements-seen` → émet pour chaque nouveau, bootstrap sans célébrer au 1er chargement) |
+| FIX | Middleware autorise assets audio | `243e381` | Bug détecté lors smoke test : regex `isPublicPath` ne matchait pas `.wav`. Ajouté `wav|mp3|ogg|m4a|flac` → sons accessibles 200 au lieu de 307 login |
+
+### 🌐 LIVE VALIDATION P6.C3 (commit `243e381` → deploy `yana-hd01w5w4e-puramapro-oss-projects.vercel.app` aliased `yana.purama.dev`)
+
+| # | Test | Résultat |
+|---|---|---|
+| 1 | `/` homepage | 200 ✅ |
+| 2 | `/pricing` | 200 ✅ |
+| 3 | `/aide` | 200 ✅ |
+| 4 | `/login` | 200 ✅ |
+| 5 | `/api/stats/public` | 200 ✅ |
+| 6 | `/api/affirmations/today` (auth guard) | 401 ✅ |
+| 7 | `/api/contest/leaderboard` | 200 ✅ |
+| 8 | `/api/faq` | 200 ✅ |
+| 9 | `/dashboard` middleware redirect | 307 ✅ |
+| 10 | `/achievements` middleware redirect | 307 ✅ |
+| 11 | `/settings` + `/settings/notifications` | 307 ✅ |
+| 12 | `/sounds/432hz-pentatonic.wav` | 200 (1 323 044 bytes) ✅ |
+| 13 | `/sounds/tibetan-bowl.wav` | 200 (154 394 bytes) ✅ |
+| 14 | C1 régression — CRON `/api/cron/emails/daily` Bearer | 200 ✅ |
+| 15 | C2 régression — CRON `/api/cron/push/daily` Bearer | 200 ✅ |
+
+**15/15 verts**. Tous les 3 flows critiques régression (homepage + pricing + auth redirects) + C1 emails + C2 push intacts.
+
+### 🚩 FLAG TISSMA — P6.C3 (tests visuels manuels à faire)
+
+Tout le backend est live et les assets sont accessibles. Pour valider l'expérience visuelle complète, il faut se connecter :
+
+1. **Modal affirmation quotidienne** : `/dashboard` → après 2.2s → modal glass avec affirmation du jour + bouton "Merci ✨" → localStorage skip pour la journée.
+2. **Pauses Respire.** : rester 25 min sur une page dashboard → overlay "Respire." 3s + haptic vibrate sur mobile.
+3. **Bulle citation** : bas-droit desktop (ou au-dessus de BottomTabBar mobile) après 6s sur dashboard → Rumi/Bashō/Lao Tseu/Saint-Exupéry rotation 30min.
+4. **Sons 432Hz** : `/settings` → section Spirituel → toggle "Sons 432Hz pentatoniques" → fade-in 2.5s de l'ambiance. Désactive → fade-out 1.2s puis stop.
+5. **Subliminaux loading** : provoquer une navigation `/dashboard → /achievements` sur connexion lente (throttle Slow 3G DevTools) → après 2s apparaît AMOUR/PUISSANCE/ABONDANCE/PAIX/CONFIANCE opacity ~4% centre.
+6. **Lotus célébration** : page `/achievements` → si de nouveaux achievements sont débloqués entre 2 visites → overlay lotus 4s + bol tibétain (si sons activés). Au 1er chargement sans tracking local, c'est un bootstrap silencieux (mémorise l'état sans célébrer).
+
+### 🧠 LEÇONS SESSION 12 — P6.C3
+
+| Date | App | Leçon | Impact |
+|---|---|---|---|
+| 2026-04-24 | YANA | Procedural audio generation (sinus Math.sin → WAV via Buffer) contourne absence de ffmpeg et la dépendance CDN CC0. Les fichiers sont domaine public par construction (aucune créativité humaine protégeable). Node stdlib suffit (pas de lib audio). | Pattern audio assets sans deps externes |
+| 2026-04-24 | YANA | Autoplay policy browsers : Howler `play()` après navigation échoue silencieusement si l'onglet n'a pas eu de geste utilisateur. Solution : écouter `pointerdown/keydown { once: true }` au mount + lancer `resumeLoopIfEnabled()`. Le toggle initial (clic user) déverrouille, et les reloads avec user déjà enabled relancent au 1er geste. | Pattern unlock Howler respectueux des policies |
+| 2026-04-24 | YANA | Middleware regex `isPublicPath` : lister explicitement les extensions audio (`wav/mp3/ogg/m4a/flac`) sinon les fichiers `/public/sounds/*` sont interceptés par la redirection auth → /login. Toujours smoke-tester les assets statiques custom après ajout de formats nouveaux. | Pattern vigilance middleware pour nouveaux media types |
+| 2026-04-24 | YANA | CustomEvent + localStorage = système de célébrations achievements zero-backend. Client compare l'état "seen" à l'état courant, dispatch event pour chaque nouveau. Bootstrap silencieux au 1er chargement évite le flood. Événements timeoutés (4.4s) si plusieurs unlocks simultanés. | Pattern delta detection client-side sans changement DB |
+| 2026-04-24 | YANA | Dashboard layout 'use client' pattern : SpiritualLayer + FloatingQuote + LotusCelebration + SubliminalLoader = 4 composants overlay client-only mount une fois dans `(dashboard)/layout.tsx`. Pas de prop-drilling, pas de state global. Chaque composant se gère en autonomie via localStorage + CustomEvents. | Pattern UI layer indépendante pour dashboard |
+
 ### ⏭️ P6 — RESTE À FAIRE
 
-- **C3 — SpiritualLayer.tsx** : composant global layout dashboard — affirmation modal 1× par login (reuse `/api/affirmations/today` P5.1), pauses cœur toutes 25min overlay "Respire." 3s, citations footer rotatives 30min (pattern TravelQuote), sons 432Hz opt-in via Howler.js, loading subliminaux mots AMOUR/PUISSANCE/ABONDANCE/PAIX/CONFIANCE, célébrations lotus sur achievements
-- **C4 — SubconsciousEngine.tsx** : reformulation i18n strings UI empowering (`Chargement→Ton espace se prépare`), hook `useEmpowerment`, ratios dorés Fibonacci 8/13/21/34/55px, fleur de vie SVG background opacity 3%, fréquences couleurs via CSS `--frequency-current` (888/963/528/639 Hz glow)
+- **C4 — SubconsciousEngine.tsx** : reformulation i18n strings UI empowering (`Chargement → Ton espace se prépare`), hook `useEmpowerment`, ratios dorés Fibonacci 8/13/21/34/55px tokens Tailwind, fleur de vie SVG background opacity 3% en layout, fréquences couleurs CSS `--frequency-current` (888/963/528/639 Hz glow box-shadow selon route active)
 
-**Commits session 10-11** : `4804917` (C1 emails) · `0dc400a` (C1 docs/GRANT) · `d6137de` (C2 push).
+**Commits session 12** : `8f447e8` (C3.1) · `c026860` (C3.2) · `7a4bf66` (C3.3) · `05beffb` (C3.4) · `4b1b71d` (C3.5) · `58243f8` (C3.6) · `243e381` (fix middleware audio).
 
 **Pour reprendre après /clear** → relance :
-> "Lis progress.md + .claude/skills/spiritual/SKILL.md. P6.C1 emails + P6.C2 push ✅ live (commits 4804917 0dc400a d6137de, backend 100% green, flag Tissma = ajouter 3 VAPID env vars à Vercel + test browser). Attaque P6.C3 SpiritualLayer.tsx. Plan d'abord."
+> "Lis progress.md + .claude/skills/spiritual/SKILL.md. P6.C3 SpiritualLayer ✅ live (6 sous-features + fix middleware audio, 15/15 smoke tests verts, commits 8f447e8 c026860 7a4bf66 05beffb 4b1b71d 58243f8 243e381). Flag Tissma = tests visuels manuels 6 features (affirmation modal, respire overlay, bulle citation, toggle sons, subliminaux, lotus célébration). Attaque P6.C4 SubconsciousEngine.tsx — reformulation i18n empowering + hook useEmpowerment + Fibonacci tokens + fleur de vie SVG bg + fréquences CSS. Plan d'abord."
