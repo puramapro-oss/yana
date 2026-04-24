@@ -1,11 +1,72 @@
 import '../global.css'
 import { useEffect } from 'react'
+import { Alert } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import { SafeAreaProvider } from 'react-native-safe-area-context'
+import * as Linking from 'expo-linking'
 import { useAuth } from '@/hooks/useAuth'
 import { colors } from '@/lib/theme'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+
+/**
+ * Parse une URL entrante (universal link https://yana.purama.dev/... ou
+ * scheme yana://...) et route vers le bon screen. Retourne true si handled.
+ */
+function handleDeepLinkUrl(
+  url: string,
+  router: ReturnType<typeof useRouter>,
+): boolean {
+  try {
+    const parsed = Linking.parse(url)
+    // path peut être "activate", "trip/abc", "moto", "wallet", ...
+    const path = parsed.path ?? ''
+    if (!path) return false
+    const firstSegment = path.split('/')[0]
+    switch (firstSegment) {
+      case 'activate': {
+        router.replace('/(tabs)/wallet')
+        setTimeout(() => {
+          Alert.alert('Abonnement activé', 'Tes gains sont débloqués 🎉')
+        }, 400)
+        return true
+      }
+      case 'wallet':
+        router.replace('/(tabs)/wallet')
+        return true
+      case 'drive':
+        router.replace('/(tabs)/drive')
+        return true
+      case 'moto':
+        router.push('/moto')
+        return true
+      case 'trip':
+        // trip/:id — fallback vers drive pour l'instant (page détail P7.C)
+        router.replace('/(tabs)/drive')
+        return true
+      default:
+        return false
+    }
+  } catch {
+    return false
+  }
+}
+
+function DeepLinkListener() {
+  const router = useRouter()
+  useEffect(() => {
+    // Initial URL (app cold-started depuis un deep link)
+    void Linking.getInitialURL().then((url) => {
+      if (url) handleDeepLinkUrl(url, router)
+    })
+    // URLs runtime (app déjà ouverte, OS ramène l'app au foreground)
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      handleDeepLinkUrl(url, router)
+    })
+    return () => sub.remove()
+  }, [router])
+  return null
+}
 
 /**
  * Auth gate : redirige selon la session.
@@ -44,6 +105,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StatusBar style="light" />
         <AuthGate />
+        <DeepLinkListener />
         <Stack
           screenOptions={{
             headerShown: false,

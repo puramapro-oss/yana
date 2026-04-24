@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "dev.purama.yana",
+      "sha256_cert_fingerprints": [
+        "TO_FILL_AFTER_EAS_BUILD_P7C_PLAY_UPLOAD_KEY_SHA256"
+      ]
+    }
+  }
+]
