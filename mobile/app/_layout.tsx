@@ -23,9 +23,14 @@ function AuthGate() {
     const inAuthGroup = segments[0] === '(auth)'
     const inTabsGroup = segments[0] === '(tabs)'
 
+    // Écrans authentifiés hors du groupe (tabs) : routes modales comme /moto.
+    const authedStandaloneScreens = ['moto']
+    const isAuthedStandalone =
+      segments.length > 0 && authedStandaloneScreens.includes(segments[0] as string)
+
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/login')
-    } else if (session && !inTabsGroup) {
+    } else if (session && !inTabsGroup && !isAuthedStandalone) {
       router.replace('/(tabs)/dashboard')
     }
   }, [session, loading, segments, router])
@@ -48,6 +53,10 @@ export default function RootLayout() {
         >
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="moto"
+            options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+          />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>
