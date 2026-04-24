@@ -1,34 +1,117 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "YANA",
+    "slug": "yana",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "scheme": "yana",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "primaryColor": "#F97316",
+    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#03040a"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.purama.yana",
+      "associatedDomains": [
+        "applinks:yana.purama.dev",
+        "applinks:purama.dev"
+      ],
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "YANA utilise ta localisation pendant tes trajets pour noter ta conduite (sécurité + écoconduite) et calculer le CO2 évité.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "YANA peut suivre un trajet en arrière-plan si tu actives le mode trajet long (optionnel). Tu peux révoquer à tout moment.",
+        "NSMotionUsageDescription": "YANA lit l'accéléromètre et le gyroscope pour détecter les freinages brusques et notes ton style de conduite. Données traitées localement sur l'appareil.",
+        "NSCameraUsageDescription": "YANA utilise la caméra pour scanner la carte grise lors de l'ajout d'un véhicule, et pour ton avatar de profil.",
+        "NSPhotoLibraryUsageDescription": "YANA accède à la galerie pour importer la photo de ton véhicule ou ton avatar.",
+        "NSUserTrackingUsageDescription": "YANA respecte ta vie privée et n'active pas le suivi publicitaire. Cette autorisation permet uniquement les partages Apple Wallet pour tes récompenses.",
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "remote-notification"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "dev.purama.yana",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#03040a"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "ACTIVITY_RECOGNITION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS",
+        "WAKE_LOCK",
+        "VIBRATE"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "yana.purama.dev",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "yana"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "appSlug": "yana",
+      "webUrl": "https://yana.purama.dev",
+      "eas": {
+        "projectId": ""
+      }
+    },
+    "owner": "puramapro-oss",
+    "updates": {
+      "url": "https://u.expo.dev/"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
