@@ -4,6 +4,7 @@ import BottomTabBar from '@/components/layout/BottomTabBar'
 import CinematicIntro from '@/components/onboarding/CinematicIntro'
 import TutorialOverlay from '@/components/onboarding/TutorialOverlay'
 import SpiritualLayer from '@/components/shared/SpiritualLayer'
+import FloatingQuote from '@/components/shared/FloatingQuote'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,6 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <CinematicIntro />
       <TutorialOverlay />
       <SpiritualLayer />
+      <FloatingQuote />
     </div>
   )
 }
