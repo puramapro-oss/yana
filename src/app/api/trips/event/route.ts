@@ -33,7 +33,7 @@ const BodySchema = z.object({
 })
 
 export async function POST(req: Request) {
-  const sb = await createServerSupabaseClient()
+  const sb = await createServerSupabaseClient(req)
   const { data: { user } } = await sb.auth.getUser()
   if (!user) {
     return NextResponse.json({ error: 'Connexion requise.' }, { status: 401 })

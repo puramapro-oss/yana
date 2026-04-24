@@ -97,7 +97,16 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "YANA utilise la localisation en arrière-plan pour suivre ton trajet même quand l'app est en veille. Tu peux désactiver à tout moment dans les Réglages.",
+          "locationWhenInUsePermission": "YANA utilise la localisation pendant tes trajets pour noter ta conduite et calculer le CO2 évité.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ]
     ],
     "extra": {
       "appSlug": "yana",

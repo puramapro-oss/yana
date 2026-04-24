@@ -38,11 +38,16 @@ export const SUPPORTED_LOCALES = [
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
 export const DEFAULT_LOCALE: SupportedLocale = 'fr'
 
-/** Clés de storage SecureStore (namespacées pour éviter collisions). */
+/** Clés de storage SecureStore / AsyncStorage (namespacées pour éviter collisions). */
 export const STORAGE_KEYS = {
   THEME: 'yana.theme',
   LOCALE: 'yana.locale',
   TUTORIAL_COMPLETED: 'yana.tutorial.completed',
   LAST_TRIP_ID: 'yana.trip.last',
+  TRIP_EVENT_QUEUE: 'yana.queue.trip_events',
   PUSH_TOKEN: 'yana.push.token',
+  NO_PHONE_WHILE_DRIVING: 'yana.settings.no_phone',
 } as const
+
+/** Nom de la TaskManager task pour tracking GPS background iOS+Android. */
+export const BACKGROUND_LOCATION_TASK = 'YANA_TRIP_TRACK' as const

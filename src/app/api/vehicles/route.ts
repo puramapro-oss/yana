@@ -18,8 +18,8 @@ function unauthorized() {
   return NextResponse.json({ error: 'Connexion requise.' }, { status: 401 })
 }
 
-export async function GET() {
-  const sb = await createServerSupabaseClient()
+export async function GET(req: Request) {
+  const sb = await createServerSupabaseClient(req)
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return unauthorized()
 
