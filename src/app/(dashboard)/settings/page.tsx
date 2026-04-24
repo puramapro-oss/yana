@@ -2,11 +2,12 @@
 
 import Link from 'next/link'
 import {
-  Bell, ChevronRight, CreditCard, LifeBuoy, LogOut, ReceiptText, Settings as SettingsIcon,
+  Bell, ChevronRight, CreditCard, LifeBuoy, LogOut, Music2, ReceiptText, Settings as SettingsIcon,
   Shield, UserRound,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useSacredSound } from '@/hooks/useSacredSound'
 import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
 import ErrorState from '@/components/ui/ErrorState'
@@ -24,6 +25,7 @@ interface Row {
 
 export default function SettingsPage() {
   const { loading: authLoading, user, profile, signOut } = useAuth()
+  const { enabled: soundEnabled, busy: soundBusy, toggle: toggleSound } = useSacredSound()
 
   const sections: Array<{ title: string; rows: Row[] }> = [
     {
@@ -163,6 +165,50 @@ export default function SettingsPage() {
           </div>
         </section>
       ))}
+
+      <section aria-labelledby="section-Spirituel" className="flex flex-col gap-2">
+        <h2
+          id="section-Spirituel"
+          className="px-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]"
+        >
+          Spirituel
+        </h2>
+        <div className="glass overflow-hidden rounded-2xl">
+          <div className="flex items-center gap-3 p-4">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#7C3AED]/20 to-[#0EA5E9]/20 text-[#7C3AED]">
+              <Music2 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-[var(--text-primary)]">Sons 432Hz pentatoniques</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                Ambiance sonore douce pendant ta navigation. Coupable à tout moment.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={soundEnabled}
+              aria-label="Activer les sons 432Hz"
+              onClick={() => {
+                void toggleSound()
+              }}
+              disabled={soundBusy}
+              data-testid="settings-spiritual-sound"
+              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition disabled:opacity-60 ${
+                soundEnabled
+                  ? 'bg-gradient-to-br from-[#7C3AED] to-[#0EA5E9]'
+                  : 'bg-white/10'
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                  soundEnabled ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+      </section>
 
       <div className="glass rounded-2xl p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

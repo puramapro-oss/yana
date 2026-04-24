@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sparkles, X } from 'lucide-react'
+import { isSoundEnabled, resumeLoopIfEnabled } from '@/lib/sacred-sound'
 
 interface Affirmation {
   id: string
@@ -85,6 +86,24 @@ export default function SpiritualLayer() {
       if (dismissTimer) clearTimeout(dismissTimer)
     }
   }, [close])
+
+  // Sons 432Hz : si activés par l'user, reprend la boucle au premier geste utilisateur
+  // (contourne la politique autoplay Chrome/Safari).
+  useEffect(() => {
+    if (!isSoundEnabled()) return
+
+    const unlock = () => {
+      void resumeLoopIfEnabled()
+    }
+
+    window.addEventListener('pointerdown', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
 
   // Pause cœur : overlay "Respire." toutes les 25min, auto-dismiss 3s.
   useEffect(() => {
