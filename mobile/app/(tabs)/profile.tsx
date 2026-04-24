@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ScrollView, Text, View, Alert } from 'react-native'
+import { useEffect, useState } from 'react'
+import { ScrollView, Switch, Text, View, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import { GlassCard } from '@/components/GlassCard'
@@ -7,10 +7,34 @@ import { PrimaryButton } from '@/components/PrimaryButton'
 import { useProfile } from '@/hooks/useProfile'
 import { signOut } from '@/hooks/useAuth'
 import { colors, typography, fib, radii } from '@/lib/theme'
+import { isNoPhoneEnabled, setNoPhoneEnabled, requestScreenTimeAuth } from '@/lib/screen-time'
 
 export default function Profile() {
   const { profile, loading } = useProfile()
   const [signingOut, setSigningOut] = useState(false)
+  const [noPhone, setNoPhone] = useState(false)
+  const [togglingNoPhone, setTogglingNoPhone] = useState(false)
+
+  useEffect(() => {
+    void isNoPhoneEnabled().then(setNoPhone)
+  }, [])
+
+  async function toggleNoPhone(next: boolean) {
+    setTogglingNoPhone(true)
+    await Haptics.selectionAsync()
+    if (next) {
+      const status = await requestScreenTimeAuth()
+      if (status === 'denied') {
+        Alert.alert(
+          'Autorisation refusée',
+          "YANA peut quand même t'aider à rester concentré quand tu conduis : on détecte quand tu ouvres une autre app pendant un trajet.",
+        )
+      }
+    }
+    await setNoPhoneEnabled(next)
+    setNoPhone(next)
+    setTogglingNoPhone(false)
+  }
 
   async function onSignOut() {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
@@ -108,6 +132,55 @@ export default function Profile() {
           <StatRow label="XP total" value={String(profile?.xp ?? 0)} />
           <StatRow label="Points KARMA" value={String(profile?.purama_points ?? 0)} />
           <StatRow label="Streak" value={`${profile?.streak_days ?? 0} jours`} />
+        </GlassCard>
+
+        <GlassCard style={{ gap: fib.sm }}>
+          <Text
+            style={{
+              color: colors.dark.textSecondary,
+              fontSize: typography.body.sm,
+              fontWeight: '600',
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
+          >
+            Conduite
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: fib.sm,
+            }}
+          >
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  color: colors.dark.textPrimary,
+                  fontSize: typography.body.md,
+                  fontWeight: '600',
+                }}
+              >
+                No-Phone-While-Driving
+              </Text>
+              <Text
+                style={{ color: colors.dark.textSecondary, fontSize: typography.body.xs, marginTop: 2 }}
+              >
+                Pendant un trajet, YANA détecte quand tu ouvres une autre app et le
+                compte comme un événement phone_use.
+              </Text>
+            </View>
+            <Switch
+              testID="profile-no-phone-toggle"
+              value={noPhone}
+              onValueChange={toggleNoPhone}
+              disabled={togglingNoPhone}
+              trackColor={{ false: colors.dark.border, true: colors.accent.primary }}
+              thumbColor="#fff"
+              ios_backgroundColor={colors.dark.border}
+            />
+          </View>
         </GlassCard>
 
         <GlassCard style={{ gap: fib.xs }}>

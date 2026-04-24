@@ -30,6 +30,7 @@ import {
   resetQueue,
   queueSize,
 } from '@/lib/event-queue'
+import { isNoPhoneEnabled, startPhoneUseWatcher } from '@/lib/screen-time'
 
 export type TripStatus = 'idle' | 'starting' | 'active' | 'paused' | 'ending' | 'error'
 
@@ -68,6 +69,7 @@ export function useTrip() {
   const [state, setState] = useState<LiveTripState>(INITIAL)
   const trackerRef = useRef<TripTrackerRN | null>(null)
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const phoneWatcherStopRef = useRef<(() => void) | null>(null)
 
   const stopFlushTimer = useCallback(() => {
     if (flushTimerRef.current) {
@@ -107,6 +109,8 @@ export function useTrip() {
     return () => {
       trackerRef.current?.stop().catch(() => null)
       stopFlushTimer()
+      phoneWatcherStopRef.current?.()
+      phoneWatcherStopRef.current = null
     }
   }, [stopFlushTimer])
 
@@ -174,6 +178,21 @@ export function useTrip() {
       }
 
       startFlushTimer(tripId)
+
+      // No-Phone-While-Driving watcher si opt-in activé.
+      if (await isNoPhoneEnabled()) {
+        phoneWatcherStopRef.current?.()
+        phoneWatcherStopRef.current = startPhoneUseWatcher({
+          onPhoneUse: () => {
+            setState((s) => ({
+              ...s,
+              events_count: s.events_count + 1,
+              queue_size: queueSize(),
+            }))
+          },
+        })
+      }
+
       setState({
         ...INITIAL,
         trip_id: tripId,
@@ -213,6 +232,8 @@ export function useTrip() {
     setState((s) => ({ ...s, status: 'ending' }))
     const finalTick = await tracker.stop()
     stopFlushTimer()
+    phoneWatcherStopRef.current?.()
+    phoneWatcherStopRef.current = null
     await flushOnce(tripId)
 
     try {
@@ -246,6 +267,8 @@ export function useTrip() {
     const tracker = trackerRef.current
     if (tracker) await tracker.stop()
     stopFlushTimer()
+    phoneWatcherStopRef.current?.()
+    phoneWatcherStopRef.current = null
     if (tripId) {
       await apiTripCancel({ trip_id: tripId }).catch(() => null)
     }
