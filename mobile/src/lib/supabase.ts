@@ -66,6 +66,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * - detectSessionInUrl = true sur web UNIQUEMENT (OAuth callback hash),
  *   false sur natif (deep link yana:// traité par app/(auth)/callback.tsx en A3)
  */
+import { APP_SLUG } from '@/lib/constants'
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: secureStorageAdapter,
@@ -73,4 +75,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     detectSessionInUrl: Platform.OS === 'web',
   },
+  // Schema `yana` par défaut — cohérent avec src/lib/supabase.ts (web).
+  // Permet `.from('profiles')` au lieu de `.from('yana.profiles')`.
+  db: { schema: APP_SLUG },
 })
