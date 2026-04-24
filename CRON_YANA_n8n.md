@@ -1,6 +1,6 @@
 # YANA — Handoff CRONs n8n
 
-Configurer 5 workflows sur `n8n.srv1286148.hstgr.cloud`.
+Configurer 6 workflows sur `n8n.srv1286148.hstgr.cloud`.
 
 ## Secrets requis
 
@@ -55,6 +55,19 @@ Configurer 5 workflows sur `n8n.srv1286148.hstgr.cloud`.
 - **Alerting** : alerter si `stats.errors.length > 0` pendant 3 runs consécutifs (Resend down ou template cassé).
 - **Trigger events inline** (pas CRON) : `/api/email/event` est appelé depuis `/api/cron/classement-weekly` et `/api/stripe/webhook` avec body `{ kind, user_id, payload }`. Aucune config n8n séparée.
 
+## 6. Push notifications lifecycle — tous les jours 10:00 UTC
+
+- **Trigger** : `Schedule Trigger` → cron expression `0 10 * * *`
+- **HTTP Request** :
+  - Méthode : `POST`
+  - URL : `https://yana.purama.dev/api/cron/push/daily`
+  - Headers : `Authorization: Bearer {{$env.CRON_SECRET}}`
+  - Timeout : 300000 ms
+- **Comportement** : scan `web_push_subscriptions` actives, filtre par `notification_preferences` (enabled + days_of_week + hour_start/hour_end + paused_until). Recalcule engagement score (0-100) par user → adapte ton (informative/encouraging/warm) et fréquence. Envoie push daily adapté via VAPID. Idempotent via unique index `push_log(user_id, type='daily', sent_day)`.
+- **Réponse** : `{ ok: true, stats: { scanned, eligible, sent, skipped, invalidated, errors } }`
+- **Alerting** : alerter si `stats.errors.length > 0` ou `stats.invalidated > 10` pendant 3 runs consécutifs.
+- **Trigger events inline** (pas CRON) : `triggerEventPush` est appelé directement depuis les routes applicatives (achievement débloqué, parrainage, webhook Stripe, CRON classement/tirage). Aucune config n8n séparée.
+
 ## Test manuel depuis l'admin
 
 Super-admin peut déclencher manuellement `classement-weekly` ou `tirage-monthly` depuis `/admin/contests` :
@@ -70,6 +83,7 @@ curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron
 curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron/tirage-monthly
 curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron/daily-gift-reset
 curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron/emails/daily
+curl -X POST -H "Authorization: Bearer $SECRET" https://yana.purama.dev/api/cron/push/daily
 ```
 
 ## Observabilité

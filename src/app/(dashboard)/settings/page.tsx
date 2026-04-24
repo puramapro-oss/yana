@@ -62,6 +62,13 @@ export default function SettingsPage() {
           description: 'Centre de notifications in-app',
           testId: 'settings-notifications',
         },
+        {
+          href: '/settings/notifications',
+          icon: Bell,
+          label: 'Notifications push',
+          description: 'Activer les push navigateur, fréquence, horaire',
+          testId: 'settings-push',
+        },
       ],
     },
     {
