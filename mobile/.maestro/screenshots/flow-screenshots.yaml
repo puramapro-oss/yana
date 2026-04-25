@@ -1,0 +1,74 @@
+# YANA — Flow capture screenshots
+# Génère 5 screenshots clés pour stores listings (App Store / Play Console).
+# Output dans .maestro/screenshots/output/${MAESTRO_DEVICE_NAME}/*.png
+# (Maestro injecte automatiquement le device name dans le path).
+#
+# Usage :
+#   cd mobile && npm run maestro:screenshots
+#
+# Tailles attendues post-capture (sharp resize si nécessaire) :
+#   - iPhone 6.7" : 1290 × 2796
+#   - iPhone 5.5" : 1242 × 2208
+#   - iPad 12.9" : 2048 × 2732
+#   - Android (Pixel 7) : 1080 × 2400
+#
+# Pour générer toutes les tailles, lancer ce flow sur chaque sim/device.
+appId: dev.purama.yana
+tags:
+  - screenshots
+---
+- launchApp:
+    clearState: false
+    permissions:
+      location: allow
+- runFlow: ../flow-helpers/login-if-needed.yaml
+# Screenshot 1 — Dashboard (page d'accueil de l'app)
+- tapOn:
+    id: "tab-dashboard"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 01-dashboard
+
+# Screenshot 2 — Drive idle (sélection véhicule)
+- tapOn:
+    id: "tab-drive"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 02-drive-idle
+
+# Screenshot 3 — Drive active (avec stats live mockées via 2s d'attente)
+- runFlow:
+    when:
+      visible:
+        id: "drive-start"
+    commands:
+      - tapOn:
+          id: "drive-start"
+      - waitForAnimationToEnd:
+          timeout: 12000
+      - takeScreenshot: 03-drive-active
+      - tapOn:
+          id: "drive-cancel"
+      - tapOn:
+          text: "Annuler"
+
+# Screenshot 4 — Moto Mode (3 boutons XXL)
+- runFlow:
+    when:
+      visible:
+        id: "drive-moto-mode"
+    commands:
+      - tapOn:
+          id: "drive-moto-mode"
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - takeScreenshot: 04-moto-mode
+      - tapOn:
+          id: "moto-exit"
+
+# Screenshot 5 — Wallet (balance + historique)
+- tapOn:
+    id: "tab-wallet"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 05-wallet
