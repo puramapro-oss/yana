@@ -1066,7 +1066,88 @@ IN_PROGRESS  🟡  (cloud build en cours, 15-30 min)
 ### ⏭️ P7.D — Quand reprendre la suite (sessions futures)
 
 - **Session 17** : post Apple Dev validation → `eas build --profile production --platform ios` + Apple Team ID dans eas.json + remplace placeholder apple-app-site-association + redeploy Vercel + curl verify + Apple Review submission (TestFlight d'abord, puis App Store).
-- **Session 18** : post crédits Anthropic + Maestro local installed → re-run i18n script (16+17 langues réelles) + capture screenshots Pixel 7 + EAS submit Android (post Tissma actions 3-5) + listings Play Console.
+- **Session 18** : capture screenshots Pixel 7 (post 1er APK installé) + EAS submit Android (post Tissma actions 3-5) + listings Play Console.
+
+---
+
+## SESSION 17 — 2026-04-25 — Re-traduction stores Haiku (post recharge crédits)
+
+**Pré-requisite résolu** : Tissma a rechargé crédits Anthropic + nouvelle clé `sk-ant-api03-sBhQmpN…` rotée.
+
+**Actions exécutées** :
+1. Vérif clé `.env.local` ↔ Vercel prod : déjà à jour mais pull a révélé un `\n` parasite à la fin de la valeur Vercel (Production+Development). Re-add propre (`printf '%s'` sans newline). Verify via `od -c` post-pull = clean. (Preview pas re-add — non-critique.)
+2. Suppression des 29 entries `_fallback` de `mobile/store.config.json` (script idempotent skip si déjà présent → besoin de delete avant re-run).
+3. Lancement `node scripts/i18n-store-translate.mjs` → **29/29 OK** (Apple 14/14, Android 15/15) en 2 batches Haiku parallèles ×3.
+4. Spot-check qualité : ja/ar-SA/ar-MENA tous natifs, 0 anglais résiduel, 0 troncature `_fallback`.
+5. Commit `46d4f19` + push → Vercel redeploy `vercel --prod` → 200 sur `/`, `/.well-known/apple-app-site-association`, `/.well-known/assetlinks.json`.
+
+**État après session 17** :
+- Stores config 100% multilingue (16 Apple locales + 17 Android locales, 0 fallback)
+- Web prod redéployée `dpl_BeLvqqLunFruuWaWeaVoxgWGhmnB` (yana-xopzuvlwb-puramapro-oss-projects.vercel.app → yana.purama.dev)
+- Universal links iOS toujours bloqués sur Apple Team ID (placeholder `TO_FILL_AFTER_EAS_BUILD_P7C`)
+
+### ⏭️ POST-SASU — Actions à faire (Tissma + Claude session future)
+
+#### 🟢 Côté Tissma (manuel, hors Claude)
+1. **Création SASU PURAMA Mobility (BPI/banque/CFE)** — incorporation effective + KBIS reçu
+2. **Apple Developer Program** — nécessite KBIS pour Apple D-U-N-S Number (sinon possible en compte personnel mais sub-optimal)
+   - Lien : https://developer.apple.com/programs/enroll/
+   - Coût : 99 USD / an
+   - Délai validation : 24-48h une fois KBIS reçu
+   - **Récupérer** : Apple Team ID (10 chars, ex `9Y8N2LCW8R`) + créer app YANA dans App Store Connect (https://appstoreconnect.apple.com/apps) → noter `ascAppId` (10 digits depuis URL)
+3. **Google Play Developer Account** — 25 USD one-time, validation immédiate
+   - Suivre `mobile/.eas/SUBMIT_ANDROID_TODO.md` + `GOOGLE_PLAY_SETUP.md` sections 1-2
+   - Créer service account `eas-submit-yana` dans Google Cloud → JSON → placer en `mobile/google-service-account.json` (gitignored)
+4. **Installer Maestro CLI localement** (Tissma uniquement, pour screenshots) :
+   ```bash
+   curl -Ls "https://get.maestro.mobile.dev" | bash
+   ```
+
+#### 🟡 Côté Claude (session 18 — déclenchée quand Tissma a Team ID + ascAppId + KBIS visible)
+1. **Re-add submit.production.ios dans `mobile/eas.json`** :
+   ```json
+   "ios": {
+     "appleId": "matiss.frasne@gmail.com",
+     "ascAppId": "<10 digits>",
+     "appleTeamId": "<10 chars>"
+   }
+   ```
+2. **Remplacer placeholder Team ID dans `public/.well-known/apple-app-site-association`** :
+   ```bash
+   sed -i '' 's|TO_FILL_AFTER_EAS_BUILD_P7C|<TEAM_ID>|' \
+     public/.well-known/apple-app-site-association
+   ```
+3. **Mettre à jour `.env.local` ligne `APPLE_TEAM_ID`** (placeholder `___à_remplir___`)
+4. **EAS build iOS production** :
+   ```bash
+   cd mobile && source ../.env.local && export EXPO_TOKEN
+   npx eas build --profile production --platform ios --non-interactive
+   ```
+5. **Commit + push + redeploy Vercel** pour propager apple-app-site-association
+6. **Curl verify** : `curl -s https://yana.purama.dev/.well-known/apple-app-site-association | jq '.applinks.details[0].appID'` → doit retourner `<TEAM_ID>.dev.purama.yana`
+7. **EAS submit iOS** : `npx eas submit --profile production --platform ios --non-interactive` → upload TestFlight
+8. **EAS submit Android** : `npx eas submit --profile production --platform android --non-interactive` (post placement google-service-account.json)
+9. **Capture screenshots** post-1er build APK installé sur Pixel 7 émulateur : `cd mobile && npm run maestro:screenshots`
+10. **Listings stores** :
+    - App Store Connect → upload screenshots 6.7" (1290×2796) + 5.5" (1242×2208) + 12.9" iPad (2048×2732)
+    - Play Console → upload screenshots Pixel 7 (1080×2400) + tablet
+    - `eas metadata:push --platform=ios` (push 14 langues stores listing depuis `mobile/store.config.json`)
+    - `eas metadata:push --platform=android` (push 15 langues)
+
+### 🧠 LEÇONS SESSION 17
+
+| Date | App | Leçon | Impact |
+|---|---|---|---|
+| 2026-04-25 | YANA | **Vercel `vercel env add` accepte un trailing newline** quand on pipe depuis stdin avec `echo` (ajoute `\n`). Utiliser `printf '%s'` ou `echo -n`. Symptôme : valeur encrypted look-OK mais HTTP signing fail aléatoirement. Fix : `vercel env rm` puis `printf '%s' "$KEY" \| vercel env add VAR env --token`. Verify : `vercel env pull tmp && od -c tmp \| tail -3` doit montrer la valeur suivie immédiatement de `"` puis `\n` (séparateur de fichier .env), PAS `\n"`. | Pattern env propagation propre |
+| 2026-04-25 | YANA | **Script i18n idempotent** : skip silencieusement si locale déjà présente dans store.config.json. Pour forcer re-traduction post-recharge crédits (cas où run précédent a injecté des fallbacks), supprimer les locales avec `_fallback` marker AVANT de relancer (Node one-liner : `JSON.parse + filter + writeFileSync`). | Pattern delete-before-retranslate |
+| 2026-04-25 | YANA | **Haiku 4.5 batch ×3 parallèle = ~30s pour 29 traductions** stores complets (~3000 tokens chacun). Coût réel observé : sub-$0.50 USD pour Apple+Android complet. Bien dimensionné pour P7.E future apps Purama. | Pattern budget i18n stores |
+
+**Commits session 17** : `46d4f19` (re-traduction 29 locales).
+
+**Deploy** : `dpl_BeLvqqLunFruuWaWeaVoxgWGhmnB` → https://yana.purama.dev (HTTP 200).
+
+**Pour reprendre après /clear (session 18 post-SASU)** → relance :
+> "Lis progress.md session 17. SASU PURAMA Mobility incorporée ✅. Apple Team ID = `XXXXXXXXXX`, ascAppId = `YYYYYYYYYY`. Google Play account créé + service account JSON copié dans mobile/google-service-account.json. Reprends P7.D : re-add submit.production.ios dans eas.json + sed Team ID dans apple-app-site-association + redeploy Vercel + EAS build production iOS + EAS submit iOS+Android + verify curl. Pas de screenshots cette session (Maestro local + APK device, à ma charge)."
 
 ### 📊 BILAN P7 COMPLET (A + B + C)
 
