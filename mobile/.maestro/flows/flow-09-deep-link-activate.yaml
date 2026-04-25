@@ -1,0 +1,26 @@
+# Flow 09 — Deep link yana://activate (retour Stripe)
+# Couvre : openLink yana://activate?session_id=test_123 → DeepLinkListener
+# route vers /(tabs)/wallet + Alert "Abonnement activé 🎉".
+#
+# Compte test : doit être loggé (sinon AuthGate redirige vers login et le
+# deep link est consommé sans effet). On force le login d'abord.
+appId: dev.purama.yana
+tags:
+  - deep-link
+  - stripe-return
+---
+- launchApp:
+    clearState: false
+- runFlow: ../flow-helpers/login-if-needed.yaml
+- assertVisible:
+    id: "tab-dashboard"
+- openLink: "yana://activate?session_id=cs_test_maestro_123"
+# DeepLinkListener route → wallet tab + Alert
+- assertVisible:
+    text: "Abonnement activé"
+    timeout: 8000
+- tapOn:
+    text: "OK"
+- assertVisible: "Wallet"
+- assertVisible:
+    text: ".*€.*"

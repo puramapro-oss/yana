@@ -1,0 +1,37 @@
+# Flow 10 — Profil : toggle no-phone + signout → retour login
+# Couvre : tab Profile → toggle profile-no-phone-toggle ON puis OFF →
+# bouton profile-signout → confirm dialog → retour écran login.
+appId: dev.purama.yana
+tags:
+  - profile
+  - signout
+---
+- launchApp:
+    clearState: false
+- runFlow: ../flow-helpers/login-if-needed.yaml
+- tapOn:
+    id: "tab-profile"
+- assertVisible: "Profil"
+# Toggle ON → potentiellement Alert si auth FamilyControls refusée → tap OK
+- tapOn:
+    id: "profile-no-phone-toggle"
+- runFlow:
+    when:
+      visible:
+        text: "Autorisation refusée"
+    commands:
+      - tapOn:
+          text: "OK"
+# Toggle OFF (revert pour ne pas laisser le watcher actif sur compte test)
+- tapOn:
+    id: "profile-no-phone-toggle"
+- tapOn:
+    id: "profile-signout"
+# Confirm dialog "Se déconnecter ?"
+- assertVisible: "Se déconnecter"
+- tapOn:
+    text: "Déconnexion"
+# Retour à login
+- assertVisible:
+    id: "login-email"
+    timeout: 10000

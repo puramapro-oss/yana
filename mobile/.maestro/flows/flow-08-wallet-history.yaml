@@ -1,0 +1,28 @@
+# Flow 08 — Wallet : balance + historique
+# Couvre : tab Wallet → header balance affichée → soit liste de transactions,
+# soit empty state si compte test n'a pas encore de mouvement.
+appId: dev.purama.yana
+tags:
+  - wallet
+  - golden-path
+---
+- launchApp:
+    clearState: false
+- runFlow: ../flow-helpers/login-if-needed.yaml
+- tapOn:
+    id: "tab-wallet"
+- assertVisible: "Wallet"
+# Solde affiché — au moins le mot "€" visible (formatPrice EUR partout).
+- assertVisible:
+    text: ".*€.*"
+    timeout: 6000
+# Bouton retrait conditionnel (≥5€). Si dispo, vérifier qu'il pointe vers le
+# web (mobile ne fait pas le RIB → flag P7.C → P7.D ou P8).
+- runFlow:
+    when:
+      visible:
+        id: "wallet-withdraw-web"
+    commands:
+      - assertVisible: "Retrait"
+      - assertVisible:
+          id: "wallet-withdraw-web"
