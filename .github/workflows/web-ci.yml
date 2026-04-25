@@ -1,0 +1,50 @@
+name: Web CI
+
+# Vérifie le site Next.js (yana.purama.dev) sur PR + push main.
+# Ne touche PAS mobile/ — l'autre workflow s'en charge.
+
+on:
+  pull_request:
+    paths-ignore:
+      - "mobile/**"
+      - "GOOGLE_PLAY_SETUP.md"
+      - "README.md"
+      - "**.md"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "mobile/**"
+      - "GOOGLE_PLAY_SETUP.md"
+
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tsc-and-build:
+    name: TypeScript + Next build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci --legacy-peer-deps
+
+      - name: TypeScript strict
+        run: npx tsc --noEmit
+
+      - name: Next build
+        run: npm run build
+        env:
+          # Variables minimales pour build statique. Pas de secret prod ici.
+          NEXT_PUBLIC_SUPABASE_URL: https://auth.purama.dev
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy_for_build_only
+          NEXT_PUBLIC_APP_URL: https://yana.purama.dev

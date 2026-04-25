@@ -1,0 +1,93 @@
+# YANA — EAS Workflow full-deploy
+# https://docs.expo.dev/eas/workflows/get-started/
+#
+# Trigger : push sur main avec changement dans mobile/**
+# Pipeline : tsc → expo doctor → build iOS preview + Android preview
+#            (parallèle) → submit manuel.
+#
+# Secrets requis dans EAS Workflows :
+#  - EXPO_TOKEN (déjà dans .env.local + EAS_BUILD env)
+#
+# Pour activer ce workflow :
+#   1. `eas init` (1×) → projectId écrit dans mobile/app.json
+#   2. `eas workflow run full-deploy` (run manuel pour valider)
+#   3. push branch → trigger auto.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "mobile/**"
+      - ".eas/workflows/**"
+
+jobs:
+  fingerprint:
+    name: Fingerprint
+    type: fingerprint
+    runs_on: linux-medium
+    inputs:
+      working_directory: mobile
+
+  test:
+    name: Lint + tsc + Maestro YAML lint
+    needs: [fingerprint]
+    runs_on: linux-medium
+    steps:
+      - name: Install
+        run: |
+          cd mobile
+          npm ci --legacy-peer-deps
+      - name: TypeScript strict
+        run: |
+          cd mobile
+          npx tsc --noEmit
+      - name: Maestro YAML lint
+        run: |
+          cd mobile
+          npm run maestro:lint
+      - name: Expo doctor
+        run: |
+          cd mobile
+          npx expo-doctor
+
+  build_ios:
+    name: Build iOS preview
+    needs: [test]
+    type: build
+    params:
+      platform: ios
+      profile: preview
+    inputs:
+      working_directory: mobile
+
+  build_android:
+    name: Build Android preview
+    needs: [test]
+    type: build
+    params:
+      platform: android
+      profile: preview
+    inputs:
+      working_directory: mobile
+
+  submit_android:
+    name: Submit Android internal
+    needs: [build_android]
+    type: submit
+    params:
+      profile: production
+      platform: android
+    inputs:
+      working_directory: mobile
+    if: github.event_name == 'workflow_dispatch'
+
+  submit_ios:
+    name: Submit iOS TestFlight
+    needs: [build_ios]
+    type: submit
+    params:
+      profile: production
+      platform: ios
+    inputs:
+      working_directory: mobile
+    if: github.event_name == 'workflow_dispatch'
