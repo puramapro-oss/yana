@@ -1,0 +1,42 @@
+# Flow 05 — Annuler un trajet en cours
+# Couvre : start trip → cancel via dialog confirm → retour idle (sélecteur véhicule visible)
+appId: dev.purama.yana
+tags:
+  - drive
+  - cancel
+---
+- launchApp:
+    clearState: false
+    permissions:
+      location: allow
+- runFlow: ../flow-helpers/login-if-needed.yaml
+- tapOn:
+    id: "tab-drive"
+- runFlow:
+    when:
+      visible:
+        id: "drive-add-vehicle"
+    commands:
+      - stopApp
+      - launchApp
+- runFlow:
+    when:
+      visible:
+        id: "drive-start"
+    commands:
+      - tapOn:
+          id: "drive-start"
+      - assertVisible:
+          id: "drive-distance"
+          timeout: 12000
+- tapOn:
+    id: "drive-cancel"
+# Confirm dialog "Annuler ce trajet ?"
+- assertVisible:
+    text: "Annuler ce trajet"
+- tapOn:
+    text: "Annuler"
+# Retour à l'écran idle — drive-start visible à nouveau.
+- assertVisible:
+    id: "drive-start"
+    timeout: 8000

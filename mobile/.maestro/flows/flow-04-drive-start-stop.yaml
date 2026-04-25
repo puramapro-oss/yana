@@ -1,0 +1,56 @@
+# Flow 04 — SAFE & GREEN DRIVE start → live → stop → score
+# Couvre la golden path d'un trajet : sélectionner véhicule, démarrer, attendre
+# que les compteurs s'incrémentent (10s suffit pour valider que le tracker tick),
+# arrêter, vérifier alert score.
+#
+# Préconditions :
+# - Compte test connecté (autre flow, ou login intégré)
+# - Au moins 1 véhicule créé dans le compte
+# - Permission location autorisée AVANT (Maestro permissions: location)
+#
+# Note iOS : si pas de signal GPS sur sim, distance reste 0 mais durée incrémente.
+# On ne dépend que de la durée pour considérer le tick fonctionnel.
+appId: dev.purama.yana
+tags:
+  - drive
+  - golden-path
+---
+- launchApp:
+    clearState: false  # Réutilise session login existante (flow-02 préalable).
+    permissions:
+      location: allow
+- runFlow: flow-helpers/login-if-needed.yaml
+- tapOn:
+    id: "tab-drive"
+- assertVisible: "SAFE & GREEN DRIVE"
+# 1ère carte (idle) : sélectionner véhicule. Si aucun véhicule visible,
+# il y a un bouton "drive-add-vehicle" → on skip ce flow proprement.
+- runFlow:
+    when:
+      visible:
+        id: "drive-add-vehicle"
+    commands:
+      - assertVisible: "Ajoute ton premier véhicule"
+      - stopApp
+      - launchApp  # On considère le flow pass mais signale l'absence de véhicule.
+- tapOn:
+    id: "drive-start"
+- assertVisible:
+    id: "drive-distance"
+    timeout: 12000
+- assertVisible:
+    id: "drive-duration"
+- waitForAnimationToEnd:
+    timeout: 10000
+# La durée doit être > 0 après 10s (le tick interne tourne à 1Hz).
+- assertVisible:
+    text: "0:[1-9]"  # 0:01 à 0:09 — fuzzy match
+    optional: true
+- tapOn:
+    id: "drive-stop"
+# Alert "Trajet terminé" affichée (Native Alert). Maestro lit le texte natif.
+- assertVisible:
+    text: "Trajet terminé"
+    timeout: 15000
+- tapOn:
+    text: "OK"

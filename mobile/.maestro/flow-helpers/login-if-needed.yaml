@@ -1,0 +1,21 @@
+# Helper inclus par d'autres flows : login si pas de session active.
+# Détection : si tab-dashboard visible, on est déjà loggé → no-op.
+# Sinon : remplit le form login avec MAESTRO_USERNAME/PASSWORD.
+appId: dev.purama.yana
+---
+- runFlow:
+    when:
+      visible:
+        id: "login-email"
+    commands:
+      - tapOn:
+          id: "login-email"
+      - inputText: ${MAESTRO_USERNAME}
+      - tapOn:
+          id: "login-password"
+      - inputText: ${MAESTRO_PASSWORD}
+      - tapOn:
+          id: "login-submit"
+      - assertVisible:
+          id: "tab-dashboard"
+          timeout: 15000
