@@ -1,0 +1,29 @@
+# Flow 02 — Login email valide
+# Couvre : (auth)/login → form → submit → tabs visibles
+# Compte test : MAESTRO_USERNAME / MAESTRO_PASSWORD (cf. .maestro/README.md).
+appId: dev.purama.yana
+tags:
+  - auth
+  - login
+  - golden-path
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- assertVisible:
+    id: "login-email"
+- inputText: ${MAESTRO_USERNAME}
+- tapOn:
+    id: "login-password"
+- inputText: ${MAESTRO_PASSWORD}
+- tapOn:
+    id: "login-submit"
+# Tabs visibles = login OK
+- assertVisible:
+    id: "tab-dashboard"
+    timeout: 15000
+- assertVisible:
+    id: "tab-drive"
+- assertVisible:
+    id: "tab-wallet"

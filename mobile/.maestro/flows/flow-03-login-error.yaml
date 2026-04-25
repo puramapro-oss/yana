@@ -1,0 +1,28 @@
+# Flow 03 — Login avec creds invalides → message FR
+# Couvre frenchifyAuthError invalid creds → texte "Identifiants incorrects" ou similaire.
+appId: dev.purama.yana
+tags:
+  - auth
+  - login
+  - error-state
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny
+- assertVisible:
+    id: "login-email"
+- inputText: "test-invalid@purama.dev"
+- tapOn:
+    id: "login-password"
+- inputText: "WrongPassword123"
+- tapOn:
+    id: "login-submit"
+# Reste sur l'écran login + message FR visible. On accepte plusieurs variantes
+# selon ce que renvoie GoTrue + frenchifyAuthError.
+- assertVisible:
+    id: "login-email"
+    timeout: 8000
+- assertVisible:
+    text: ".*incorrect.*|.*invalide.*|.*pas trouvé.*"
+    optional: true

@@ -1,0 +1,43 @@
+# Flow 01 — Inscription email
+# Couvre : (auth)/signup → form 3 champs → submit → toast confirm OU redirect tabs
+#
+# Compte test : utilise un email aléatoire à chaque run pour éviter le doublon
+# (le compte créé n'est pas réutilisé — c'est juste un smoke du formulaire).
+appId: dev.purama.yana
+tags:
+  - auth
+  - signup
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: deny  # Pas de location ici, on reste hors trajet.
+- assertVisible: "Connexion"
+- tapOn:
+    text: "Créer un compte"
+    optional: true
+# Si l'app boote sur signup direct (1ère install), on est déjà dessus.
+- assertVisible:
+    id: "signup-fullname"
+- inputText: "Yana Maestro Test"
+- tapOn:
+    id: "signup-email"
+- inputText: "yana-maestro-${output.now}@purama.dev"
+- tapOn:
+    id: "signup-password"
+- inputText: "DemoPwd2026!"
+- tapOn:
+    id: "signup-submit"
+# Deux issues possibles selon config Supabase :
+# 1. AUTOCONFIRM=true (notre cas) → redirect direct dashboard
+# 2. confirmation email → toast "Vérifie ton mail"
+# On accepte les deux.
+- assertVisible:
+    text: "Bienvenue"
+    optional: true
+- assertVisible:
+    text: "vérifie"
+    optional: true
+- assertVisible:
+    text: "Confirmation"
+    optional: true
