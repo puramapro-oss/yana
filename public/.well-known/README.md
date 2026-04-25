@@ -11,12 +11,44 @@ Consommé par iOS dès que l'app est installée. Apple télécharge ce fichier
 depuis `https://yana.purama.dev/.well-known/apple-app-site-association` lors
 de la première ouverture de l'app et chaque mise à jour.
 
-**À finaliser en P7.C** : remplacer `TO_FILL_AFTER_EAS_BUILD_P7C` par le
-**Apple Team ID** (10 caractères, ex: `9Y8N2LCW8R`). Le Team ID est visible
-dans App Store Connect → *Membership* → *Team ID*.
+## ⏳ EN ATTENTE — Apple Team ID (à compléter par Tissma)
 
-Après le premier `eas build --profile production --platform ios`, le Team ID
-est affiché dans les logs de build et dans `eas.json` une fois configuré.
+Tissma a souscrit l'Apple Developer Program (validation 24-48h).
+Une fois le compte actif :
+
+```bash
+# 1. Créer / récupérer le Team ID
+#    App Store Connect → Membership → Team ID (10 chars, ex: 9Y8N2LCW8R)
+
+# 2. Ré-ajouter le bloc submit.production.ios dans mobile/eas.json :
+#    {
+#      "submit": {
+#        "production": {
+#          "ios": {
+#            "appleId": "matiss.frasne@gmail.com",
+#            "ascAppId": "<App Store Connect ID, depuis App Store Connect → Apps → YANA>",
+#            "appleTeamId": "<Team ID 10 chars>"
+#          },
+#          "android": { ... }
+#        }
+#      }
+#    }
+
+# 3. Remplacer le placeholder dans apple-app-site-association :
+sed -i '' 's|TO_FILL_AFTER_EAS_BUILD_P7C|<TEAM_ID>|' \
+  public/.well-known/apple-app-site-association
+
+# 4. Commit + push + redeploy Vercel :
+git add mobile/eas.json public/.well-known/apple-app-site-association
+git commit -m "fix(yana): P7.C iOS Team ID + apple-app-site-association final"
+git push origin main
+source .env.local && vercel --prod --token "$VERCEL_TOKEN" --yes
+
+# 5. Test final :
+curl -s https://yana.purama.dev/.well-known/apple-app-site-association | \
+  jq '.applinks.details[0].appID'
+# Doit retourner "<TEAM_ID>.dev.purama.yana" — pas le placeholder.
+```
 
 Test de validité :
 ```bash
@@ -29,18 +61,27 @@ Consommé par Android dès que l'app déclare `android:autoVerify="true"` dans
 son intent filter (c'est notre cas, cf. `mobile/app.json`). Android 12+ vérifie
 automatiquement la correspondance au premier lancement.
 
-**À finaliser en P7.C** : remplacer le fingerprint par le
-**SHA-256 de la Play Upload Key**. Récupérable via :
+**SHA-256 active** (P7.C.5.3, 2026-04-25) :
+`EA:D0:30:C3:D8:66:76:BA:2C:64:1F:6E:57:96:BB:C8:8A:FC:1E:B6:3A:08:FC:5A:87:9A:4D:06:9D:AF:F5:60`
+
+C'est la **Upload Key EAS** (Build Credentials 2_vAHRB4W_ par défaut). Tant
+que l'app n'est pas uploadée sur Play Console + Play App Signing activé,
+cette même clé sert pour le sideload (APK preview). Une fois Play prend la
+main sur la signing key (post 1er upload), il faudra ajouter une **2ème
+SHA-256** dans le tableau `sha256_cert_fingerprints` (Play génère sa propre
+release key, distincte de la upload key — les 2 doivent être présentes).
+
+Récupération de la 2ème SHA-256 (post upload Play) :
 ```bash
-keytool -list -v -keystore ~/.android/debug.keystore   # pour tests locaux
-# ou via Play Console → Setup → App signing → App signing key certificate
+# Via Play Console
+# Setup → App signing → App signing key certificate → SHA-256
+
+# OU via EAS
+cd mobile && npx eas credentials --platform android
+# Choisir "App-specific credentials" → "Show all credentials"
 ```
 
-Astuce : pour Expo + EAS, après le 1er build Android, récupérer via :
-```bash
-eas credentials --platform android
-# Puis copier le "SHA-256 Fingerprint of app signing certificate"
-```
+Format attendu : 32 paires hex séparées par `:`, en MAJUSCULES.
 
 ## Rôle côté app mobile
 
