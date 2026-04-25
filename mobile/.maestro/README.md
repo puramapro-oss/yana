@@ -15,6 +15,16 @@ maestro --version  # ≥ 1.40
 # Android : nécessite Android Studio + emulator OU device USB en mode debug
 ```
 
+## Lint syntaxique (pas besoin de Maestro CLI)
+
+```bash
+cd mobile
+npm run maestro:lint
+# → vérifie chaque .yaml parsable + collecte testIDs absents du code
+```
+
+CI peut lancer ce lint sans installer Maestro (zéro Java requis).
+
 ## Lancer les flows
 
 ```bash
@@ -73,3 +83,14 @@ Tailles requises (Apple Connect / Play Console) :
 
 Les flows tournent **localement avant chaque release** par Tissma. Maestro Cloud
 (payant) est une option future — non requis pour les premiers builds EAS.
+
+## Smoke checklist post-P7.C (Tissma — 1× après EAS build)
+
+Lors du 1er EAS dev build sur device physique :
+
+- [ ] Installer Maestro : `curl -Ls "https://get.maestro.mobile.dev" | bash`
+- [ ] Vérifier Java : `java -version` (Java 11+ requis)
+- [ ] Booter sim iOS ou device USB Android
+- [ ] `cd mobile && npm run maestro:test` (run all 10 flows)
+- [ ] Si flow échoue : capturer logs + screenshot + ouvrir issue avec tag `maestro`
+- [ ] Si tous OK : commit le rapport + commenter sur dernier commit P7.C
