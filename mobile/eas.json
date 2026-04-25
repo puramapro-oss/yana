@@ -53,11 +53,6 @@
   },
   "submit": {
     "production": {
-      "ios": {
-        "appleId": "matiss.frasne@gmail.com",
-        "ascAppId": "",
-        "appleTeamId": ""
-      },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
         "track": "internal",
@@ -66,3 +61,4 @@
     }
   }
 }
+

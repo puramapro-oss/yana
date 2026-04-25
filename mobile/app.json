@@ -59,7 +59,12 @@
         "WRITE_EXTERNAL_STORAGE",
         "POST_NOTIFICATIONS",
         "WAKE_LOCK",
-        "VIBRATE"
+        "VIBRATE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ],
       "intentFilters": [
         {
@@ -120,10 +125,11 @@
       "appSlug": "yana",
       "webUrl": "https://yana.purama.dev",
       "eas": {
-        "projectId": ""
-      }
+        "projectId": "f72307e6-4567-4b5f-940e-f4ec65345408"
+      },
+      "router": {}
     },
-    "owner": "puramapro-oss",
+    "owner": "purama",
     "updates": {
       "url": "https://u.expo.dev/"
     },
