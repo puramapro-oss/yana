@@ -1,0 +1,21 @@
+# YANA — Maestro config racine
+# https://maestro.mobile.dev
+#
+# `appId` doit matcher mobile/app.json `bundleIdentifier` (iOS) +
+# `android.package` (Android) → tous les deux à `dev.purama.yana`.
+#
+# Maestro résout les flows via l'argument du `maestro test` (file ou répertoire).
+# Pour exécuter : `npm run maestro:test` (cf. mobile/package.json).
+appId: dev.purama.yana
+
+# Tags par défaut sur tous les flows (filtrables via maestro --include-tags).
+tags:
+  - yana
+  - p7c
+
+# Variables injectées dans tous les flows (overridables via --env KEY=VALUE).
+# Les comptes test sont fournis par CI ou par .env.local sans être commit.
+env:
+  USERNAME: ${MAESTRO_USERNAME:-yana-maestro@purama.dev}
+  PASSWORD: ${MAESTRO_PASSWORD:-DemoPwd2026!}
+  TEST_VEHICLE_NAME: "Tesla Model 3 (principal)"
