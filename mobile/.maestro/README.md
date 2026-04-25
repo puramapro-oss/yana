@@ -84,6 +84,31 @@ Tailles requises (Apple Connect / Play Console) :
 Les flows tournent **localement avant chaque release** par Tissma. Maestro Cloud
 (payant) est une option future — non requis pour les premiers builds EAS.
 
+## i18n re-translate (Tissma — quand crédits Anthropic dispo)
+
+Le 1er run `node scripts/i18n-store-translate.mjs` (P7.C.2.3, 2026-04-25) a
+échoué avec `HTTP 401 invalid x-api-key` sur la clé `.env.local` puis
+`credit balance is too low` sur la clé globale CLAUDE.md → 14 locales Apple
++ 15 locales Android sont en **fallback EN** (marker `_fallback` dans
+chaque entrée du `mobile/store.config.json`).
+
+Pour re-traduire correctement :
+```bash
+# 1. Renouveler ANTHROPIC_API_KEY dans .env.local (key avec crédits)
+# 2. Vider les fallbacks pour forcer la re-traduction
+node -e "
+const fs = require('fs')
+const c = JSON.parse(fs.readFileSync('mobile/store.config.json'))
+for (const k of Object.keys(c.apple.info)) if (c.apple.info[k]._fallback) delete c.apple.info[k]
+for (const k of Object.keys(c.android.info)) if (c.android.info[k]._fallback) delete c.android.info[k]
+fs.writeFileSync('mobile/store.config.json', JSON.stringify(c, null, 2) + '\n')
+"
+# 3. Re-run le script (idempotent — il skip fr-FR/en-US déjà figés)
+node scripts/i18n-store-translate.mjs
+# 4. Vérifier qu'aucun _fallback ne reste
+grep -c "_fallback" mobile/store.config.json  # doit retourner 0
+```
+
 ## Smoke checklist post-P7.C (Tissma — 1× après EAS build)
 
 Lors du 1er EAS dev build sur device physique :

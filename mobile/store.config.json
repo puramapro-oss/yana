@@ -22,6 +22,160 @@
         "supportUrl": "https://yana.purama.dev/aide",
         "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
         "promotionalText": "Every trip is a chance to rest, depollute, connect."
+      },
+      "es-ES": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgDskKL49xCauNaKwz\"}"
+      },
+      "de-DE": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgDywTBgLC3FjHy44J\"}"
+      },
+      "it": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgEceTtS1RpqBNYjNo\"}"
+      },
+      "pt-PT": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgVyNUoLZFVS2vLMMc\"}"
+      },
+      "ar-SA": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgW45m3FNMSWzWR7qY\"}"
+      },
+      "zh-Hans": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgWRf7ViSncQztPdBf\"}"
+      },
+      "ja": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgpXajcKvDKdCFZAd1\"}"
+      },
+      "ko": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgnCRy6CV4NneqGQF1\"}"
+      },
+      "hi": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDgnKd879mQtssHDmLo\"}"
+      },
+      "ru": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDh6N5myEYQQpMtfLr4\"}"
+      },
+      "tr": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDh5ks7aLLSf5RPWJqP\"}"
+      },
+      "nl-NL": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDh5zWSmo2xppDgHK3V\"}"
+      },
+      "pl": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDhQM4VeJXcsR2WjX1L\"}"
+      },
+      "sv": {
+        "title": "YANA · Mobility Wellness",
+        "subtitle": "Drive mindfully, earn",
+        "description": "YANA turns every trip into a moment of well-being. The app tracks your driving (safety + eco-driving) using GPS, accelerometer and gyroscope, returns a SAFE & GREEN score at the end of each trip, and plants real trees for the CO₂ you avoided.\n\nNAMA-PILOTE, your kind copilot, reads your sleep and heart-rate variability (with your consent) to suggest you rest when your body sends fatigue signals. Moto Mode gives you 3 XXL commands, voice + haptic, made for helmet-and-gloves riders.\n\nYou can also offer carpool rides to your neighbors, follow your wallet and trip history, or enable the No-Phone-While-Driving mode which gently reminds you to put your phone down.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community. Keep the journey 🌱",
+        "keywords": "driving, eco-driving, carpool, fatigue, mobility, journey, car, motorbike, ecology",
+        "marketingUrl": "https://yana.purama.dev",
+        "supportUrl": "https://yana.purama.dev/aide",
+        "privacyPolicyUrl": "https://yana.purama.dev/politique-confidentialite",
+        "promotionalText": "Every trip is a chance to rest, depollute, connect.",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDhMkY8Wv2qsttfD3Wr\"}"
       }
     },
     "categories": [
@@ -75,6 +229,111 @@
         "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
         "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
         "video": ""
+      },
+      "es-ES": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDhgWerYfk52SjV2o3N\"}"
+      },
+      "de-DE": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDhgUvAMYX6mQcRuNGK\"}"
+      },
+      "it-IT": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDhhXBN1DRtEMxYZoFu\"}"
+      },
+      "pt-PT": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDhy83AZqkK8h3ZF1yn\"}"
+      },
+      "ar": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDhyGUBuAewmAYT8GNe\"}"
+      },
+      "zh-CN": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDhy8HeHrWKDEqZ62sy\"}"
+      },
+      "ja-JP": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDiEn85nfVDCj37u1aY\"}"
+      },
+      "ko-KR": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDiEtZz7t6oZ1AMJn7c\"}"
+      },
+      "hi-IN": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDiFBS47PFZBSo8XBMQ\"}"
+      },
+      "ru-RU": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDiWbP2xuGRRX3gqoqV\"}"
+      },
+      "tr-TR": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDiWWv8FRan1433C3TS\"}"
+      },
+      "nl-NL": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDiWZ9Qm5Bw6azegbZ2\"}"
+      },
+      "pl-PL": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDipRw9tC15ZRV6WLyJ\"}"
+      },
+      "sv-SE": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDimz64FB1xcSqXgjkJ\"}"
+      },
+      "pt-BR": {
+        "title": "YANA — Mobility Wellness",
+        "shortDescription": "Drive mindfully, earn. SAFE & GREEN score, trees planted.",
+        "fullDescription": "YANA turns every trip into a moment of well-being.\n\n🚗 SAFE & GREEN DRIVE — real-time safety + ecology score via GPS, accelerometer, gyroscope.\n🌱 Tree-Nation — every 10 kg of CO₂ avoided plants a real tree under your name.\n💜 NAMA-PILOTE — your kind copilot reads your sleep and HRV (with your consent) to suggest you rest.\n🛵 Moto Mode — 3 XXL commands, voice + haptics, helmet-and-gloves friendly.\n🤝 Carpool — offer your trips to your neighbors.\n💰 Wallet — track your earnings, withdraw from €5.\n📵 No-Phone-While-Driving — gentle reminder when you open another app during a trip.\n\nYANA belongs to the Purama ecosystem: refined design, privacy respected, kind community.\n\n💎 Premium from €4.99/month at https://yana.purama.dev/subscribe — advanced scores, multipliers, priority withdrawals.\n\nTerms: https://yana.purama.dev/cgu\nPrivacy: https://yana.purama.dev/politique-confidentialite",
+        "video": "",
+        "_fallback": "en-US copy because Haiku failed: HTTP 401: {\"type\":\"error\",\"error\":{\"type\":\"authentication_error\",\"message\":\"invalid x-api-key\"},\"request_id\":\"req_011CaQDinAWHRARtMoSNMEnn\"}"
       }
     }
   }
