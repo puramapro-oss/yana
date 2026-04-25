@@ -17,3 +17,8 @@ docs/
 AKASHA-BRIEF.md
 AGENT-EMAIL-BRIEF.md
 .env.local
+.gitnexus
+
+# Mobile EAS / store credentials
+mobile/google-service-account.json
+mobile/credentials.json
