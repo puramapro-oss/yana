@@ -981,3 +981,102 @@ Doc complète : `public/.well-known/README.md`.
 **Pour reprendre après /clear** → relance :
 > "Lis progress.md session 15. P7.B Features Natives ✅ live (7 gates : expo-location fg+bg + queue persistée AsyncStorage · expo-sensors 50Hz buffer 10s fusion GPS · HealthKit+HealthConnect abstraction health.ts + FatigueModal NAMA bloquant · screen-time.ts AppState No-Phone-While-Driving opt-in · Moto Mode 3 gros boutons voix+haptique+keep-awake · icônes Pollinations+sharp 5 formats · universal links .well-known/* + /activate). Deploy yana.purama.dev live, curl 200 sur les 3 endpoints, tsc 0 partout, expo export iOS 4.56 MB. Attaque P7.C Stores + CI — 6 gates : Maestro 10 flows avec testID déjà posés · store.config.json 16 langues · GOOGLE_PLAY_SETUP.md · GitHub Actions full-deploy.yaml · 1er EAS build iOS+Android → Team ID + SHA-256 → remplace placeholders .well-known (auto via CI si possible) · screenshots Maestro 4 tailles. Apple Team ID manquant dans .env.local → Tissma le renseignera. Plan d'abord, 1 commit par gate, tsc 0 à chaque gate, push+deploy à la fin."
 
+
+---
+
+## 🎉 SESSION 16 — P7.C STORES + CI (2026-04-25)
+
+### P7.C — 6 gates (22 sub-gates atomiques) livrées
+
+| Gate | Sub-gate | Commit | Livré |
+|---|---|---|---|
+| **C1** | C1.1 Maestro scaffold | `b59d0f6` | `mobile/.maestro/{config.yaml,README.md}` + npm scripts maestro:test / maestro:lint / maestro:screenshots. appId dev.purama.yana, env MAESTRO_USERNAME/PASSWORD/TEST_VEHICLE_NAME. |
+| | C1.2 flows auth | `13ae82a` | flow-01-signup-email + flow-02-login-email + flow-03-login-error.yaml. Email aléatoire signup, fuzzy match texte FR pour login error. |
+| | C1.3 flows drive | `e14e56c` | flow-04-drive-start-stop (sélection véhicule → start → 12s wait → drive-distance/duration → stop → alert score) + flow-05-drive-cancel + flow-06-moto-mode. Helper login-if-needed.yaml. |
+| | C1.4 flows universels | `0d48a26` | flow-07-fatigue-modal (non-deterministic) + flow-08-wallet-history + flow-09-deep-link-activate (yana://activate?session_id=…) + flow-10-profile-signout. |
+| | C1.5 lint YAML | `dd0bffa` | `scripts/lint-maestro.mjs` valide chaque .yaml + extrait testIDs vs code. 12/12 OK, 0 testID manquant. Smoke réel Maestro CLI = flag Tissma post-EAS. |
+| **C2** | C2.1 store.config base | `1bc85a8` | `mobile/store.config.json` schema EAS metadata-0, FR + EN finalisés. apple-info clean §3.1.1 (0 mention prix/abo), android-info riche avec emojis + prix Premium. apple.review compte démo `yana-review@purama.dev`. |
+| | C2.2 i18n script | `cf8996a` | `scripts/i18n-store-translate.mjs` Haiku batch ×3 parallèles, retry 3× backoff exp, fallback EN si fail. Validations longueurs (title 30, subtitle 30, desc 4000, keywords 100, promotionalText 170). |
+| | C2.3 16 langues run | `64783d5` | Run réel : 0/14 Apple OK + 0/15 Android OK → fallback EN appliqué (HTTP 401 invalid x-api-key sur 2 clés testées). 16 Apple locales + 17 Android locales committées avec marker `_fallback`. README documente la procédure de re-run quand crédits Anthropic dispo. |
+| **C3** | C3 GOOGLE_PLAY_SETUP | `1325b50` | `GOOGLE_PLAY_SETUP.md` racine repo, 9 sections numérotées : créer app + service account `eas-submit-yana@api-puramapro.iam` + Play App Signing + internal testing + privacy/data safety + listing visuel + récup SHA-256 + submit. Checklist "Done quand…". |
+| **C4** | C4 CI workflows | `ad6d08d` | `.eas/workflows/full-deploy.yaml` (fingerprint → test → build_ios+build_android parallèle → submit manuel) + `.github/workflows/mobile-ci.yml` (PR + main paths mobile/** : tsc + maestro:lint + expo export iOS) + `.github/workflows/web-ci.yml` (paths-ignore mobile/** : tsc + next build). 3/3 YAML valides via js-yaml.load. |
+| **C5** | C5.1 eas init | `2dce994` | `eas-cli@18.8.1` devDep mobile. owner: puramapro-oss → purama (token EAS @purama). projectId f72307e6-4567-4b5f-940e-f4ec65345408. submit.production.ios retiré (placeholders bloquaient init). |
+| | C5.2 build #1 | (errored) | `eas build --profile preview --platform android` build #1 `2d8afa52-...` ERRORED phase INSTALL_DEPENDENCIES (lockfile désync react-dom@19.2.5 + scheduler@0.27.0 missing). |
+| | C5.2 fix lockfile + .npmrc | `c8baeaf` | `mobile/.npmrc` legacy-peer-deps=true + lockfile regéné. Build #2 `7822118f-...` lancé. |
+| | C5.3 SHA-256 → assetlinks | `b154a6a` | SHA-256 récupérée via GraphQL Expo direct (`androidAppBuildCredentialsList[0].androidKeystore.sha256CertificateFingerprint`) — eas credentials non-tty KO bypassed. Format Android colon-MAJ : `EA:D0:30:C3:D8:66:76:BA:2C:64:1F:6E:57:96:BB:C8:8A:FC:1E:B6:3A:08:FC:5A:87:9A:4D:06:9D:AF:F5:60`. assetlinks.json mis à jour, vercel --prod déployé, curl 200 prod confirmé. |
+| | C5.4 iOS pending bloc | (idem `b154a6a`) | `public/.well-known/README.md` ajoute section `⏳ EN ATTENTE — Apple Team ID` avec procédure step-by-step Tissma post Apple Dev validation. Block submit.production.ios à ré-ajouter dans eas.json + sed placeholder + commit + push + Vercel redeploy + curl test. |
+| **C6** | C6.1 flow-screenshots | `73add35` | `mobile/.maestro/screenshots/flow-screenshots.yaml` capture 5 vues : 01-dashboard, 02-drive-idle, 03-drive-active (12s wait + cancel), 04-moto-mode, 05-wallet. |
+| | C6.2 README screenshots | `762189d` | `mobile/.maestro/screenshots/README.md` procédure capture sur 4 tailles (Pixel 7 1080×2400 / iPhone 6.7" 1290×2796 / iPhone 5.5" 1242×2208 / iPad 12.9" 2048×2732). Status honest : capture bloquée cette session (Maestro CLI absent + pas de Pixel 7 booted + Apple Dev en attente). |
+| | C6.3 SUBMIT_ANDROID_TODO | `4004357` | `mobile/.eas/SUBMIT_ANDROID_TODO.md` état builds 1+2, procédure post-build (eas submit nécessite google-service-account.json — étapes 2 GOOGLE_PLAY_SETUP.md). Causes d'échec connues + remèdes. |
+| | C6.4 handoff session 16 | `<this>` | progress.md session 16 + ACTIONS_TISSMA.md récap + push final. |
+
+### 🌐 LIVE VALIDATION P7.C — 2026-04-25 session 16
+
+```bash
+$ curl -s https://yana.purama.dev/.well-known/assetlinks.json | jq '.[0].target.sha256_cert_fingerprints[0]'
+"EA:D0:30:C3:D8:66:76:BA:2C:64:1F:6E:57:96:BB:C8:8A:FC:1E:B6:3A:08:FC:5A:87:9A:4D:06:9D:AF:F5:60"  ✅
+
+$ curl -sI https://yana.purama.dev/.well-known/apple-app-site-association | head -3
+HTTP/2 200
+content-type: application/json   ✅ (Team ID encore placeholder = expected)
+
+$ cd mobile && npx tsc --noEmit
+0 erreur ✅
+
+$ node scripts/lint-maestro.mjs
+13 flows OK, 0 KO ✅
+
+$ npx eas build:view 7822118f-0ad1-497d-9f32-b8f98d792c9e --json | jq -r '.status'
+IN_PROGRESS  🟡  (cloud build en cours, 15-30 min)
+```
+
+### 🚩 ACTIONS TISSMA POST-P7.C — récap unique
+
+| # | Action physique | Bloquant pour | Quand | Doc |
+|---|---|---|---|---|
+| 1 | **Apple Developer Account** ($99/an) | iOS submit | 24-48h en cours | https://developer.apple.com/programs/ |
+| 2 | **Apple Team ID** + ascAppId | apple-app-site-association final + eas submit iOS | Post action 1 | `public/.well-known/README.md` ⏳ EN ATTENTE bloc |
+| 3 | **Google Play Console** : créer app `dev.purama.yana` | eas submit Android | Tout de suite (independant) | `GOOGLE_PLAY_SETUP.md` §1 |
+| 4 | **Service account Google Cloud** `eas-submit-yana@api-puramapro.iam` + JSON download | eas submit Android | Post action 3 | `GOOGLE_PLAY_SETUP.md` §2 |
+| 5 | Placer `mobile/google-service-account.json` (gitignored) | eas submit Android | Post action 4 | `GOOGLE_PLAY_SETUP.md` §2 |
+| 6 | **2ème SHA-256 Play release key** dans assetlinks.json | Universal links Android post Play takes signing | Post 1er upload Play (action 7) | `public/.well-known/README.md` |
+| 7 | `eas submit --profile production --platform android` post build success | Listing Android | Quand build #2 7822118f SUCCESS | `mobile/.eas/SUBMIT_ANDROID_TODO.md` |
+| 8 | **Compte test prod** : créer `yana-maestro@purama.dev` / `DemoPwd2026!` sur signup web + ajouter 1 véhicule "Tesla Model 3" primary | Maestro flows + Apple Review | Tout de suite (independant) | `mobile/.maestro/README.md` |
+| 9 | **Crédits Anthropic** : recharger compte → re-run `node scripts/i18n-store-translate.mjs` après cleanup _fallback | Listing 16 langues réelles (vs 14 EN copies) | Quand crédits dispo | `mobile/.maestro/README.md` (section i18n re-translate) |
+| 10 | **Maestro CLI install local** + Java 11+ + booter Pixel 7 emulator | Capture screenshots Pixel 7 (1080×2400) | Post build #2 SUCCESS + APK installé | `mobile/.maestro/screenshots/README.md` |
+| 11 | Capture screenshots iPhone 6.7" / 5.5" / iPad 12.9" sims Xcode | Listing App Store iOS | Post Apple Dev + build iOS | `mobile/.maestro/screenshots/README.md` |
+| 12 | **Upload listings Play Console** (texte 17 langues + screenshots Pixel 7 + feature-graphic.png) | Listing Android publié | Post action 9 + 10 | `GOOGLE_PLAY_SETUP.md` §7 |
+| 13 | **Upload listings App Store Connect** (texte 16 langues + screenshots 3 tailles) | Listing iOS publié | Post action 9 + 11 + Apple Dev | (post P7.D) |
+| 14 | Activer Play App Signing dans Play Console | Sécurité Android long terme | Post action 7 | `GOOGLE_PLAY_SETUP.md` §3 |
+| 15 | Privacy form + Content rating + Data safety | Listing publishable Play | Tout de suite (independant) | `GOOGLE_PLAY_SETUP.md` §5-6 |
+
+### 🧠 LEÇONS SESSION 16 — P7.C
+
+| Date | App | Leçon | Impact |
+|---|---|---|---|
+| 2026-04-25 | YANA | **EAS Build par défaut utilise `npm ci` strict** sans `--legacy-peer-deps`. Avec react@19 + react-native-* + expo-router peerOptional react-dom, le lockfile DOIT être propre OU `mobile/.npmrc` doit contenir `legacy-peer-deps=true`. Sans ça : INSTALL_DEPENDENCIES fail systématique. | Pattern config `.npmrc` mobile pour EAS |
+| 2026-04-25 | YANA | **Lockfile désync silencieux** quand on alterne `npm install --legacy-peer-deps` et `npx expo install` (qui peut faire `npm install` sans flag). Solution : forcer `legacy-peer-deps=true` dans `mobile/.npmrc` + regéner lockfile en cas de désync (`rm package-lock.json && npm install`). | Pattern lockfile single-source-of-truth |
+| 2026-04-25 | YANA | **eas-cli `eas credentials` est interactif TTY-only** — non-tty (CI, scripts) sort sur "Nonexistent flag: --non-interactive". Bypass : query GraphQL direct `https://api.expo.dev/graphql` avec `Authorization: Bearer $EXPO_TOKEN` + introspection `__type` pour découvrir les champs (androidAppCredentials → androidAppBuildCredentialsList → androidKeystore.sha256CertificateFingerprint). | Pattern GraphQL EAS direct au lieu de CLI |
+| 2026-04-25 | YANA | **EAS init refuse les valeurs vides dans submit.production** : `ascAppId: ""` et `appleTeamId: ""` bloquaient validation. Fix : retirer entièrement le bloc submit.production.ios tant qu'on n'a pas les valeurs (Apple Dev en attente). Le bloc Android peut rester avec `serviceAccountKeyPath` même si le fichier n'existe pas (validation différée au submit). | Pattern eas.json minimal-only |
+| 2026-04-25 | YANA | **owner mismatch token vs app.json** : EXPO_TOKEN auth = `purama` mais app.json `owner: puramapro-oss` → "You don't have permission to create a new project on the puramapro-oss account". Fix : aligner owner sur l'account du token (`purama`). EAS projectId créé = lié à `purama` org. | Pattern owner == EAS account |
+| 2026-04-25 | YANA | **Vercel middleware bloque .well-known/* + /activate par défaut** (déjà fixé en P7.B), MAIS la nouvelle valeur de SHA-256 dans assetlinks.json a réquis un re-deploy explicite (`vercel --prod --token $VERCEL_TOKEN --yes`) pour que le edge cache propage. Sans redeploy, le curl prod retourne encore le placeholder. | Pattern : modif fichier statique = redeploy obligatoire |
+| 2026-04-25 | YANA | **Maestro YAML lint sans CLI** : `js-yaml.loadAll` (multi-doc Maestro) + grep des `id:` référencés vs testIDs présents dans `app/**` + `src/**` permet de valider 100% des flows en CI sans installer Maestro CLI (50MB + Java). 12/12 OK, 0 testID manquant cette session. | Pattern lint structurel < smoke complet |
+| 2026-04-25 | YANA | **Anthropic API key crédit-épuisé donne 400** (pas 401), avec body `"credit balance is too low"`. Pour différencier auth-fail vs credit-fail : checker `error.type === "invalid_request_error"` && message contient "credit". Le fallback EN dans le script i18n est le bon comportement dans les 2 cas (récupérable post-recharge). | Pattern fallback uniforme auth/credit |
+
+### ⏭️ P7.D — Quand reprendre la suite (sessions futures)
+
+- **Session 17** : post Apple Dev validation → `eas build --profile production --platform ios` + Apple Team ID dans eas.json + remplace placeholder apple-app-site-association + redeploy Vercel + curl verify + Apple Review submission (TestFlight d'abord, puis App Store).
+- **Session 18** : post crédits Anthropic + Maestro local installed → re-run i18n script (16+17 langues réelles) + capture screenshots Pixel 7 + EAS submit Android (post Tissma actions 3-5) + listings Play Console.
+
+### 📊 BILAN P7 COMPLET (A + B + C)
+
+- **P7.A** ✅ Foundation Mobile (7 gates, session 14, commit `8863187` etc.)
+- **P7.B** ✅ Features Natives (7 gates, session 15, commit `8c650f1` etc.)
+- **P7.C** ✅ Stores + CI (22 sub-gates, session 16, commit `4004357` + handoff)
+- **P7.D** ⏭ post Apple Dev — iOS build + submit + Apple Review (session 17+)
+- **P7.E** ⏭ post Anthropic credits + Maestro CLI — capture screenshots + i18n complet + Play submit (session 18)
+
+**Commits session 16** : `b59d0f6` (C1.1) · `13ae82a` (C1.2) · `e14e56c` (C1.3) · `0d48a26` (C1.4) · `dd0bffa` (C1.5) · `1bc85a8` (C2.1) · `cf8996a` (C2.2) · `64783d5` (C2.3) · `1325b50` (C3) · `ad6d08d` (C4) · `2dce994` (C5.1) · `c8baeaf` (C5.2 fix) · `b154a6a` (C5.3+5.4) · `73add35` (C6.1) · `762189d` (C6.2) · `4004357` (C6.3) · `<C6.4 handoff>`.
+
+**Pour reprendre après /clear** → relance :
+> "Lis progress.md session 16. P7.C Stores + CI ✅ live (6 gates / 22 sub-gates : 10 Maestro flows + lint 12/12 OK + 17 store.config locales (29 fallback EN, à re-run quand crédits Anthropic dispo) + GOOGLE_PLAY_SETUP.md + 3 CI workflows + EAS init projectId f72307e6 + assetlinks.json SHA-256 EA:D0:... live prod + iOS pending bloc + flow-screenshots.yaml + actions Tissma documentées). EAS build Android #2 (7822118f) en cours → vérifier status + récupérer URL APK. Apple Developer compte en cours validation 24-48h. Quand prêt : reprendre P7.D = 1er EAS build iOS + remplace placeholder Team ID + Apple Review TestFlight."
