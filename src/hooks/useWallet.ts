@@ -50,22 +50,22 @@ export function useWallet() {
     }
   }, [user, supabase])
 
-  useEffect(() => {
-    fetchWallet()
-  }, [fetchWallet])
+  useEffect(() => { void (async () => { await fetchWallet(); })(); }, [fetchWallet])
 
   // Sync with profile updates (faster feedback than refetching)
   useEffect(() => {
-    if (profile) {
-      setState({
-        balanceCents: Number(profile.wallet_balance_cents ?? 0),
-        points: Number(profile.purama_points ?? 0),
-        seeds: Number(profile.seeds_balance ?? 0),
-        co2OffsetKg: Number(profile.co2_offset_total_kg ?? 0),
-        treesPlantedTotal: Number(profile.trees_planted_total ?? 0),
-        loading: false,
-      })
-    }
+    void (async () => {
+      if (profile) {
+        setState({
+          balanceCents: Number(profile.wallet_balance_cents ?? 0),
+          points: Number(profile.purama_points ?? 0),
+          seeds: Number(profile.seeds_balance ?? 0),
+          co2OffsetKg: Number(profile.co2_offset_total_kg ?? 0),
+          treesPlantedTotal: Number(profile.trees_planted_total ?? 0),
+          loading: false,
+        })
+      }
+    })();
   }, [profile])
 
   const balanceEur = state.balanceCents / 100

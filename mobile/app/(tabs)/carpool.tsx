@@ -41,9 +41,7 @@ export default function Carpool() {
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    fetchBookings()
-  }, [fetchBookings])
+  useEffect(() => { void (async () => { await fetchBookings(); })(); }, [fetchBookings])
 
   async function openCarpoolOnWeb() {
     await Haptics.selectionAsync()

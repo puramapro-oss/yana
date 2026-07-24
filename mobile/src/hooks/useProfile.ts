@@ -52,9 +52,7 @@ export function useProfile() {
     setState({ profile: data as Profile, loading: false, error: null })
   }, [])
 
-  useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
+  useEffect(() => { void (async () => { await fetchProfile(); })(); }, [fetchProfile])
 
   return { ...state, refresh: fetchProfile }
 }

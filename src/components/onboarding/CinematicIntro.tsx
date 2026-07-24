@@ -19,12 +19,14 @@ export default function CinematicIntro() {
   const [shown, setShown] = useState<boolean | null>(null)
 
   useEffect(() => {
-    try {
-      const seen = window.localStorage.getItem(INTRO_STORAGE_KEY)
-      setShown(seen !== '1')
-    } catch {
-      setShown(false)
-    }
+    queueMicrotask(() => {
+      try {
+        const seen = window.localStorage.getItem(INTRO_STORAGE_KEY)
+        setShown(seen !== '1')
+      } catch {
+        setShown(false)
+      }
+    });
   }, [])
 
   function dismiss() {

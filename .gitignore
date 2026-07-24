@@ -22,3 +22,7 @@ AGENT-EMAIL-BRIEF.md
 # Mobile EAS / store credentials
 mobile/google-service-account.json
 mobile/credentials.json
+
+# Secrets — fichier CLAUDE local avec cles live (jamais commit)
+KARMA-CLAUDE.md
+CLAUDE-2.md

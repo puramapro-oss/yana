@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * screen-time.ts — abstraction No-Phone-While-Driving.
  *

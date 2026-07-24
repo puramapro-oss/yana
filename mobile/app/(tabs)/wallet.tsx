@@ -42,9 +42,7 @@ export default function Wallet() {
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    fetchTxs()
-  }, [fetchTxs])
+  useEffect(() => { void (async () => { await fetchTxs(); })(); }, [fetchTxs])
 
   async function openWithdrawalOnWeb() {
     await Haptics.selectionAsync()

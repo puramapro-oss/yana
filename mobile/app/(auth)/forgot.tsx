@@ -23,7 +23,7 @@ export default function Forgot() {
     }
     setLoading(true)
     const { error: authError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      // Le lien Supabase redirige vers l'URL web — le password est réinitialisé
+      // Le lien Supabase redirige vers l&apos;URL web — le password est réinitialisé
       // dans un onglet navigateur (flow plus robuste que deep link mobile pour P7.A).
       redirectTo: `${WEB_URL}/forgot-password`,
     })

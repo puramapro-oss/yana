@@ -79,9 +79,7 @@ export function useCarpool() {
     })
   }, [user, supabase])
 
-  useEffect(() => {
-    fetchMine()
-  }, [fetchMine])
+  useEffect(() => { void (async () => { await fetchMine(); })(); }, [fetchMine])
 
   const create = useCallback(
     async (input: CreateCarpoolInput): Promise<{ carpool: Carpool | null; error: string | null }> => {

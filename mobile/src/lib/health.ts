@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 /**
  * health.ts — abstraction cross-platform Apple HealthKit + Android Health Connect.
  *
