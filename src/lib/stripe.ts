@@ -80,6 +80,7 @@ export async function createCheckoutSession(params: {
     subscription_data: {
       trial_period_days: params.trialDays ?? planCfg.trial_days,
       metadata: {
+        app_slug: 'yana',
         plan: params.plan,
         interval: params.interval,
         ...(params.userId ? { user_id: params.userId } : {}),
@@ -87,6 +88,7 @@ export async function createCheckoutSession(params: {
       },
     },
     metadata: {
+      app_slug: 'yana',
       plan: params.plan,
       interval: params.interval,
       ...(params.userId ? { user_id: params.userId } : {}),
