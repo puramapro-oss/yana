@@ -15,6 +15,8 @@ interface Particle {
   color: string
   delay: number
   size: number
+  borderRadius: string
+  animationDuration: string
 }
 
 export default function Confetti({ active, duration = 3000 }: ConfettiProps) {
@@ -22,7 +24,7 @@ export default function Confetti({ active, duration = 3000 }: ConfettiProps) {
 
   useEffect(() => {
     if (!active) {
-      setParticles([])
+      queueMicrotask(() => setParticles([]))
       return
     }
     const newParticles = Array.from({ length: 50 }, (_, i) => ({
@@ -31,8 +33,10 @@ export default function Confetti({ active, duration = 3000 }: ConfettiProps) {
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       delay: Math.random() * 500,
       size: 4 + Math.random() * 8,
+      borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+      animationDuration: `${1500 + Math.random() * 1500}ms`,
     }))
-    setParticles(newParticles)
+    queueMicrotask(() => setParticles(newParticles))
 
     const timer = setTimeout(() => setParticles([]), duration)
     return () => clearTimeout(timer)
@@ -52,9 +56,9 @@ export default function Confetti({ active, duration = 3000 }: ConfettiProps) {
             width: `${p.size}px`,
             height: `${p.size}px`,
             backgroundColor: p.color,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            borderRadius: p.borderRadius,
             animationDelay: `${p.delay}ms`,
-            animationDuration: `${1500 + Math.random() * 1500}ms`,
+            animationDuration: p.animationDuration,
           }}
         />
       ))}

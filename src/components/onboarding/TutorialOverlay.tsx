@@ -105,7 +105,7 @@ export default function TutorialOverlay() {
 
   useEffect(() => {
     if (!active) return
-    updateSpotlight()
+    queueMicrotask(() => updateSpotlight())
     window.addEventListener('resize', updateSpotlight)
     window.addEventListener('scroll', updateSpotlight, true)
     return () => {

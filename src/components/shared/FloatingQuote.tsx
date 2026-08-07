@@ -30,14 +30,14 @@ export default function FloatingQuote() {
     try {
       const stored = window.localStorage.getItem(DISMISSED_KEY)
       if (stored === '1') {
-        setDismissed(true)
+        queueMicrotask(() => setDismissed(true))
         return
       }
     } catch {
       // localStorage bloqué — on masque
       return
     }
-    setDismissed(false)
+    queueMicrotask(() => setDismissed(false))
 
     const showTimer = setTimeout(() => setMounted(true), SHOW_DELAY_MS)
     const rotation = setInterval(() => {

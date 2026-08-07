@@ -54,7 +54,7 @@ export function useVehicle() {
   }, [user, supabase])
 
   useEffect(() => {
-    fetchAll()
+    queueMicrotask(() => fetchAll())
   }, [fetchAll])
 
   const create = useCallback(

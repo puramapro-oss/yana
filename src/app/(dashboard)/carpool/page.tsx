@@ -21,7 +21,7 @@ export default function CarpoolPage() {
 
   useEffect(() => {
     let cancelled = false
-    setSearching(true)
+    queueMicrotask(() => setSearching(true))
     search({}).then((rows) => {
       if (!cancelled) {
         setSearchResults(rows)

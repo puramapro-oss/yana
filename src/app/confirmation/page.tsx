@@ -27,7 +27,7 @@ function ConfirmationContent() {
   const [confettiPlayed, setConfettiPlayed] = useState(false)
 
   useEffect(() => {
-    if (!confettiPlayed) setConfettiPlayed(true)
+    if (!confettiPlayed) queueMicrotask(() => setConfettiPlayed(true))
   }, [confettiPlayed])
 
   return (

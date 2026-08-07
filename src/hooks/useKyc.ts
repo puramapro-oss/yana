@@ -59,7 +59,7 @@ export function useKyc() {
   }, [user, supabase])
 
   useEffect(() => {
-    fetchLatest()
+    queueMicrotask(() => fetchLatest())
   }, [fetchLatest])
 
   const isApproved = state.status === 'approved' || profile?.onfido_status === 'approved'

@@ -22,7 +22,7 @@ export default function DrivePage() {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    if (!selectedVehicleId && primary) setSelectedVehicleId(primary.id)
+    if (!selectedVehicleId && primary) queueMicrotask(() => setSelectedVehicleId(primary.id))
   }, [primary, selectedVehicleId])
 
   useEffect(() => {

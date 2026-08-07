@@ -38,11 +38,13 @@ export default function WithdrawModal({
 
   useEffect(() => {
     if (!open) {
-      setAmountInput('')
-      setIban('')
-      setError(null)
-      setSuccess(false)
-      setLoading(false)
+      queueMicrotask(() => {
+        setAmountInput('')
+        setIban('')
+        setError(null)
+        setSuccess(false)
+        setLoading(false)
+      })
     }
   }, [open])
 

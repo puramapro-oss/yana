@@ -66,7 +66,7 @@ export function useTrees() {
   }, [user])
 
   useEffect(() => {
-    fetchAll()
+    queueMicrotask(() => fetchAll())
   }, [fetchAll])
 
   const claimTree = useCallback(async (): Promise<{ error: string | null }> => {

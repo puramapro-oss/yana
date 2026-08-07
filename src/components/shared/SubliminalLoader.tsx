@@ -39,12 +39,12 @@ export default function SubliminalLoader({
   const [locale, setLocale] = useState<string>('fr')
 
   useEffect(() => {
-    setLocale(detectLocale())
+    queueMicrotask(() => setLocale(detectLocale()))
   }, [])
 
   useEffect(() => {
     if (!active) {
-      setVisible(false)
+      queueMicrotask(() => setVisible(false))
       return
     }
     const timer = setTimeout(() => setVisible(true), delayMs)

@@ -1,5 +1,6 @@
 'use client'
 
+import { createElement } from 'react'
 import {
   Award, Bell, Coins, Gift, Leaf, Sparkles, Ticket, Trophy, UserPlus,
   type LucideIcon,
@@ -37,9 +38,11 @@ function pickIcon(type: string): LucideIcon {
   return TYPE_ICONS[type] ?? Bell
 }
 
-export default function NotificationItem({ item, onMarkRead }: NotificationItemProps) {
-  const Icon = pickIcon(item.type)
+function IconForType({ type }: { type: string }) {
+  return createElement(pickIcon(type), { className: 'h-5 w-5' })
+}
 
+export default function NotificationItem({ item, onMarkRead }: NotificationItemProps) {
   return (
     <li
       className={cn(
@@ -57,7 +60,7 @@ export default function NotificationItem({ item, onMarkRead }: NotificationItemP
         )}
         aria-hidden
       >
-        <Icon className="h-5 w-5" />
+        <IconForType type={item.type} />
       </div>
 
       <div className="min-w-0 flex-1">

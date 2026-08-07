@@ -28,14 +28,16 @@ export function useTheme() {
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (isValidTheme(stored)) {
-      setThemeState(stored)
-      applyTheme(stored)
-    } else {
-      applyTheme('dark')
-    }
-    setHydrated(true)
+    queueMicrotask(() => {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (isValidTheme(stored)) {
+        setThemeState(stored)
+        applyTheme(stored)
+      } else {
+        applyTheme('dark')
+      }
+      setHydrated(true)
+    })
   }, [])
 
   const setTheme = useCallback((t: Theme) => {

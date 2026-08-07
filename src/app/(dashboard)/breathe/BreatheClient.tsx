@@ -80,17 +80,19 @@ export default function BreatheClient() {
     }
   }, [])
 
+  const tickPhaseRef = useRef<((current: Exclude<Phase, 'idle' | 'done'>, secondsLeft: number, cycle: number) => void) | null>(null)
+
   const tickPhase = useCallback((current: Exclude<Phase, 'idle' | 'done'>, secondsLeft: number, cycle: number) => {
     setPhase(current)
     setPhaseSecondsLeft(secondsLeft)
     if (secondsLeft <= 0) {
       // Transition suivante
       if (current === 'inhale') {
-        tickPhase('hold', PHASES.hold.seconds, cycle)
+        queueMicrotask(() => tickPhaseRef.current?.('hold', PHASES.hold.seconds, cycle))
         return
       }
       if (current === 'hold') {
-        tickPhase('exhale', PHASES.exhale.seconds, cycle)
+        queueMicrotask(() => tickPhaseRef.current?.('exhale', PHASES.exhale.seconds, cycle))
         return
       }
       // exhale → fin cycle
@@ -102,13 +104,15 @@ export default function BreatheClient() {
         logSession(durationSec)
         return
       }
-      tickPhase('inhale', PHASES.inhale.seconds, next)
+      queueMicrotask(() => tickPhaseRef.current?.('inhale', PHASES.inhale.seconds, next))
       return
     }
     timeoutRef.current = setTimeout(() => {
-      tickPhase(current, secondsLeft - 1, cycle)
+      tickPhaseRef.current?.(current, secondsLeft - 1, cycle)
     }, 1000)
   }, [totalCycles, logSession])
+
+  useEffect(() => { tickPhaseRef.current = tickPhase }, [tickPhase])
 
   const start = useCallback(() => {
     clearTimer()
