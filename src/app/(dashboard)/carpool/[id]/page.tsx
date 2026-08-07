@@ -286,7 +286,7 @@ export default function CarpoolDetailPage() {
       {is_driver && !isFinished && (
         <div className="mt-4 flex items-center gap-3 text-xs text-[var(--text-muted)]">
           <Flag className="h-3 w-3" />
-          Tu géreras ce trajet le jour J. Les passagers peuvent marquer "terminé" après coup pour libérer ton paiement.
+          Tu géreras ce trajet le jour J. Les passagers peuvent marquer &quot;terminé&quot; après coup pour libérer ton paiement.
         </div>
       )}
 

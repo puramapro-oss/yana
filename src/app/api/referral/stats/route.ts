@@ -83,7 +83,7 @@ export async function GET() {
     ),
   )
 
-  let profilesMap = new Map<string, { full_name: string | null; email: string | null }>()
+  const profilesMap = new Map<string, { full_name: string | null; email: string | null }>()
   if (referredIds.length > 0) {
     const { data: profiles } = await admin
       .from('profiles')
