@@ -96,6 +96,8 @@ export async function createCheckoutSession(params: {
     },
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
+  }, {
+    idempotencyKey: `checkout:${params.customerId ?? params.userId ?? params.customerEmail ?? 'anon'}:${params.plan}:${params.interval}:${new Date().toISOString().slice(0, 10)}`,
   })
 }
 
