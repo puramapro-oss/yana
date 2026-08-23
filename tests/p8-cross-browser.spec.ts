@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
 const BASE_URL = 'https://yana.purama.dev'
 

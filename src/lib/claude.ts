@@ -1,8 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { smarana, type SmaranaTier } from '@purama/smarana'
 import type { Plan } from '@/types'
 import { AI_MODEL_FALLBACKS } from './constants'
 
 // Lazy init (pattern PATTERNS MOKSHA — Turbopack evalue modules avant env vars)
+// Utilisé uniquement par streamNamaPilote (streaming hors périmètre smarana P0/P1)
 let _anthropic: Anthropic | null = null
 export function getAnthropic(): Anthropic {
   if (!_anthropic) {
@@ -136,23 +138,42 @@ JAMAIS :
 // ──────────────────────────────────────────────────────────────────
 // API : askNamaPilote / streamNamaPilote
 // ──────────────────────────────────────────────────────────────────
+// Loi 1 SMARANA-BRIEF : "Aucune app n'appelle l'API directement. Tout passe par smarana.ask()."
+// askNamaPilote (non-streaming) délègue à @purama/smarana pour mémoire + cache + usage centralisés.
+// streamNamaPilote reste en SDK direct (streaming hors périmètre smarana P0/P1, cf packages/smarana/README.md).
 export async function askNamaPilote(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   plan: Plan = 'free',
   ctx?: NamaPiloteContext,
+  userId?: string,
 ): Promise<string> {
-  const anthropic = getAnthropic()
-  const response = await anthropic.messages.create({
-    model: resolveModel(plan),
-    max_tokens: TOKEN_LIMITS[plan],
-    system: getNamaPiloteSystemPrompt(ctx),
-    messages,
+  const tier: SmaranaTier = plan === 'free' ? 'fast' : 'main'
+  const maxTokens = TOKEN_LIMITS[plan]
+  const systemPrompt = getNamaPiloteSystemPrompt(ctx)
+
+  // smarana.ask attend message (string dernier user) + recentMessages (historique précédent)
+  const lastUserMsg = messages[messages.length - 1]
+  if (!lastUserMsg || lastUserMsg.role !== 'user') {
+    throw new Error('Le dernier message doit être de type user')
+  }
+  const message = lastUserMsg.content
+  const recentMessages = messages.slice(0, -1) // tous sauf le dernier
+
+  const result = await smarana.ask({
+    appSlug: 'yana',
+    userId,
+    system: systemPrompt,
+    recentMessages,
+    message,
+    tier,
+    maxTokens,
   })
-  const block = response.content[0]
-  if (block && block.type === 'text') return block.text
-  return ''
+  return result.text
 }
 
+// streamNamaPilote reste en SDK direct (@anthropic-ai/sdk) car le streaming est hors périmètre
+// de smarana.ask() dans P0/P1 (cf packages/smarana/README.md "Hors périmètre volontaire").
+// Utilisé par api/chat/route.ts (chat principal SSE). Migration streaming prévue en smarana P2/P3.
 export async function* streamNamaPilote(
   messages: Array<{ role: 'user' | 'assistant'; content: string }>,
   plan: Plan = 'free',

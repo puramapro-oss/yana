@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Plus, MapPin, Users, ChevronRight, ShieldCheck } from 'lucide-react'
-import Button from '@/components/ui/Button'
 import EmptyState from '@/components/ui/EmptyState'
 import { useCarpool } from '@/hooks/useCarpool'
 import { useKyc } from '@/hooks/useKyc'

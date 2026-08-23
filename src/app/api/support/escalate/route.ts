@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { z } from 'zod'
-import { getAnthropic, MODEL_FAST } from '@/lib/claude'
+import { askNamaPilote } from '@/lib/claude'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { createServiceClient } from '@/lib/supabase'
 import { APP_NAME, APP_SLUG } from '@/lib/constants'
@@ -118,21 +118,20 @@ async function tryAiResolve(
   if (faqs.length === 0) return null
 
   try {
-    const anthropic = getAnthropic()
-    const response = await anthropic.messages.create({
-      model: MODEL_FAST,
-      max_tokens: 1024,
-      system: buildSystemPrompt(faqs),
-      messages: [
+    // Délègue à smarana via askNamaPilote (plan 'free' = tier 'fast', maxTokens 1024 custom).
+    // Pas de userId pour un appel système (résolution automatique FAQ).
+    const responseText = await askNamaPilote(
+      [
         {
           role: 'user',
           content: `Sujet : ${subject}\n\nMessage utilisateur :\n${message}`,
         },
       ],
-    })
-    const block = response.content[0]
-    if (!block || block.type !== 'text') return null
-    return parseVerdict(block.text)
+      'free',
+      undefined, // pas de contexte NamaPiloteContext pour un support ticket
+      undefined, // pas de userId (appel système)
+    )
+    return parseVerdict(responseText)
   } catch {
     return null
   }

@@ -101,7 +101,7 @@ function log(line) {
   appendFileSync(LOG_PATH, `[${new Date().toISOString()}] ${line}\n`)
 }
 
-async function callHaiku(systemPrompt, userPrompt, attempt = 1) {
+async function callHaiku(systemPrompt, userPrompt) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -307,7 +307,7 @@ async function main() {
     `=== END — Apple: ${appleResults.filter((r) => r.value).length}/${appleResults.length} OK, ` +
       `Android: ${androidResults.filter((r) => r.value).length}/${androidResults.length} OK ===`,
   )
-  console.log('[i18n] Terminé. Voir scripts/i18n-store-translate.log pour détails.')
+  console.warn('[i18n] Terminé. Voir scripts/i18n-store-translate.log pour détails.')
 }
 
 main().catch((err) => {

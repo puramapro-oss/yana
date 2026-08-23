@@ -57,7 +57,7 @@ async function fetchSourceBuffer() {
     const arrayBuf = await res.arrayBuffer()
     const buf = Buffer.from(arrayBuf)
     if (buf.length < 5_000) throw new Error('buffer too small — likely rate-limited')
-    console.log(`[gen-icons] Pollinations OK — ${(buf.length / 1024).toFixed(0)} KiB`)
+    console.warn(`[gen-icons] Pollinations OK — ${(buf.length / 1024).toFixed(0)} KiB`)
     return buf
   } catch (err) {
     console.warn('[gen-icons] Pollinations indispo → fallback procédural :', String(err))
@@ -102,7 +102,7 @@ async function renderFallback() {
 async function writeIcon(buf, filename) {
   const outPath = join(ASSETS_DIR, filename)
   await writeFile(outPath, buf)
-  console.log(`[gen-icons] ✔ ${filename}`)
+  console.warn(`[gen-icons] ✔ ${filename}`)
 }
 
 async function main() {
@@ -186,7 +186,7 @@ async function main() {
     .toBuffer()
   await writeIcon(featureBuf, 'feature-graphic.png')
 
-  console.log('[gen-icons] Terminé. Source :', POLLINATIONS_URL.slice(0, 100) + '…')
+  console.warn('[gen-icons] Terminé. Source :', POLLINATIONS_URL.slice(0, 100) + '…')
 }
 
 main().catch((err) => {

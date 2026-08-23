@@ -67,7 +67,7 @@ for (const f of flows) {
       if (id.includes('${') || id.includes('*')) continue
       if (!codeIDs.has(id)) missingIDs.add(`${id} (in ${f.replace(ROOT + '/', '')})`)
     }
-    console.log(`OK  ${f.replace(ROOT + '/', '')}`)
+    console.warn(`OK  ${f.replace(ROOT + '/', '')}`)
     ok++
   } catch (err) {
     console.error(`KO  ${f.replace(ROOT + '/', '')}: ${err.message}`)
@@ -75,11 +75,11 @@ for (const f of flows) {
   }
 }
 
-console.log(`--- ${ok} flows OK, ${ko} KO ---`)
+console.warn(`--- ${ok} flows OK, ${ko} KO ---`)
 if (missingIDs.size > 0) {
-  console.log(`\n⚠ testIDs référencés par Maestro mais absents du code :`)
-  for (const id of [...missingIDs].sort()) console.log(`   - ${id}`)
-  console.log('Si attendu (ex: tag externe), accept ; sinon ajouter le testID dans le composant.')
+  console.warn(`\n⚠ testIDs référencés par Maestro mais absents du code :`)
+  for (const id of [...missingIDs].sort()) console.warn(`   - ${id}`)
+  console.warn('Si attendu (ex: tag externe), accept ; sinon ajouter le testID dans le composant.')
 }
 
 process.exit(ko === 0 ? 0 : 1)

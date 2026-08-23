@@ -90,5 +90,5 @@ function genTibetanBowl(durationSec) {
 mkdirSync('public/sounds', { recursive: true })
 writeWav('public/sounds/432hz-pentatonic.wav', gen432Pentatonic(30))
 writeWav('public/sounds/tibetan-bowl.wav', genTibetanBowl(3.5))
-console.log('✓ public/sounds/432hz-pentatonic.wav (30s loop)')
-console.log('✓ public/sounds/tibetan-bowl.wav (3.5s decay)')
+console.warn('✓ public/sounds/432hz-pentatonic.wav (30s loop)')
+console.warn('✓ public/sounds/tibetan-bowl.wav (3.5s decay)')

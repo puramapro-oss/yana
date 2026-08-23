@@ -1,7 +1,5 @@
 // YANA Service Worker — Web Push (VAPID) only.
-// Scope racine /. Versionné pour cache-bust.
-
-const SW_VERSION = 'yana-push-v1'
+// Scope racine /.
 
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting())
@@ -17,7 +15,7 @@ self.addEventListener('push', (event) => {
   let payload = {}
   try {
     payload = event.data.json()
-  } catch (_e) {
+  } catch {
     payload = { title: 'YANA', body: event.data.text() }
   }
 
@@ -55,7 +53,7 @@ self.addEventListener('notificationclick', (event) => {
             body: JSON.stringify({ logId }),
             keepalive: true,
           })
-        } catch (_e) {
+        } catch {
           // best-effort
         }
       }
@@ -70,7 +68,9 @@ self.addEventListener('notificationclick', (event) => {
           if (url.pathname === targetUrl && 'focus' in client) {
             return client.focus()
           }
-        } catch (_e) {}
+        } catch {
+          // URL parsing can fail, skip
+        }
       }
       if (self.clients.openWindow) {
         return self.clients.openWindow(targetUrl)
