@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import {
-  Bell, ChevronRight, CreditCard, LifeBuoy, LogOut, Music2, ReceiptText, Settings as SettingsIcon,
+  Bell, ChevronRight, CreditCard, Database, LifeBuoy, LogOut, Music2, ReceiptText, Settings as SettingsIcon,
   Shield, UserRound,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -89,6 +89,13 @@ export default function SettingsPage() {
           label: 'Confidentialité',
           description: 'RGPD, DPO, données personnelles',
           testId: 'settings-privacy',
+        },
+        {
+          href: '/ma-memoire',
+          icon: Database,
+          label: 'Ma mémoire',
+          description: 'Exporter ou supprimer mes données (RGPD)',
+          testId: 'settings-ma-memoire',
         },
       ],
     },

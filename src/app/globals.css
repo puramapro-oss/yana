@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* Mapping vers les tokens YANA réels pour les composants du socle légal partagé
+   (packages/legal/src/components/*) qui utilisent des classes Tailwind sémantiques
+   style shadcn (bg-background, text-muted-foreground, border-border, bg-destructive,
+   text-primary-on-dark, rounded-pill) — cf PIEGES.md §16 (sarva 2026-08-23) : sans ce
+   bloc, ces classes ne génèrent aucune règle CSS et le rendu est silencieusement cassé. */
+@theme inline {
+  --color-background: var(--bg-void);
+  --color-background-soft: var(--bg-deep);
+  --color-foreground: var(--text-primary);
+  --color-muted-foreground: var(--text-muted);
+  --color-border: var(--border);
+  --color-primary: var(--cyan);
+  --color-primary-on-dark: var(--cyan);
+  --color-destructive: #f87171;
+  --radius-pill: 9999px;
+}
+
 :root, [data-theme='dark'] {
   --bg-void: #03040a;
   --bg-deep: #04120c;

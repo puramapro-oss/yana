@@ -8,6 +8,7 @@ import { ArrowLeft, Send, Loader2, MessageSquare } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Message } from '@/types'
+import AIDisclosure from '@/lib/legal/components/AIDisclosure'
 
 interface ThreadMessage extends Pick<Message, 'id' | 'role' | 'content'> {
   /** local-only = créé côté client avant persistance DB */
@@ -227,6 +228,8 @@ export default function ChatThreadPage() {
         </h1>
         <span aria-hidden className="w-16" />
       </header>
+
+      <AIDisclosure appName="YANA" className="mb-3 text-center text-xs text-[var(--text-muted)]" />
 
       <div
         ref={scrollRef}
