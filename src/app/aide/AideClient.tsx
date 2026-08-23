@@ -6,82 +6,14 @@ import {
   Search, MessageSquare, ThumbsUp, ChevronDown, Loader2, Send, CheckCircle2,
   BookOpen, Sparkles, AlertCircle,
 } from 'lucide-react'
-
-interface FaqArticle {
-  id: string
-  category: string
-  question: string
-  answer: string
-  search_keywords: string[]
-  view_count: number
-  helpful_count: number
-  priority: number
-}
-
-interface FaqCategory {
-  slug: string
-  count: number
-}
-
-type ActiveTab = 'faq' | 'chat'
-
-const CATEGORY_LABELS: Record<string, string> = {
-  demarrage: 'Démarrage',
-  'safety-score': 'Score de sécurité',
-  graines: 'Graines 🌱',
-  covoiturage: 'Covoiturage',
-  'tree-planting': "Plantation d'arbres 🌳",
-  kyc: "Vérification d'identité",
-  fatigue: 'Fatigue & santé',
-  moto: 'Mode Moto',
-  'permis-points': 'Permis à points',
-  assurance: 'Assurance',
-  facturation: 'Abonnement & facturation',
-  'retrait-wallet': 'Retraits & wallet',
-  parrainage: 'Parrainage',
-  'erreur-gps': 'Problèmes GPS',
-  'suppression-compte': 'RGPD & suppression',
-}
-
-function labelForCategory(slug: string): string {
-  return CATEGORY_LABELS[slug] ?? slug.replace(/-/g, ' ')
-}
-
-function renderAnswer(md: string): string {
-  // Rendu minimaliste : gras **x** → <strong>, retours ligne → <br>
-  return md
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>')
-}
-
-interface ChatResult {
-  resolved: boolean
-  answer?: string | null
-  confidence?: number | null
-  ticket_id?: string
-}
+import type { FaqArticle, FaqCategory, ActiveTab, ChatResult } from './types'
+import { CATEGORY_LABELS, labelForCategory, renderAnswer } from './types'
 
 export default function AideClient() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('faq')
-  const [query, setQuery] = useState('')
-  const [articles, setArticles] = useState<FaqArticle[]>([])
-  const [categories, setCategories] = useState<FaqCategory[]>([])
-  const [loading, setLoading] = useState(true)
-  const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [helpfulClicked, setHelpfulClicked] = useState<Record<string, boolean>>({})
-  const viewTrackedRef = useRef<Set<string>>(new Set())
-
-  // Chat state
-  const [chatSubject, setChatSubject] = useState('')
-  const [chatMessage, setChatMessage] = useState('')
-  const [chatName, setChatName] = useState('')
-  const [chatEmail, setChatEmail] = useState('')
-  const [chatSubmitting, setChatSubmitting] = useState(false)
-  const [chatResult, setChatResult] = useState<ChatResult | null>(null)
-  const [chatError, setChatError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<ActiveTab>('faq'); const [query, setQuery] = useState(''); const [articles, setArticles] = useState<FaqArticle[]>([]); const [categories, setCategories] = useState<FaqCategory[]>([]); const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState<string | null>(null); const [helpfulClicked, setHelpfulClicked] = useState<Record<string, boolean>>({}); const viewTrackedRef = useRef<Set<string>>(new Set())
+  const [chatSubject, setChatSubject] = useState(''); const [chatMessage, setChatMessage] = useState(''); const [chatName, setChatName] = useState(''); const [chatEmail, setChatEmail] = useState('')
+  const [chatSubmitting, setChatSubmitting] = useState(false); const [chatResult, setChatResult] = useState<ChatResult | null>(null); const [chatError, setChatError] = useState<string | null>(null)
 
   const loadFaq = useCallback(async (q: string) => {
     setLoading(true)
