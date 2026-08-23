@@ -13,38 +13,9 @@ import {
   unsubscribeFromPush,
   sendTestPush,
 } from '@/lib/notifications-client/push'
-
-type PrefType = 'daily' | 'achievement' | 'referral' | 'wallet' | 'contest' | 'lottery'
-type Frequency = 'low' | 'normal' | 'high'
-
-interface Preference {
-  type: PrefType
-  enabled: boolean
-  days_of_week: number[]
-  hour_start: number
-  hour_end: number
-  frequency: Frequency
-  paused_until: string | null
-}
-
-const TYPE_LABELS: Record<PrefType, { label: string; desc: string }> = {
-  daily:       { label: 'Rappel quotidien',  desc: 'Message personnalisé selon ton engagement.' },
-  achievement: { label: 'Achievements',      desc: 'Quand tu débloques un badge.' },
-  referral:    { label: 'Parrainage',        desc: 'Nouvel inscrit filleul, palier atteint.' },
-  wallet:      { label: 'Wallet',            desc: 'Crédits, retraits, virements SEPA.' },
-  contest:     { label: 'Classement hebdo',  desc: 'Gain hebdo, approche du podium.' },
-  lottery:     { label: 'Tirage mensuel',    desc: 'Ticket gagnant, prochain tirage.' },
-}
-
-const DAYS = [
-  { idx: 1, label: 'L' },
-  { idx: 2, label: 'M' },
-  { idx: 3, label: 'M' },
-  { idx: 4, label: 'J' },
-  { idx: 5, label: 'V' },
-  { idx: 6, label: 'S' },
-  { idx: 0, label: 'D' },
-]
+import type { Preference } from './types'
+import { TYPE_LABELS } from './types'
+import NotificationPref from './components/NotificationPref'
 
 export default function NotificationsSettingsPage() {
   const [loading, setLoading] = useState(true)
@@ -261,147 +232,9 @@ export default function NotificationsSettingsPage() {
         </div>
       ) : (
         <section className="flex flex-col gap-4">
-          {prefs.map((p) => {
-            const meta = TYPE_LABELS[p.type]
-            const paused = p.paused_until && new Date(p.paused_until) > new Date()
-            return (
-              <article
-                key={p.type}
-                data-testid={`pref-${p.type}`}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5"
-              >
-                <header className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="font-semibold">{meta.label}</h2>
-                    <p className="mt-0.5 text-sm text-[color-mix(in_oklab,var(--foreground)_65%,transparent)]">
-                      {meta.desc}
-                    </p>
-                  </div>
-                  <label className="relative inline-flex h-6 w-11 cursor-pointer items-center">
-                    <input
-                      type="checkbox"
-                      checked={p.enabled}
-                      onChange={(e) => patchPref({ ...p, enabled: e.target.checked })}
-                      className="peer sr-only"
-                      aria-label={`Activer ${meta.label}`}
-                    />
-                    <span className="absolute inset-0 rounded-full bg-[color-mix(in_oklab,var(--foreground)_20%,transparent)] transition peer-checked:bg-[var(--accent-primary)]" />
-                    <span className="absolute left-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
-                  </label>
-                </header>
-
-                {p.enabled && !paused ? (
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-xs font-medium uppercase tracking-wide text-[color-mix(in_oklab,var(--foreground)_60%,transparent)]">
-                        Jours
-                      </label>
-                      <div className="mt-2 flex gap-1.5">
-                        {DAYS.map((d) => {
-                          const active = p.days_of_week.includes(d.idx)
-                          return (
-                            <button
-                              key={d.idx}
-                              type="button"
-                              onClick={() => toggleDay(p, d.idx)}
-                              className={`h-8 w-8 rounded-lg text-xs font-semibold transition ${
-                                active
-                                  ? 'bg-[var(--accent-primary)] text-white'
-                                  : 'bg-[var(--surface-elevated)] text-[color-mix(in_oklab,var(--foreground)_70%,transparent)] hover:bg-[color-mix(in_oklab,var(--surface-elevated)_80%,var(--foreground))]'
-                              }`}
-                            >
-                              {d.label}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium uppercase tracking-wide text-[color-mix(in_oklab,var(--foreground)_60%,transparent)]">
-                        Fréquence
-                      </label>
-                      <div className="mt-2 flex gap-2">
-                        {(['low', 'normal', 'high'] as Frequency[]).map((f) => (
-                          <button
-                            key={f}
-                            type="button"
-                            onClick={() => patchPref({ ...p, frequency: f })}
-                            className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-medium transition ${
-                              p.frequency === f
-                                ? 'bg-[var(--accent-primary)] text-white'
-                                : 'bg-[var(--surface-elevated)] text-[color-mix(in_oklab,var(--foreground)_70%,transparent)] hover:bg-[color-mix(in_oklab,var(--surface-elevated)_80%,var(--foreground))]'
-                            }`}
-                          >
-                            {f === 'low' ? 'Basse' : f === 'normal' ? 'Normale' : 'Haute'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium uppercase tracking-wide text-[color-mix(in_oklab,var(--foreground)_60%,transparent)]">
-                        Plage horaire (UTC)
-                      </label>
-                      <div className="mt-2 flex items-center gap-2">
-                        <input
-                          type="number"
-                          min={0}
-                          max={23}
-                          value={p.hour_start}
-                          onChange={(e) => {
-                            const v = Math.max(0, Math.min(23, parseInt(e.target.value, 10) || 0))
-                            patchPref({ ...p, hour_start: v })
-                          }}
-                          className="w-16 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-2 py-1.5 text-sm"
-                          aria-label="Heure de début"
-                        />
-                        <span className="text-xs text-[color-mix(in_oklab,var(--foreground)_60%,transparent)]">→</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={23}
-                          value={p.hour_end}
-                          onChange={(e) => {
-                            const v = Math.max(0, Math.min(23, parseInt(e.target.value, 10) || 0))
-                            patchPref({ ...p, hour_end: v })
-                          }}
-                          className="w-16 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-2 py-1.5 text-sm"
-                          aria-label="Heure de fin"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium uppercase tracking-wide text-[color-mix(in_oklab,var(--foreground)_60%,transparent)]">
-                        Pause jusqu&apos;à
-                      </label>
-                      <input
-                        type="date"
-                        value={p.paused_until ? p.paused_until.slice(0, 10) : ''}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          patchPref({
-                            ...p,
-                            paused_until: v ? new Date(v + 'T23:59:59Z').toISOString() : null,
-                          })
-                        }}
-                        className="mt-2 rounded-lg border border-[var(--border)] bg-[var(--surface-elevated)] px-2 py-1.5 text-sm"
-                      />
-                    </div>
-                  </div>
-                ) : paused ? (
-                  <p className="mt-3 text-sm text-[color-mix(in_oklab,var(--foreground)_65%,transparent)]">
-                    En pause jusqu&apos;au {new Date(p.paused_until!).toLocaleDateString('fr-FR')}.{' '}
-                    <button
-                      type="button"
-                      onClick={() => patchPref({ ...p, paused_until: null })}
-                      className="underline hover:text-[var(--foreground)]"
-                    >
-                      Lever la pause
-                    </button>
-                  </p>
-                ) : null}
-              </article>
-            )
-          })}
+          {prefs.map((p) => (
+            <NotificationPref key={p.type} pref={p} onPatch={patchPref} onToggleDay={toggleDay} />
+          ))}
         </section>
       )}
 
