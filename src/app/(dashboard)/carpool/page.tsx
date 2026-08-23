@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, MapPin, Users, ChevronRight, ShieldCheck } from 'lucide-react'
+import { Plus, MapPin, Users, ChevronRight } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
+import KycBanner from './components/KycBanner'
 import { useCarpool } from '@/hooks/useCarpool'
 import { useKyc } from '@/hooks/useKyc'
 import { formatDateTime, formatPrice } from '@/lib/utils'
@@ -53,22 +54,7 @@ export default function CarpoolPage() {
         </Link>
       </header>
 
-      {!isApproved && kycStatus !== 'processing' && (
-        <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <ShieldCheck className="h-5 w-5 flex-shrink-0 text-amber-300" />
-            <p className="text-sm text-amber-100">
-              Vérifie ton identité pour réserver ou proposer un trajet. On protège tout le monde.
-            </p>
-          </div>
-          <Link
-            href="/kyc"
-            className="inline-flex flex-shrink-0 items-center justify-center rounded-full bg-amber-400/15 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-400/25"
-          >
-            Lancer la vérification
-          </Link>
-        </div>
-      )}
+      {!isApproved && kycStatus !== 'processing' && <KycBanner />}
 
       <nav
         className="mb-4 inline-flex gap-1 rounded-full border border-[var(--border)] bg-white/[0.02] p-1"
