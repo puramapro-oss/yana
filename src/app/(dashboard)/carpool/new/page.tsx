@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { useCarpool } from '@/hooks/useCarpool'
 import { useKyc } from '@/hooks/useKyc'
+import CheckboxCard from './components/CheckboxCard'
 
 interface GeoPoint {
   lat: number
@@ -307,32 +308,3 @@ function CityPicker({
   )
 }
 
-function CheckboxCard({
-  checked,
-  onChange,
-  emoji,
-  label,
-}: {
-  checked: boolean
-  onChange: (v: boolean) => void
-  emoji: string
-  label: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      aria-pressed={checked}
-      className={`flex items-center gap-2 rounded-xl border p-3 text-left text-sm transition ${
-        checked
-          ? 'border-[var(--cyan)]/60 bg-[var(--cyan)]/5 text-[var(--text-primary)]'
-          : 'border-[var(--border)] bg-white/[0.02] text-[var(--text-secondary)] hover:border-[var(--border-glow)]'
-      }`}
-    >
-      <span className="text-xl" aria-hidden>
-        {emoji}
-      </span>
-      <span>{label}</span>
-    </button>
-  )
-}
