@@ -29,7 +29,9 @@ export function useMultisensorialEnabled() {
   const setEnabled = useCallback((next: boolean) => {
     try {
       window.localStorage.setItem(STORAGE_KEY, next ? '1' : '0')
-    } catch {}
+    } catch {
+      // Silent — localStorage unsupported
+    }
     setEnabledState(next)
   }, [])
 
