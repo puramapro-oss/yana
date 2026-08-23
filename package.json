@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
+    "@purama/smarana": "file:../packages/smarana",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.0",
     "@stripe/stripe-js": "^9.0.1",
@@ -26,6 +27,7 @@
     "lucide-react": "^1.7.0",
     "next": "^16.2.2",
     "next-intl": "^4.9.0",
+    "pg": "^8.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-markdown": "^10.1.0",
@@ -41,8 +43,10 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
+    "@purama/eslint-config": "file:../packages/eslint-config-purama",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.39",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.184.0",
