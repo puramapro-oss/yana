@@ -9,7 +9,7 @@ import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { useCarpool } from '@/hooks/useCarpool'
 import { useKyc } from '@/hooks/useKyc'
-import CheckboxCard from './components/CheckboxCard'
+import CheckboxCard from '../components/CheckboxCard'
 
 interface GeoPoint {
   lat: number

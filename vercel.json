@@ -1,6 +1,11 @@
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
+  "git": {
+    "deploymentEnabled": {
+      "audit/yana-typecheck-20261112-78d5": false
+    }
+  },
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 120
