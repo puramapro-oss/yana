@@ -6,12 +6,12 @@ export interface MissionCompletion {
   proof_data: Record<string, unknown>
   proof_url: string | null
   ai_confidence: number | null
-  status: CompletionStatus
+  status: import('./mobility').CompletionStatus
   seeds_credited: number
   points_credited: number
   validated_at: string | null
   completed_at: string
-  mission?: MobilityMission
+  mission?: import('./mobility').MobilityMission
 }
 
 // ──────────────────────────────────────────────────────────────────

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "repository": "puramapro-oss/purama-master",
+  "commit": "6e50837af08ad57d8db37077f0363b3e05289e31",
+  "files": [
+    {
+      "path": "packages/eslint-config-purama/package.json",
+      "bytes": 454,
+      "sha256": "6aae62a1b893d3c69181297bde54b0b343616b30439d2e3c0f1f204b08f94382"
+    },
+    {
+      "path": "packages/eslint-config-purama/index.mjs",
+      "bytes": 2136,
+      "sha256": "987fcb95af879ce9c793bd9a865363dd229d64d9004c756be3d2a98046f4d9d6"
+    }
+  ]
+}
