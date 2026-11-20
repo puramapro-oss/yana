@@ -27,7 +27,7 @@ permissions:
 jobs:
   tsc-and-build:
     name: TypeScript + Next build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
@@ -39,10 +39,10 @@ jobs:
           path: yana
           persist-credentials: false
 
-      - name: Setup Node 20
+      - name: Setup Node 22
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: yana/package-lock.json
 
