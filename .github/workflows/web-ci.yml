@@ -169,6 +169,22 @@ jobs:
         env:
           # Variables minimales pour build statique. Pas de secret prod ici.
           NEXT_TELEMETRY_DISABLED: '1'
-          NEXT_PUBLIC_SUPABASE_URL: https://example.invalid
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy_for_build_only
           NEXT_PUBLIC_APP_URL: http://127.0.0.1:4100
+
+      - name: Verify YANA navigation in Chromium, Firefox and WebKit
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:4100
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy_for_build_only
+          SUPABASE_SERVICE_ROLE_KEY: dummy_for_browser_test_only
+        run: |
+          npx --no-install playwright install --with-deps chromium firefox webkit
+          node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 4100 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          curl --fail --silent --show-error --retry 30 --retry-delay 1 --retry-connrefused \
+            --max-time 3 "$PLAYWRIGHT_BASE_URL/api/status" > /dev/null
+          npx --no-install playwright test
