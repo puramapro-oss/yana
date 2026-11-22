@@ -28,7 +28,7 @@ const STEPS: Step[] = [
   {
     targetTestId: 'nav-green',
     title: 'GREEN DRIVE — plante des arbres',
-    description: 'Tes km économisés en CO₂ plantent des arbres réels (traçabilité blockchain).',
+    description: 'Tes économies de CO₂ débloquent des demandes de plantation. Leur réalisation reste à confirmer.',
     placement: 'right',
   },
   {

@@ -18,10 +18,15 @@ export default function GreenPage() {
   async function handleClaim() {
     if (claiming) return
     setClaiming(true)
-    const { error: errMsg } = await claimTree()
-    setClaiming(false)
-    if (errMsg) toast.error(errMsg)
-    else toast.success('Un arbre de plus dans ta forêt 🌳')
+    try {
+      const { error: errMsg } = await claimTree()
+      if (errMsg) toast.error(errMsg)
+      else toast.success('Ta demande de plantation est enregistrée 🌱')
+    } catch {
+      toast.error('Connexion impossible. Réessaie dans quelques instants.')
+    } finally {
+      setClaiming(false)
+    }
   }
 
   return (
@@ -31,7 +36,7 @@ export default function GreenPage() {
           GREEN DRIVE 🌿
         </h1>
         <p className="mt-2 text-sm text-[var(--text-secondary)]">
-          Ta conduite compense du CO₂. Tous les 10 kg, un arbre est planté et scellé sur la blockchain Bitcoin.
+          Tous les 10 kg de CO₂ comptabilisés, tu peux enregistrer une demande de plantation. La plantation physique reste à confirmer.
         </p>
       </header>
 
@@ -51,7 +56,7 @@ export default function GreenPage() {
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat
               icon="🌳"
-              label="Arbres plantés"
+              label="Demandes d’arbres"
               value={String(stats.trees_planted_total)}
               testId="green-stat-trees"
             />
@@ -94,7 +99,7 @@ export default function GreenPage() {
                 </h2>
                 <p className="mt-0.5 text-sm text-[var(--text-secondary)]">
                   {stats.trees_available_to_claim >= 1
-                    ? 'Ta conduite verte a atteint un palier. Clique pour officialiser ta plantation (certificat blockchain inclus).'
+                    ? 'Ta conduite verte a atteint un palier. Enregistre ta demande ; un reçu OpenTimestamps peut être joint si les calendriers répondent.'
                     : `Encore ${stats.kg_to_next_tree.toFixed(1)} kg de CO₂ compensés avant ton prochain arbre.`}
                 </p>
               </div>
@@ -108,7 +113,7 @@ export default function GreenPage() {
               className="w-full sm:w-auto"
               icon={<Sparkles className="h-4 w-4" />}
             >
-              Planter mon arbre
+              Demander ma plantation
             </Button>
           </section>
 
@@ -146,8 +151,8 @@ export default function GreenPage() {
             />
             <InfoCard
               icon={<ShieldCheck className="h-4 w-4" />}
-              title="Preuve blockchain Bitcoin"
-              desc="Chaque plantation est horodatée via OpenTimestamps (Bitcoin). Personne, même pas PURAMA, ne peut modifier la date ou le contenu de ton certificat."
+              title="Reçu OpenTimestamps"
+              desc="Le reçu conserve l’empreinte de ta demande. Il ne confirme ni une plantation physique ni un ancrage Bitcoin vérifié. En cas d’indisponibilité des calendriers, la demande reste enregistrée sans reçu."
             />
           </section>
         </>
@@ -161,7 +166,7 @@ function Forest({ trees }: { trees: TreePlanted[] }) {
     <div
       className="glass-card-static relative overflow-hidden p-6"
       role="list"
-      aria-label="Arbres plantés"
+      aria-label="Demandes de plantation"
     >
       <div
         className="grid gap-1 sm:gap-1.5"
@@ -178,13 +183,13 @@ function Forest({ trees }: { trees: TreePlanted[] }) {
 }
 
 function TreeTile({ tree }: { tree: TreePlanted }) {
-  const verified = Boolean(tree.ots_proof)
+  const hasReceipt = Boolean(tree.ots_proof)
   const plantedLabel = formatDate(tree.planted_at)
   return (
     <div
       role="listitem"
       className="group relative flex aspect-square items-center justify-center rounded-lg transition hover:bg-emerald-500/5"
-      title={`Planté le ${plantedLabel}${verified ? ' · scellé blockchain' : ''}`}
+      title={`Enregistré le ${plantedLabel} · ${tree.provider === 'manual' ? 'plantation à confirmer' : 'demande transmise'}${hasReceipt ? ' · reçu OTS disponible, ancrage non vérifié' : ' · sans reçu OTS'}`}
     >
       <span
         className="text-2xl transition-transform duration-300 group-hover:-translate-y-0.5 sm:text-3xl"
@@ -192,10 +197,10 @@ function TreeTile({ tree }: { tree: TreePlanted }) {
       >
         🌳
       </span>
-      {verified && (
+      {hasReceipt && (
         <span
           className="absolute bottom-0.5 right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300"
-          aria-label="Scellé sur la blockchain Bitcoin"
+          aria-label="Reçu OpenTimestamps disponible, ancrage Bitcoin non vérifié"
         >
           <ShieldCheck className="h-2 w-2" />
         </span>

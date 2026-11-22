@@ -1,0 +1,87 @@
+name: Tree transaction regression
+
+on:
+  pull_request:
+    paths:
+      - 'src/app/api/trees/plant/**'
+      - 'src/app/api/cron/plant-trees/**'
+      - 'src/lib/co2.ts'
+      - 'schema.sql'
+      - 'db/migrations/20260423_b1_profile_birthdate.sql'
+      - 'db/migrations/20260423_p3_2_wallet_withdrawal_fn.sql'
+      - 'db/migrations/20261122_atomic_tree_pledges.sql'
+      - 'db/migrations/20261122_wallet_withdrawal_permissions.sql'
+      - 'db/migrations/20261122_profiles_rls_identity.sql'
+      - 'migrations/0002_story_shares.sql'
+      - 'migrations/0003_fix_profiles_rls_recursion.sql'
+      - 'migrations/0003_financement_pools.sql'
+      - 'scripts/check-tree-invariants.mjs'
+      - 'scripts/check-tree-transactions.mjs'
+      - 'scripts/tree-postgres-fixture.mjs'
+      - 'scripts/wallet-permission-cases.mjs'
+      - 'scripts/profile-rls-cases.mjs'
+      - '.github/workflows/trees-transaction-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/api/trees/plant/**'
+      - 'src/app/api/cron/plant-trees/**'
+      - 'src/lib/co2.ts'
+      - 'schema.sql'
+      - 'db/migrations/20260423_b1_profile_birthdate.sql'
+      - 'db/migrations/20260423_p3_2_wallet_withdrawal_fn.sql'
+      - 'db/migrations/20261122_atomic_tree_pledges.sql'
+      - 'db/migrations/20261122_wallet_withdrawal_permissions.sql'
+      - 'db/migrations/20261122_profiles_rls_identity.sql'
+      - 'migrations/0002_story_shares.sql'
+      - 'migrations/0003_fix_profiles_rls_recursion.sql'
+      - 'migrations/0003_financement_pools.sql'
+      - 'scripts/check-tree-invariants.mjs'
+      - 'scripts/check-tree-transactions.mjs'
+      - 'scripts/tree-postgres-fixture.mjs'
+      - 'scripts/wallet-permission-cases.mjs'
+      - 'scripts/profile-rls-cases.mjs'
+      - '.github/workflows/trees-transaction-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tree-transaction-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres-transactions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: yana_tree_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: synthetic-ci-only
+        options: >-
+          --health-cmd "pg_isready -U postgres -d yana_tree_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Install only public test compiler and validation dependencies
+        run: npm install --prefix "$RUNNER_TEMP/yana-tree-tools" --no-save --package-lock=false --ignore-scripts typescript@5.9.3 zod@4.6.7
+      - name: Reproduce handler invariants without external I/O
+        env:
+          YANA_TEST_MODULES: ${{ runner.temp }}/yana-tree-tools/node_modules
+        run: node scripts/check-tree-invariants.mjs .
+      - name: Verify native transactions, guards, wallet permissions and canonical profile RLS
+        env:
+          YANA_TREE_TEST_CONTAINER: ${{ job.services.postgres.id }}
+          YANA_TEST_MODULES: ${{ runner.temp }}/yana-tree-tools/node_modules
+        run: node --test scripts/check-tree-transactions.mjs

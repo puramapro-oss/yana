@@ -1,3 +1,4 @@
+import type { User } from '@supabase/supabase-js'
 import { createServerSupabaseClient } from './supabase-server'
 import { createServiceClient } from './supabase'
 import { SUPER_ADMIN_EMAIL } from './constants'
@@ -13,29 +14,38 @@ export type AdminAuthSuccess = {
 export type AdminAuthResult = AdminAuthSuccess | AdminAuthFailure
 
 // Vérifie qu'un appel API /api/admin/* vient d'un super-admin authentifié.
-// - 401 si pas de session
-// - 403 si session mais profile.role != 'super_admin' ET email != SUPER_ADMIN_EMAIL
+// - 401 si l'identité ne peut pas être vérifiée par Supabase Auth
+// - 403 sans rôle serveur super_admin ni email propriétaire confirmé par Auth
 // À utiliser au tout début de chaque route handler /api/admin/*
 export async function requireSuperAdmin(): Promise<AdminAuthResult> {
-  const supabase = await createServerSupabaseClient()
-  const { data: auth } = await supabase.auth.getUser()
-  const user = auth.user
-  if (!user) return { ok: false, status: 401, reason: 'unauthenticated' }
+  let user: User
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: auth, error } = await supabase.auth.getUser()
+    if (error || !auth.user) return { ok: false, status: 401, reason: 'unauthenticated' }
+    user = auth.user
+  } catch {
+    return { ok: false, status: 401, reason: 'unauthenticated' }
+  }
 
-  const admin = createServiceClient()
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('role, email')
-    .eq('id', user.id)
-    .maybeSingle()
+  const identity: AdminAuthSuccess = { ok: true, userId: user.id, email: user.email ?? '' }
+  if (user.email === SUPER_ADMIN_EMAIL && user.email_confirmed_at) return identity
 
-  const isSuper =
-    profile?.role === 'super_admin' ||
-    (profile?.email ?? user.email) === SUPER_ADMIN_EMAIL
+  try {
+    const admin = createServiceClient()
+    const { data: profile, error } = await admin
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
 
-  if (!isSuper) return { ok: false, status: 403, reason: 'forbidden' }
-
-  return { ok: true, userId: user.id, email: profile?.email ?? user.email ?? '' }
+    if (error || profile?.role !== 'super_admin') {
+      return { ok: false, status: 403, reason: 'forbidden' }
+    }
+    return identity
+  } catch {
+    return { ok: false, status: 403, reason: 'forbidden' }
+  }
 }
 
 export interface ProfileMetadata {

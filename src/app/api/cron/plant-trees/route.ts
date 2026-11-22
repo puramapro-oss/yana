@@ -10,9 +10,8 @@ export const maxDuration = 60
 // encore "traduit" en arbre, planter automatiquement 1 arbre par tranche
 // atteinte. Auth : Bearer $CRON_SECRET (header ou ?token=...).
 //
-// Idempotent via la règle : trees_plantable = floor(co2/10) - trees_planted.
-// Un nouvel appel ne replante pas tant que co2_offset_total_kg n'a pas
-// franchi la tranche suivante.
+// Les lectures préparent le lot ; la RPC verrouille chaque profil et revalide
+// le crédit avant d'enregistrer l'intention et le compteur dans une transaction.
 //
 // Cap batch : max 50 users par exécution pour ne pas saturer les calendriers
 // OpenTimestamps. Les suivants sont traités au prochain run.
@@ -21,6 +20,11 @@ interface ProfileLite {
   id: string
   co2_offset_total_kg: number | string
   trees_planted_total: number
+}
+
+interface TreePledgeResult {
+  error_code: string | null
+  tree: Record<string, unknown> | null
 }
 
 const BATCH_LIMIT = 50
@@ -38,25 +42,32 @@ function authorize(req: Request): boolean {
 async function run() {
   const admin = createServiceClient()
 
-  const { data: profiles } = await admin
+  const { data: profiles, error: profilesError } = await admin
     .from('profiles')
     .select('id, co2_offset_total_kg, trees_planted_total')
     .gte('co2_offset_total_kg', CO2_TO_TREE_KG)
     .order('co2_offset_total_kg', { ascending: false })
     .limit(BATCH_LIMIT * 2)
 
+  if (profilesError) throw new Error('Lecture des profils impossible.')
   if (!profiles || profiles.length === 0) {
-    return { planted: 0, processed: 0, skipped: 0 }
+    return { planted: 0, processed: 0, skipped: 0, failed: 0, reconciliation_required: 0 }
   }
 
   let planted = 0
   let processed = 0
   let skipped = 0
+  let failed = 0
+  let reconciliationRequired = 0
 
   for (const p of profiles as ProfileLite[]) {
     if (processed >= BATCH_LIMIT) break
     const co2 = Number(p.co2_offset_total_kg ?? 0)
     const already = p.trees_planted_total ?? 0
+    if (!Number.isFinite(co2) || co2 < 0 || !Number.isInteger(already) || already < 0) {
+      failed += 1
+      continue
+    }
     const eligible = Math.floor(co2 / CO2_TO_TREE_KG)
     const toPlant = eligible - already
 
@@ -79,27 +90,37 @@ async function run() {
         note: `CRON auto-plant (palier ${already + i + 1} × ${CO2_TO_TREE_KG}kg CO2)`,
       })
 
-      const { error } = await admin.from('trees_planted').insert({
-        user_id: p.id,
-        trip_id: null,
-        provider: result.provider,
-        tree_count: 1,
-        co2_offset_kg: CO2_TO_TREE_KG,
-        cost_cents: 0,
-        certificate_url: result.certificate_url,
-        ots_proof: result.ots_proof,
-      })
+      if (result.provider !== 'manual') {
+        failed += 1
+        break
+      }
 
-      if (!error) planted += 1
+      const { data: outcome, error } = await admin
+        .rpc('record_manual_tree_pledge', {
+          p_user_id: p.id,
+          p_trip_id: null,
+          p_ots_proof: result.ots_proof,
+        })
+        .single<TreePledgeResult>()
+
+      if (error || !outcome) {
+        failed += 1
+        break
+      }
+      if (outcome.error_code === 'not_eligible' || outcome.error_code === 'profile_not_found') {
+        if (i === 0) skipped += 1
+        break
+      }
+      if (outcome.error_code || !outcome.tree) {
+        failed += 1
+        if (outcome.error_code === 'reconciliation_required') reconciliationRequired += 1
+        break
+      }
+      planted += 1
     }
-
-    await admin
-      .from('profiles')
-      .update({ trees_planted_total: already + count })
-      .eq('id', p.id)
   }
 
-  return { planted, processed, skipped }
+  return { planted, processed, skipped, failed, reconciliation_required: reconciliationRequired }
 }
 
 export async function POST(req: Request) {
@@ -108,7 +129,15 @@ export async function POST(req: Request) {
   }
   try {
     const result = await run()
-    return NextResponse.json({ ok: true, ...result, ran_at: new Date().toISOString() })
+    return NextResponse.json(
+      {
+        ok: result.failed === 0,
+        ...result,
+        ...(result.failed ? { error: 'Certaines intentions n’ont pas pu être enregistrées.' } : {}),
+        ran_at: new Date().toISOString(),
+      },
+      { status: result.failed ? 500 : 200 },
+    )
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'erreur inconnue'
     return NextResponse.json({ error: `CRON plant-trees: ${msg}` }, { status: 500 })

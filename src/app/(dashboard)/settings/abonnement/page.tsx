@@ -1,6 +1,5 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowUpRight, Check, CreditCard, ExternalLink, ReceiptText, Sparkles,
@@ -12,57 +11,12 @@ import ErrorState from '@/components/ui/ErrorState'
 import EmptyState from '@/components/ui/EmptyState'
 import { PLANS, type PlanId } from '@/lib/constants'
 import { cn, formatDate, formatPrice } from '@/lib/utils'
-import type { SubscriptionResponse } from './types'
+import { useSubscriptionStatus } from './useSubscriptionStatus'
+import { useSubscriptionPortal } from './useSubscriptionPortal'
 import { PAYMENT_STATUS_LABELS } from './types'
 
 export default function AbonnementPage() {
   const { loading: authLoading, user } = useAuth()
-  const [data, setData] = useState<SubscriptionResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [opening, setOpening] = useState(false)
-  const [portalError, setPortalError] = useState<string | null>(null)
-
-  const fetchStatus = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/subscription', { cache: 'no-store' })
-      if (!res.ok) {
-        setError('Impossible de charger ton abonnement. Réessaie.')
-        setLoading(false)
-        return
-      }
-      const body: SubscriptionResponse = await res.json()
-      setData(body)
-    } catch {
-      setError('Erreur réseau. Vérifie ta connexion.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (user) fetchStatus()
-  }, [user, fetchStatus])
-
-  async function openPortal() {
-    setOpening(true)
-    setPortalError(null)
-    try {
-      const res = await fetch('/api/stripe/portal', { method: 'POST' })
-      const body = await res.json()
-      if (!res.ok || !body.url) {
-        setPortalError(body.error ?? 'Impossible d\'ouvrir le portail Stripe.')
-        return
-      }
-      window.location.href = body.url
-    } catch {
-      setPortalError('Erreur réseau. Réessaie.')
-    } finally {
-      setOpening(false)
-    }
-  }
 
   if (authLoading) {
     return (
@@ -80,6 +34,13 @@ export default function AbonnementPage() {
       </div>
     )
   }
+
+  return <AbonnementDetails key={user.id} />
+}
+
+function AbonnementDetails() {
+  const { data, loading, error, retryStatus } = useSubscriptionStatus()
+  const { opening, portalError, openPortal } = useSubscriptionPortal()
 
   const plan = data ? PLANS[data.plan] ?? PLANS.free : null
   const paidPlanIds: PlanId[] = ['essentiel', 'infini', 'legende']
@@ -108,7 +69,7 @@ export default function AbonnementPage() {
           <Skeleton className="h-48" />
         </>
       ) : error ? (
-        <ErrorState message={error} onRetry={fetchStatus} />
+        <ErrorState message={error} onRetry={retryStatus} />
       ) : data && plan ? (
         <>
           <section className="glass relative overflow-hidden rounded-2xl p-5 sm:p-6">
