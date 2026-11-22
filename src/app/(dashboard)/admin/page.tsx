@@ -97,9 +97,9 @@ export default async function AdminOverviewPage() {
       testId: 'kpi-trips',
     },
     {
-      label: 'Arbres plantés',
+      label: 'Demandes d’arbres',
       value: s.treesTotal.toLocaleString('fr-FR'),
-      sub: 'certifiés OTS',
+      sub: 'plantations à confirmer',
       icon: TreeDeciduous,
       color: 'from-green-500/20 to-green-500/5',
       testId: 'kpi-trees',

@@ -155,11 +155,22 @@ jobs:
           npm rebuild --no-audit --no-fund
           npm --prefix ../packages/smarana rebuild --no-audit --no-fund
 
-      - name: Lint the corrected imports
+      - name: Reject high and critical dependency advisories
+        run: npm audit --audit-level=high
+
+      - name: Verify real OpenTimestamps receipts and honest tree status without external I/O
+        run: node --experimental-vm-modules --test scripts/opentimestamps.test.mjs scripts/green-receipt-state.test.mjs
+
+      - name: Lint the corrected modules
         run: >-
           node node_modules/eslint/bin/eslint.js --max-warnings 0
           'src/app/(dashboard)/carpool/new/page.tsx'
           'src/app/(dashboard)/settings/abonnement/page.tsx' src/types/autres.ts
+          src/lib/opentimestamps.ts src/lib/ots-stamp.ts src/lib/request-deadline.ts
+          src/types/ots-primitives.d.ts 'src/app/(dashboard)/green/page.tsx'
+          'src/app/(dashboard)/guide/page.tsx' 'src/app/(dashboard)/admin/page.tsx'
+          src/components/onboarding/TutorialOverlay.tsx src/lib/tree-nation.ts
+          scripts/opentimestamps.test.mjs scripts/green-receipt-state.test.mjs
 
       - name: TypeScript strict
         run: node node_modules/typescript/bin/tsc --noEmit --incremental false

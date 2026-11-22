@@ -48,9 +48,9 @@ export function hasTreeNationKey(): boolean {
 }
 
 /**
- * Planter 1 ou plusieurs arbres. Le résultat contient toujours un hash de la
- * requête + une preuve OpenTimestamps (même en mode manual), scellant
- * l'intention sur la blockchain Bitcoin publique.
+ * Enregistrer l'intention de planter 1 ou plusieurs arbres. Le résultat
+ * contient un hash et, si les calendriers répondent, un reçu OTS provisoire.
+ * Le mode manual ne confirme pas la réalisation d'une plantation.
  */
 export async function plantTree(req: PlantRequest): Promise<PlantResult> {
   const canonicalPayload = JSON.stringify({

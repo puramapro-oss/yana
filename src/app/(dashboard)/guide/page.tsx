@@ -30,10 +30,10 @@ const SECTIONS: GuideSection[] = [
     id: 'green-drive',
     icon: TreeDeciduous,
     title: 'GREEN DRIVE — CO₂ et plantation',
-    summary: 'Calcul CO₂ ADEME + arbres plantés avec preuve blockchain Bitcoin.',
+    summary: 'Calcul CO₂ ADEME et demandes de plantation avec reçu OpenTimestamps lorsque disponible.',
     paragraphs: [
       'Chaque trajet calcule ton économie CO₂ basée sur les facteurs d\'émission ADEME officiels, en comparant ton usage réel à un trajet solo voiture thermique moyen.',
-      'Dès que tu as compensé 10 kg de CO₂ cumulés, YANA déclenche la plantation d\'un arbre (via un partenaire reforestation) et horodate la preuve sur la blockchain Bitcoin (OpenTimestamps). La preuve est consultable à vie.',
+      'Tous les 10 kg de CO₂ comptabilisés, YANA permet d\'enregistrer une demande de plantation. Le partenaire n\'est pas encore connecté : la plantation physique reste à confirmer. Un reçu OpenTimestamps peut conserver l\'empreinte de la demande ; sa présence ne confirme pas un ancrage Bitcoin vérifié.',
       'Ton compteur d\'arbres et de CO₂ est visible sur /green, avec une forêt SVG qui pousse au fil du temps.',
     ],
   },
