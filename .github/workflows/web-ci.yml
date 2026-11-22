@@ -181,6 +181,15 @@ jobs:
           src/app/api/trees/plant/route.ts src/app/api/cron/plant-trees/route.ts
           scripts/check-tree-invariants.mjs scripts/check-tree-transactions.mjs
           scripts/tree-postgres-fixture.mjs
+          scripts/wallet-permission-cases.mjs
+
+      - name: Verify authenticated admin identity and all nine protected handlers
+        run: node --experimental-vm-modules --test scripts/admin-authorization.test.mjs
+
+      - name: Lint admin authorization and its regression tests
+        run: >-
+          node node_modules/eslint/bin/eslint.js --max-warnings 0
+          src/lib/admin.ts scripts/admin-authorization.test.mjs
 
       - name: TypeScript strict
         run: node node_modules/typescript/bin/tsc --noEmit --incremental false

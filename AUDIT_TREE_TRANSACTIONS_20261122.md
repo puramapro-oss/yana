@@ -1,9 +1,12 @@
-# YANA — compteurs d’intentions : correction transactionnelle proposée
+# YANA — transactions des intentions et permissions des profils
 
-État au 22 novembre 2026 : préparation locale pour revue, sans publication et
-sans exécution sur une base réelle. Candidat source :
-`508d8a2ebffe69594842d6308afad051e3c529b0`, arbre
-`85109ecd1c526d2a934517c050b3261c2bb32c52`.
+Le premier lot est publié en `f6f002bece30bd6db8900760307532e3d3cbea85`,
+arbre `e43c40be01783d9c82444f01ce1229ac86977bf2`. Ses deux CI sont PASS :
+[Web 44973775476](https://github.com/puramapro-oss/yana/actions/runs/44973775476)
+et [PostgreSQL 44973775426](https://github.com/puramapro-oss/yana/actions/runs/44973775426).
+Le présent complément resserre les permissions ; ses nouvelles vérifications
+doivent être liées à son SHA de publication. Aucune base réelle n’a été migrée.
+La reproduction initiale reste attachée à la référence `508d8a2`.
 
 ## Preuves disponibles
 
@@ -13,9 +16,10 @@ sans exécution sur une base réelle. Candidat source :
 | Reproduction sur les handlers source | PASS | Un contrôle positif ; sept scénarios révèlent les invariants cassés. L’exécution de référence conserve son code de sortie 1. |
 | Handlers proposés avec double transactionnel | PASS | Huit scénarios passent. Ce double ne prouve pas les propriétés de PostgreSQL. |
 | Syntaxe des trois scripts Node | PASS | `node --check`, code de sortie 0. |
-| Précontrôle lint des trois scripts et deux handlers | PASS | Configuration Next/PURAMA du propriétaire, aucune exclusion ajoutée, zéro erreur/avertissement. ESLint local 9.39.4 ; la CI du candidat verrouille 9.39.5 et reste à exécuter. |
-| PostgreSQL natif jetable | NON TESTÉ | Workflow et 35 tests préparés pour la CI, à exécuter sur la révision publiée après revue. |
-| Types, lint et build de l’application composée | NON TESTÉ | À vérifier avec la CI existante après composition avec les autres correctifs du propriétaire. |
+| Précontrôle lint des trois scripts et deux handlers | PASS | Configuration Next/PURAMA du propriétaire, aucune exclusion ajoutée, zéro erreur/avertissement. ESLint local 9.39.4 ; la CI complète f6f002be utilisait le verrou 9.39.5. Le nouveau delta doit être requalifié. |
+| PostgreSQL natif du premier lot | PASS | 35 tests natifs et 8 modèles de handlers réussis sur f6f002be ; trois courses avec deux connexions réellement bloquées chacune. |
+| Complément de permissions | NON TESTÉ en PostgreSQL avant publication | La suite native élargie doit passer sur le nouveau SHA ; les résultats anciens ne lui sont pas attribués. |
+| Types, lint et build du premier lot composé | PASS | CI f6f002be : installation complète, audit, lint, types, build 95 pages et 52 tests navigateur. Le complément doit repasser cette CI. |
 | Base réelle, politique RLS distante, déploiement | NON TESTÉ | Aucune connexion, migration ou modification de données réelle. |
 
 Défauts observés sur la référence :
@@ -59,11 +63,42 @@ prérogatives inhérentes du propriétaire de la fonction. Retirer PUBLIC seul
 ne suffirait pas : `schema.sql` accorde aussi EXECUTE aux rôles clients par
 défaut.
 
-Un trigger distinct `SECURITY INVOKER` protège seulement
-`co2_offset_total_kg` et `trees_planted_total` : INSERT à zéro et absence de
-modification à UPDATE pour `anon`/`authenticated`. Les champs ordinaires,
-les écritures du serveur et la création de profil existante sont préservés.
-Les droits généraux sur la table ne sont pas réorganisés.
+Le trigger distinct `SECURITY INVOKER` protège désormais tous les champs
+serveur du profil. Les INSERT directs `anon`/`authenticated` sont refusés :
+la création légitime passe par la fonction serveur `handle_new_user`. Les UPDATE
+clients sont limités aux six champs publics de PATCH `/profile` : `full_name`,
+`theme`, `locale`, `birthdate`, `notifications_enabled`, `tutorial_completed`.
+La comparaison des lignes JSON exclut uniquement cette liste ; rôle, email,
+plan, multiplicateur, solde, quotas, identifiants Stripe, métadonnées et compteurs
+restent protégés, ainsi que les colonnes ajoutées ultérieurement.
+
+Les 20 mutations applicatives de profils inventoriées passent par le client
+serveur ; le mobile ne contient qu’une lecture. Les éditions ordinaires, les
+écritures serveur et la création de profil sont conservées. `updated_at` reste
+protégé : le vrai trigger `profiles_touch_updated` s’exécute après le garde dans
+l’ordre alphabétique du schéma. La fixture le reproduit. Les politiques RLS
+globales ne sont pas remplacées par ce complément.
+
+### Fonction de demande de retrait réservée au serveur
+
+La déclaration canonique de `request_withdrawal(uuid,integer,text,text)` ne retirait
+que PUBLIC, alors que les droits par défaut du schéma peuvent accorder EXECUTE
+explicitement à `anon` et `authenticated`. La correction retire les trois grants
+et conserve `service_role`. Le seul appelant applicatif passe déjà par l’API
+authentifiée `/api/wallet/withdraw`, avec `p_user_id` issu d’Auth.
+
+La migration incrémentale `20261122_wallet_withdrawal_permissions.sql` resserre
+les droits d’une fonction déjà installée sans changer son identité ni son corps.
+Si elle est absente, cette absence est signalée ; aucun objet wallet n’est créé.
+La déclaration canonique corrigée assure les mêmes droits aux installations futures.
+Les deux corps de RPC restent identiques aux sources examinées.
+
+La suite native composée prépare 61 cas : 54 arbres/profils et 7 permissions
+wallet. Elle recrée les droits historiques depuis les vrais DEFAULT PRIVILEGES,
+vérifie les refus clients avant toute écriture, l’absence optionnelle de fonction,
+un retrait strictement synthétique par le serveur et son rollback en cas d’échec
+du registre de débits. Aucun transfert, prestataire ou paiement n’est appelé.
+Le résultat de ces nouveaux cas doit être lu dans la CI du nouveau candidat.
 
 `plantTree` produit actuellement une intention manuelle et éventuellement un
 reçu OTS. La RPC enregistre exclusivement `manual`. L’ajout futur d’un prestataire
@@ -72,15 +107,17 @@ avant l’appel externe ; la transaction actuelle ne garantit pas l’unicité d
 paiement ou d’une plantation externe. Un reçu préparé mais non enregistré peut
 être abandonné lors d’une concurrence, sans consommation de crédit.
 
-## Banc PostgreSQL natif préparé
+## Banc PostgreSQL natif
 
 Le workflow utilise un service jetable `postgres:17`, une base nommée uniquement
 `yana_tree_ci`, et des identités synthétiques. Le script refuse les URL de
 connexion et exige l’identifiant du conteneur de service GitHub Actions. Il
 appelle `psql` dans ce conteneur ; aucun secret de production n’est nécessaire.
 
-Les définitions de `profiles` et `trees_planted`, ainsi que la fonction de
-création de profil serveur, sont extraites exactement de `schema.sql`. `trips`
+Les définitions de `profiles`, `trees_planted`, `wallet_transactions` et
+`withdrawals`, ainsi que les fonctions de création de profil et de timestamp,
+sont extraites exactement de `schema.sql`. La migration birthdate existante est
+appliquée telle quelle. `trips`
 et `auth.users` sont des fixtures minimales. Les politiques de profil sont
 explicitement non récursives, avec sélection/mise à jour de son propre profil.
 Une permission INSERT et un accès anon sont ajoutés **dans la fixture seulement**
@@ -97,7 +134,9 @@ INSERT/UPDATE des colonnes protégées, éditions ordinaires et créations serve
 
 ## Déploiement et limites de portée
 
-La migration doit être examinée et appliquée avant le code qui appelle la RPC.
+Les migrations de ce lot doivent être examinées et appliquées avant le code
+qui appelle la RPC. La correction canonique wallet ne remplace pas la migration
+incrémentale pour une fonction déjà installée.
 Les deux anciens écrivains (claim et cron) doivent être arrêtés ou remplacés
 ensemble pendant la transition ; une coexistence avec l’ancien protocole
 read/insert/update ne conserve pas l’invariant. Sans migration, le nouveau code
@@ -110,23 +149,28 @@ inéligibles avant de préparer un reçu OTS ; ces routes ne constituent donc pa
 un audit exhaustif de cet historique ni un diagnostic de chaque ancien désaccord. Les autres
 écrivains privilégiés éventuels doivent respecter le même protocole.
 
-L’examen des 11 fichiers SQL présents révèle deux alertes distinctes non résolues :
+L’examen des sources SQL conserve deux limites distinctes à qualifier avant exploitation :
 
 - `schema.sql` associe `profiles.id` à `auth.users.id`, tandis que
   `0003_fix_profiles_rls_recursion.sql` utilise `auth_user_id`. Cette migration
   retire `profiles_select_own`, alors que le schéma crée `profiles_self_select`,
   dont la sous-requête sur `profiles` est récursive.
 - La politique `profiles_self_update` ne protège que l’identité de la ligne.
-  Les autres champs sensibles tels que rôle, plan et solde ne sont pas couverts
-  par ce correctif limité aux deux compteurs. L’état des politiques distantes
-  reste inconnu ; aucune exploitation en production n’est affirmée.
+  Le nouveau garde limite désormais ses écritures, mais l’état des politiques
+  distantes et l’intégrité des valeurs historiques restent inconnus. Une
+  ancienne élévation de rôle ou modification de solde ne serait pas réparée
+  automatiquement par un trigger qui protège les écritures futures. Aucune
+  exploitation en production n’est affirmée.
 
 GitNexus préalable : POST du claim `UNKNOWN` (appelant HTTP non résolu) ;
 `run` du cron `LOW` (POST puis GET, cinq parcours), POST du cron `LOW` (GET).
 L’usage HTTP `useTrees` et les lecteurs de statistiques ont été contrôlés
-séparément. Le propriétaire doit exécuter `detect-changes` sur le delta composé
-avant son commit ; aucun commit ni modification de son checkout n’a été effectué
-par cette sous-tâche.
+séparément. Le lot f6f002be avait un signal HIGH (29 fichiers, 20 symboles,
+14 parcours). L’impact du garde administrateur complémentaire est CRITICAL :
+neuf appelants et neuf parcours, signalés avant édition. Les nouvelles fonctions
+SQL ne sont pas indexées : UNKNOWN est complété par la revue des producteurs,
+des consommateurs et les tests natifs. `detect-changes` est exécuté sur le lot
+composé avant publication ; la PR consigne le résultat et les CI exacts.
 
 ## Références techniques
 

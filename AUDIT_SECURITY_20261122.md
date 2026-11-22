@@ -86,6 +86,26 @@ Le bouton sort systématiquement de son chargement, y compris en cas de rejet r�
   locaux utilisent les versions publiques exactes déjà disponibles ; la CI
   qualifie le verrou complet. Aucune nouvelle tentative locale lourde prévue.
 
+## Complément de permissions et identité administrateur
+
+La revue a trouvé une confiance accordée à `profile.email` dans le garde des
+neuf routes administratives. Le propriétaire est désormais identifié seulement
+par l’email exact et confirmé de Supabase Auth. Le rôle serveur `super_admin`
+reste admis indépendamment ; les erreurs d’identité ou de lecture du rôle
+ferment l’accès. L’email retourné pour l’audit provient toujours d’Auth.
+
+Les 41 tests exécutent le vrai garde et les refus des neuf vrais handlers :
+16 PASS / 25 FAIL avant, 41 PASS après, sans compte ni service réel. Les types,
+le build et les versions exactes de dépendances doivent être requalifiés en CI.
+L’impact GitNexus préalable est CRITICAL : neuf appelants directs et neuf parcours,
+signalé avant modification, avec deux revues indépendantes du contrat.
+
+Le garde SQL des profils limite les écritures clientes aux six champs publics
+ordinaires et réserve leur création au serveur. Il protège ainsi les identités,
+rôles, abonnements, soldes et quotas, sans tenter de corriger rétroactivement les
+données historiques. L’inventaire et les permissions de la fonction de demande
+de retrait sont documentés dans `AUDIT_TREE_TRANSACTIONS_20261122.md`.
+
 ## Limites conservées explicitement
 
 L'absence d'alerte haute/critique ne signifie pas l'absence de toute vulnérabilité.
@@ -102,11 +122,11 @@ La comptabilité des intentions reçoit désormais une RPC transactionnelle comm
 au claim et au cron : verrou du profil, contrôle du registre et écriture atomique.
 Les incohérences historiques sont refusées sans réécriture. Huit scénarios locaux
 passent, dont sept défauts reproduits sur la référence. Les 35 vérifications PostgreSQL
-natives préparées doivent encore être exécutées dans le service jetable de CI.
+natives du premier lot ont réussi dans le service jetable de CI 44973775426 ;
+le complément de permissions doit être requalifié au nouveau SHA.
 La migration doit précéder les deux nouveaux writers ; leur coexistence avec les
-anciens writers ne serait pas sûre. Les divergences du schéma historique et les
-autres champs sensibles du profil restent à examiner sur une base réellement
-accessible. Voir `AUDIT_TREE_TRANSACTIONS_20261122.md`. Aucun appel payant,
+anciens writers ne serait pas sûre. Les divergences du schéma historique et l’intégrité des valeurs
+existantes restent à examiner sur une base réellement accessible. Voir `AUDIT_TREE_TRANSACTIONS_20261122.md`. Aucun appel payant,
 opération financière, migration de données distantes ou déploiement n’est effectué.
 
 Les sources partagées restent épinglées à SMARANA

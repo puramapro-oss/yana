@@ -80,5 +80,6 @@ END;
 $$;
 
 -- Permissions : appelable uniquement via service_role (l'API route serveur)
-REVOKE ALL ON FUNCTION yana.request_withdrawal(uuid, integer, text, text) FROM PUBLIC;
+-- Les droits par défaut peuvent aussi avoir accordé EXECUTE explicitement aux clients.
+REVOKE ALL ON FUNCTION yana.request_withdrawal(uuid, integer, text, text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION yana.request_withdrawal(uuid, integer, text, text) TO service_role;

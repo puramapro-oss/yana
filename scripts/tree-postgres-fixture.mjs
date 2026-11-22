@@ -50,11 +50,16 @@ function exactTable(schema, name) {
   return match[0]
 }
 
+const readMigration = name => fs.readFileSync(path.join(ROOT, 'db/migrations', name), 'utf8')
+
 async function setupDatabase() {
   assert.equal(await sql('SELECT current_database();'), DATABASE)
   const schema = fs.readFileSync(path.join(ROOT, 'schema.sql'), 'utf8')
   const signupFunction = schema.match(/CREATE OR REPLACE FUNCTION yana\.handle_new_user\(\)[\s\S]*?\$\$ LANGUAGE plpgsql SECURITY DEFINER;/)
   assert.ok(signupFunction, 'exact existing server signup function exists')
+  const timestampFunction = schema.match(/CREATE OR REPLACE FUNCTION yana\.touch_updated_at\(\)[\s\S]*?\$\$ LANGUAGE plpgsql;/)
+  const timestampTrigger = schema.match(/CREATE TRIGGER profiles_touch_updated BEFORE UPDATE ON yana\.profiles[\s\S]*?;/)
+  assert.ok(timestampFunction && timestampTrigger, 'exact existing timestamp function and trigger exist')
   const co2Source = fs.readFileSync(path.join(ROOT, 'src/lib/co2.ts'), 'utf8')
   assert.match(co2Source, /export const CO2_TO_TREE_KG\s*=\s*10\b/, 'SQL and application threshold agree')
   await rawSql(`
@@ -75,12 +80,18 @@ async function setupDatabase() {
     ${exactTable(schema, 'profiles')}
     CREATE TABLE yana.trips (id uuid PRIMARY KEY, user_id uuid NOT NULL REFERENCES yana.profiles(id));
     ${exactTable(schema, 'trees_planted')}
+    ${exactTable(schema, 'wallet_transactions')}
+    ${exactTable(schema, 'withdrawals')}
     CREATE INDEX trees_user_idx ON yana.trees_planted(user_id, planted_at DESC);
+    ${timestampFunction[0]}
+    ${timestampTrigger[0]}
     ${signupFunction[0]}
     CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users
       FOR EACH ROW EXECUTE FUNCTION yana.handle_new_user();
     ALTER TABLE yana.profiles ENABLE ROW LEVEL SECURITY;
     ALTER TABLE yana.trees_planted ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE yana.wallet_transactions ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE yana.withdrawals ENABLE ROW LEVEL SECURITY;
     -- Explicit NON-recursive fixture policies. Do not apply the inconsistent
     -- profiles_self_select / auth_user_id historical migration chain here.
     CREATE POLICY fixture_profile_select ON yana.profiles FOR SELECT
@@ -93,13 +104,20 @@ async function setupDatabase() {
       TO anon, authenticated WITH CHECK (id = auth.uid());
     CREATE POLICY trees_owner_select ON yana.trees_planted FOR SELECT
       TO authenticated USING (user_id = auth.uid());
+    CREATE POLICY wallet_tx_owner_select ON yana.wallet_transactions FOR SELECT
+      TO authenticated USING (user_id = auth.uid());
+    CREATE POLICY withdrawals_owner_all ON yana.withdrawals FOR SELECT
+      TO authenticated USING (user_id = auth.uid());
   `)
-  await rawSql(fs.readFileSync(path.join(ROOT, 'db/migrations/20261122_atomic_tree_pledges.sql'), 'utf8'))
+  await rawSql(readMigration('20260423_b1_profile_birthdate.sql'))
+  await rawSql(readMigration('20261122_atomic_tree_pledges.sql'))
+  await rawSql(readMigration('20260423_p3_2_wallet_withdrawal_fn.sql'))
+  await rawSql(readMigration('20261122_wallet_withdrawal_permissions.sql'))
 }
 
 async function reset({ co2 = 10, counter = 0, ledger = 0 } = {}) {
   await sql(`
-    TRUNCATE yana.trees_planted, yana.trips, yana.profiles, auth.users CASCADE;
+    TRUNCATE yana.wallet_transactions, yana.withdrawals, yana.trees_planted, yana.trips, yana.profiles, auth.users CASCADE;
     INSERT INTO auth.users (id, email) VALUES
       (${sqlValue(USER)}, 'one@synthetic.invalid'),
       (${sqlValue(OTHER)}, 'two@synthetic.invalid');
@@ -114,6 +132,7 @@ async function cleanupFailures() {
   await sql(`
     DROP TRIGGER IF EXISTS fixture_insert_failure ON yana.trees_planted;
     DROP TRIGGER IF EXISTS fixture_update_failure ON yana.profiles;
+    DROP TRIGGER IF EXISTS fixture_wallet_failure ON yana.wallet_transactions;
   `)
 }
 
@@ -208,4 +227,4 @@ async function concurrentlyLocked(actions) {
   }
 }
 
-export { USER, OTHER, THIRD, TRIP, sqlValue, sql, jsonSql, reset, state, rpc, route, concurrentlyLocked, setupDatabase, cleanupFailures }
+export { USER, OTHER, THIRD, TRIP, sqlValue, sql, rawSql, readMigration, jsonSql, reset, state, rpc, route, concurrentlyLocked, setupDatabase, cleanupFailures }

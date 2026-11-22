@@ -4,10 +4,13 @@ import {
   USER, OTHER, THIRD, TRIP, sqlValue, sql, jsonSql, reset, state, rpc,
   route, concurrentlyLocked, setupDatabase, cleanupFailures,
 } from './tree-postgres-fixture.mjs'
+import { registerWalletPermissionTests } from './wallet-permission-cases.mjs'
 
 before(setupDatabase)
 beforeEach(async () => { await reset() })
 afterEach(cleanupFailures)
+
+const profileState = () => jsonSql(`SELECT row_to_json(p) FROM yana.profiles p WHERE id=${sqlValue(USER)};`)
 
 test('single real handler claim commits one row and one counter', async () => {
   const response = await route('single-claim').claim()
@@ -127,6 +130,13 @@ test('function security and explicit ACL remove default PUBLIC/anon/authenticate
   assert.deepEqual(rights, { anon: false, authenticated: false, service_role: true, rpc_definer: true, guard_definer: false, guard_anon: false, guard_authenticated: false, public_execute: false })
 })
 
+test('profile guard precedes the exact existing automatic timestamp trigger', async () => {
+  const triggers = await jsonSql(`SELECT json_agg(tgname ORDER BY tgname) FROM pg_trigger
+    WHERE tgrelid='yana.profiles'::regclass AND NOT tgisinternal AND tgenabled='O'
+      AND tgname IN ('profiles_guard_tree_totals','profiles_touch_updated');`)
+  assert.deepEqual(triggers, ['profiles_guard_tree_totals', 'profiles_touch_updated'])
+})
+
 for (const role of ['anon', 'authenticated']) {
   test(`${role} cannot invoke the privileged RPC`, async () => {
     const previous = await state()
@@ -134,53 +144,89 @@ for (const role of ['anon', 'authenticated']) {
     assert.deepEqual(await state(), previous)
   })
 
-  test(`${role} can edit ordinary fields with unchanged protected values`, async () => {
+  test(`${role} can edit all six public fields while the timestamp trigger runs`, async () => {
+    const previous = await profileState()
     await sql(`UPDATE yana.profiles SET full_name='Synthetic profile edit',
-      co2_offset_total_kg=co2_offset_total_kg, trees_planted_total=trees_planted_total
+      theme='light',locale='en',birthdate='2000-01-02',
+      notifications_enabled=false,tutorial_completed=true,
+      co2_offset_total_kg=co2_offset_total_kg, trees_planted_total=trees_planted_total,
+      role=role, plan=plan, wallet_balance_cents=wallet_balance_cents,updated_at=updated_at
       WHERE id=${sqlValue(USER)};`, { role })
-    assert.equal(await sql(`SELECT full_name FROM yana.profiles WHERE id=${sqlValue(USER)};`), 'Synthetic profile edit')
-    assert.equal((await state()).co2, 10)
-    assert.equal((await state()).counter, 0)
+    const saved = await profileState()
+    assert.equal(await sql(`SELECT updated_at > ${sqlValue(previous.updated_at)}::timestamptz
+      FROM yana.profiles WHERE id=${sqlValue(USER)};`), 't')
+    assert.deepEqual(saved, { ...previous, full_name: 'Synthetic profile edit',
+      theme: 'light', locale: 'en', birthdate: '2000-01-02',
+      notifications_enabled: false, tutorial_completed: true, updated_at: saved.updated_at })
   })
 
-  for (const column of ['co2_offset_total_kg', 'trees_planted_total']) {
+  for (const { column, value } of [
+    { column: 'co2_offset_total_kg', value: 99 },
+    { column: 'trees_planted_total', value: 99 },
+    { column: 'role', value: 'super_admin' },
+    { column: 'plan', value: 'legende' },
+    { column: 'wallet_balance_cents', value: 99000 },
+    { column: 'email', value: 'changed@synthetic.invalid' },
+    { column: 'stripe_customer_id', value: 'cus_synthetic_client' },
+    { column: 'metadata', value: '{"banned":false}' },
+    { column: 'plan_multiplier', value: 99 },
+    { column: 'daily_questions', value: 99 },
+    { column: 'daily_questions_reset_at', value: '2099-01-01' },
+    { column: 'updated_at', value: '2100-01-01T00:00:00Z' },
+  ]) {
     test(`${role} cannot UPDATE ${column}`, async () => {
-      const previous = await state()
-      await assert.rejects(sql(`UPDATE yana.profiles SET ${column}=99 WHERE id=${sqlValue(USER)};`, { role }), error => /42501/.test(error.message))
-      assert.deepEqual(await state(), previous)
-    })
-    test(`${role} cannot INSERT a nonzero ${column}`, async () => {
-      await sql(`DELETE FROM yana.profiles WHERE id=${sqlValue(OTHER)};`)
-      await assert.rejects(sql(`INSERT INTO yana.profiles (id,email,${column})
-        VALUES (${sqlValue(OTHER)},'insert@synthetic.invalid',99);`, { role, user: OTHER }), error => /42501/.test(error.message))
-      assert.equal(await sql(`SELECT count(*) FROM yana.profiles WHERE id=${sqlValue(OTHER)};`), '0')
+      if (column === 'metadata') {
+        await sql(`UPDATE yana.profiles SET metadata='{"banned":true}' WHERE id=${sqlValue(USER)};`)
+      }
+      const previous = await profileState()
+      await assert.rejects(sql(`UPDATE yana.profiles SET ${column}=${sqlValue(value)} WHERE id=${sqlValue(USER)};`, { role }), error => /42501/.test(error.message))
+      assert.deepEqual(await profileState(), previous)
     })
   }
 
-  test(`${role} INSERT with default zero totals remains allowed by the fixture`, async () => {
+  test(`${role} cannot INSERT a profile even with default protected fields`, async () => {
     await sql(`DELETE FROM yana.profiles WHERE id=${sqlValue(OTHER)};`)
-    await sql(`INSERT INTO yana.profiles (id,email,full_name)
-      VALUES (${sqlValue(OTHER)},'insert@synthetic.invalid','Synthetic default insert');`, { role, user: OTHER })
-    assert.deepEqual(await jsonSql(`SELECT json_build_array(co2_offset_total_kg,trees_planted_total)
-      FROM yana.profiles WHERE id=${sqlValue(OTHER)};`), [0, 0])
+    await assert.rejects(sql(`INSERT INTO yana.profiles (id,email,full_name)
+      VALUES (${sqlValue(OTHER)},'insert@synthetic.invalid','Synthetic default insert');`, { role, user: OTHER }), error => /42501/.test(error.message))
+    assert.equal(await sql(`SELECT count(*) FROM yana.profiles WHERE id=${sqlValue(OTHER)};`), '0')
+  })
+
+  test(`${role} cannot INSERT a profile with authority, billing or moderation data`, async () => {
+    await sql(`DELETE FROM yana.profiles WHERE id=${sqlValue(OTHER)};`)
+    await assert.rejects(sql(`INSERT INTO yana.profiles
+      (id,email,role,plan,wallet_balance_cents,stripe_customer_id,metadata)
+      VALUES (${sqlValue(OTHER)},'insert@synthetic.invalid','super_admin','legende',99000,
+        'cus_synthetic_client','{"banned":false}');`, { role, user: OTHER }), error => /42501/.test(error.message))
+    assert.equal(await sql(`SELECT count(*) FROM yana.profiles WHERE id=${sqlValue(OTHER)};`), '0')
   })
 }
 
-test('service_role retains both counter writes and profile creation', async () => {
-  await sql(`UPDATE yana.profiles SET co2_offset_total_kg=20,trees_planted_total=1 WHERE id=${sqlValue(USER)};`, { role: 'service_role' })
+test('service_role retains protected writes and profile creation', async () => {
+  await sql(`UPDATE yana.profiles SET co2_offset_total_kg=20,trees_planted_total=1,
+    role='super_admin',plan='legende',wallet_balance_cents=12500,
+    email='server-edit@synthetic.invalid',stripe_customer_id='cus_synthetic_server',
+    metadata='{"banned":true}',plan_multiplier=10,daily_questions=12
+    WHERE id=${sqlValue(USER)};`, { role: 'service_role' })
   assert.equal((await state()).co2, 20)
   assert.equal((await state()).counter, 1)
+  assert.deepEqual(await jsonSql(`SELECT json_build_array(role,plan,wallet_balance_cents,
+    email,stripe_customer_id,metadata,plan_multiplier,daily_questions)
+    FROM yana.profiles WHERE id=${sqlValue(USER)};`),
+  ['super_admin', 'legende', 12500, 'server-edit@synthetic.invalid', 'cus_synthetic_server', { banned: true }, 10, 12])
   await sql(`DELETE FROM yana.profiles WHERE id=${sqlValue(OTHER)};`)
-  await sql(`INSERT INTO yana.profiles (id,email,co2_offset_total_kg,trees_planted_total)
-    VALUES (${sqlValue(OTHER)},'server@synthetic.invalid',20,1);`, { role: 'service_role' })
-  assert.deepEqual(await jsonSql(`SELECT json_build_array(co2_offset_total_kg,trees_planted_total)
-    FROM yana.profiles WHERE id=${sqlValue(OTHER)};`), [20, 1])
+  await sql(`INSERT INTO yana.profiles (id,email,co2_offset_total_kg,trees_planted_total,role,plan,wallet_balance_cents)
+    VALUES (${sqlValue(OTHER)},'server@synthetic.invalid',20,1,'ambassadeur','essentiel',500);`, { role: 'service_role' })
+  assert.deepEqual(await jsonSql(`SELECT json_build_array(co2_offset_total_kg,trees_planted_total,role,plan,wallet_balance_cents)
+    FROM yana.profiles WHERE id=${sqlValue(OTHER)};`), [20, 1, 'ambassadeur', 'essentiel', 500])
 })
 
 test('existing SECURITY DEFINER signup trigger still creates zeroed profiles', async () => {
   await sql(`INSERT INTO auth.users (id,email,raw_user_meta_data)
     VALUES (${sqlValue(THIRD)},'signup@synthetic.invalid','{"full_name":"Synthetic signup"}');`, { role: 'supabase_auth_admin' })
-  const created = await jsonSql(`SELECT json_build_array(full_name,co2_offset_total_kg,trees_planted_total)
+  const created = await jsonSql(`SELECT json_build_array(full_name,co2_offset_total_kg,trees_planted_total,role,plan,wallet_balance_cents)
     FROM yana.profiles WHERE id=${sqlValue(THIRD)};`)
-  assert.deepEqual(created, ['Synthetic signup', 0, 0])
+  assert.deepEqual(created, ['Synthetic signup', 0, 0, 'user', 'free', 0])
 })
+
+// Register in this same process so all cases share the hooks and run serially.
+registerWalletPermissionTests()

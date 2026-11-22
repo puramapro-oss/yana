@@ -2,25 +2,29 @@
 -- Apply with the normal migration owner after review. No historical backfill.
 BEGIN;
 
--- Preserve normal profile edits and server writes. The two earned counters must
--- not be supplied by an anon/authenticated client, including during INSERT.
+-- Client edits follow the public profile PATCH allowlist. All other fields,
+-- including future additions, belong to the server. Signup creates profiles.
+-- This guard runs before profiles_touch_updated by trigger-name ordering;
+-- updated_at stays protected while the existing server trigger maintains it.
 CREATE OR REPLACE FUNCTION yana.guard_profile_tree_totals()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = pg_catalog
 AS $$
+DECLARE
+  v_client_fields CONSTANT text[] := ARRAY[
+    'full_name', 'theme', 'locale', 'birthdate',
+    'notifications_enabled', 'tutorial_completed'
+  ];
 BEGIN
   IF current_user IN ('anon', 'authenticated') THEN
     IF TG_OP = 'INSERT' THEN
-      IF NEW.co2_offset_total_kg IS DISTINCT FROM 0::numeric
-         OR NEW.trees_planted_total IS DISTINCT FROM 0 THEN
-        RAISE EXCEPTION 'Tree and CO2 totals are managed by the server'
-          USING ERRCODE = '42501';
-      END IF;
-    ELSIF NEW.co2_offset_total_kg IS DISTINCT FROM OLD.co2_offset_total_kg
-       OR NEW.trees_planted_total IS DISTINCT FROM OLD.trees_planted_total THEN
-      RAISE EXCEPTION 'Tree and CO2 totals are managed by the server'
+      RAISE EXCEPTION 'Profiles are created by the server'
+        USING ERRCODE = '42501';
+    ELSIF (to_jsonb(NEW) - v_client_fields)
+       IS DISTINCT FROM (to_jsonb(OLD) - v_client_fields) THEN
+      RAISE EXCEPTION 'Protected profile fields are managed by the server'
         USING ERRCODE = '42501';
     END IF;
   END IF;
