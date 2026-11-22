@@ -60,18 +60,27 @@ Le bouton sort systématiquement de son chargement, y compris en cas de rejet r�
   absence de mise à jour synchrone au montage, erreurs visibles, annulation avant
   réponse ou après JSON, rejet tardif et nettoyage réel du signal. L'état de la
   page est isolé par compte ; les relances utilisateur initialisent le chargement.
+- PASS local : 5 tests du portail Abonnement, dont 3 régressions reproduites.
+  Une réponse tardive après sortie ou changement de compte ne redirige plus
+  vers l’ancien portail ; deux clics simultanés ne lancent qu’une requête.
+  Le succès courant et la relance après refus restent disponibles. Aucun appel
+  Stripe réel dans ces tests.
 - PASS local : 46 régressions existantes d'admission des sources privées,
   d'installation et de suppression de l'authentification temporaire.
 - PASS local : les 21 fichiers SMARANA et 2 fichiers ESLint correspondent aux
   empreintes et commits immuables déjà suivis par le projet. Aucun paquet privé
   n'est copié dans le dépôt public.
 - La CI existante conserve installation complète, types, build et navigation
-  Chromium/Firefox/WebKit. Elle ajoute ces 46 régressions et une barrière npm
+  Chromium/Firefox/WebKit. Elle ajoute ces 51 régressions et une barrière npm
   refusant les alertes hautes ou critiques. Son résultat doit être lié au SHA final.
 - Première CI `44970199456` : installation complète sous Node 22, contrôle des
   sources privées, audit et 40 régressions PASS. Le lint a révélé un appel de
   mise à jour synchrone dans l'effet Abonnement. Le correctif structurel ci-dessus
-  conserve la règle ; types, build et navigateur attendent la nouvelle CI.
+  conserve la règle ; types, build et navigateur n’avaient pas été exécutés à ce stade.
+- CI du candidat `508d8a2`, run `44971076219` : PASS installation complète,
+  audit, lint ciblé, types, build de 95 pages, 46 contrôles de sources privées,
+  46 régressions et 52 tests navigateur. Les ajouts ultérieurs, dont la protection
+  du portail, doivent être requalifiés au SHA de publication ; la PR lie cette preuve.
 - Deux installations npm complètes locales ont été arrêtées avec le code 137 ;
   leur cause n'est pas établie et elles ne valent pas un test réussi. Les tests
   locaux utilisent les versions publiques exactes déjà disponibles ; la CI
@@ -89,14 +98,24 @@ Anthropic 1.x ou suppression artificielle de dépendances pour masquer l'audit.
 La réalisation d'une plantation, l'activation du partenaire, l'actualisation et
 la vérification Bitcoin d'un reçu, les données de production, les parcours avec
 un compte réel et les applications mobiles ne sont pas qualifiés par ces tests.
-Les transactions/concurrences de la comptabilité des arbres ne sont pas modifiées
-par cette correction. Aucun appel payant, opération financière, migration de données
-distantes ou déploiement n'est effectué.
+La comptabilité des intentions reçoit désormais une RPC transactionnelle commune
+au claim et au cron : verrou du profil, contrôle du registre et écriture atomique.
+Les incohérences historiques sont refusées sans réécriture. Huit scénarios locaux
+passent, dont sept défauts reproduits sur la référence. Les 35 vérifications PostgreSQL
+natives préparées doivent encore être exécutées dans le service jetable de CI.
+La migration doit précéder les deux nouveaux writers ; leur coexistence avec les
+anciens writers ne serait pas sûre. Les divergences du schéma historique et les
+autres champs sensibles du profil restent à examiner sur une base réellement
+accessible. Voir `AUDIT_TREE_TRANSACTIONS_20261122.md`. Aucun appel payant,
+opération financière, migration de données distantes ou déploiement n’est effectué.
 
 Les sources partagées restent épinglées à SMARANA
 `531cc653c81ffa3c99ab94667067f217deb5f944` et purama-master
 `6e50837af08ad57d8db37077f0363b3e05289e31`.
 
-Le contrôle GitNexus préalable au commit signale un risque élevé : 12 symboles
-et 8 parcours affectés par les hunks, dont le parcours GREEN et les routes arbres.
-Ce classement est signalé ; la revue indépendante et la CI complète qualifient le candidat.
+Le premier contrôle GitNexus préalable signalait un risque élevé : 12 symboles
+et 8 parcours affectés, dont GREEN et les routes arbres. Les analyses des handlers
+du second lot donnent UNKNOWN pour le claim HTTP et LOW pour le cron ; elles ne
+suffisent pas à prouver l’absence d’impact. Le contrôle cumulé avant publication couvre
+29 fichiers, 20 symboles et 14 parcours : risque HIGH, signalé avant publication.
+La revue et les deux CI doivent qualifier le SHA composé.

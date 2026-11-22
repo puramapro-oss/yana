@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import {
   ArrowUpRight, Check, CreditCard, ExternalLink, ReceiptText, Sparkles,
@@ -13,6 +12,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import { PLANS, type PlanId } from '@/lib/constants'
 import { cn, formatDate, formatPrice } from '@/lib/utils'
 import { useSubscriptionStatus } from './useSubscriptionStatus'
+import { useSubscriptionPortal } from './useSubscriptionPortal'
 import { PAYMENT_STATUS_LABELS } from './types'
 
 export default function AbonnementPage() {
@@ -40,26 +40,7 @@ export default function AbonnementPage() {
 
 function AbonnementDetails() {
   const { data, loading, error, retryStatus } = useSubscriptionStatus()
-  const [opening, setOpening] = useState(false)
-  const [portalError, setPortalError] = useState<string | null>(null)
-
-  async function openPortal() {
-    setOpening(true)
-    setPortalError(null)
-    try {
-      const res = await fetch('/api/stripe/portal', { method: 'POST' })
-      const body = await res.json()
-      if (!res.ok || !body.url) {
-        setPortalError(body.error ?? 'Impossible d\'ouvrir le portail Stripe.')
-        return
-      }
-      window.location.href = body.url
-    } catch {
-      setPortalError('Erreur réseau. Réessaie.')
-    } finally {
-      setOpening(false)
-    }
-  }
+  const { opening, portalError, openPortal } = useSubscriptionPortal()
 
   const plan = data ? PLANS[data.plan] ?? PLANS.free : null
   const paidPlanIds: PlanId[] = ['essentiel', 'infini', 'legende']
