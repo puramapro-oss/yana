@@ -56,14 +56,22 @@ Le bouton sort systématiquement de son chargement, y compris en cas de rejet r�
   dont 5 reçus officiels conservant octet pour octet leur sérialisation.
 - PASS local : 6 scénarios de rendu réel de la page GREEN et du callback réel,
   avec seules les données distantes remplacées.
+- PASS local : 6 régressions des lectures Abonnement, reproduites avant correction :
+  absence de mise à jour synchrone au montage, erreurs visibles, annulation avant
+  réponse ou après JSON, rejet tardif et nettoyage réel du signal. L'état de la
+  page est isolé par compte ; les relances utilisateur initialisent le chargement.
 - PASS local : 46 régressions existantes d'admission des sources privées,
   d'installation et de suppression de l'authentification temporaire.
 - PASS local : les 21 fichiers SMARANA et 2 fichiers ESLint correspondent aux
   empreintes et commits immuables déjà suivis par le projet. Aucun paquet privé
   n'est copié dans le dépôt public.
 - La CI existante conserve installation complète, types, build et navigation
-  Chromium/Firefox/WebKit. Elle ajoute ces 40 régressions et une barrière npm
+  Chromium/Firefox/WebKit. Elle ajoute ces 46 régressions et une barrière npm
   refusant les alertes hautes ou critiques. Son résultat doit être lié au SHA final.
+- Première CI `44970199456` : installation complète sous Node 22, contrôle des
+  sources privées, audit et 40 régressions PASS. Le lint a révélé un appel de
+  mise à jour synchrone dans l'effet Abonnement. Le correctif structurel ci-dessus
+  conserve la règle ; types, build et navigateur attendent la nouvelle CI.
 - Deux installations npm complètes locales ont été arrêtées avec le code 137 ;
   leur cause n'est pas établie et elles ne valent pas un test réussi. Les tests
   locaux utilisent les versions publiques exactes déjà disponibles ; la CI
@@ -89,6 +97,6 @@ Les sources partagées restent épinglées à SMARANA
 `531cc653c81ffa3c99ab94667067f217deb5f944` et purama-master
 `6e50837af08ad57d8db37077f0363b3e05289e31`.
 
-Le contrôle GitNexus préalable au commit signale un risque élevé : 9 symboles
-et 6 parcours affectés par les hunks, dont le parcours GREEN et les routes arbres.
+Le contrôle GitNexus préalable au commit signale un risque élevé : 12 symboles
+et 8 parcours affectés par les hunks, dont le parcours GREEN et les routes arbres.
 Ce classement est signalé ; la revue indépendante et la CI complète qualifient le candidat.
