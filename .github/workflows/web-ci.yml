@@ -182,6 +182,7 @@ jobs:
           scripts/check-tree-invariants.mjs scripts/check-tree-transactions.mjs
           scripts/tree-postgres-fixture.mjs
           scripts/wallet-permission-cases.mjs
+          scripts/profile-rls-cases.mjs
 
       - name: Verify authenticated admin identity and all nine protected handlers
         run: node --experimental-vm-modules --test scripts/admin-authorization.test.mjs

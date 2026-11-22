@@ -5,6 +5,7 @@ import {
   route, concurrentlyLocked, setupDatabase, cleanupFailures,
 } from './tree-postgres-fixture.mjs'
 import { registerWalletPermissionTests } from './wallet-permission-cases.mjs'
+import { registerProfileRlsTests } from './profile-rls-cases.mjs'
 
 before(setupDatabase)
 beforeEach(async () => { await reset() })
@@ -230,3 +231,7 @@ test('existing SECURITY DEFINER signup trigger still creates zeroed profiles', a
 
 // Register in this same process so all cases share the hooks and run serially.
 registerWalletPermissionTests()
+// Run after the guard/transaction fixture cases: these use schema.sql's actual
+// profile policy chain and the additive identity/RLS repair, without permissive
+// fixture policies. Shared hooks still reset data between every native case.
+registerProfileRlsTests()

@@ -11,10 +11,15 @@ on:
       - 'db/migrations/20260423_p3_2_wallet_withdrawal_fn.sql'
       - 'db/migrations/20261122_atomic_tree_pledges.sql'
       - 'db/migrations/20261122_wallet_withdrawal_permissions.sql'
+      - 'db/migrations/20261122_profiles_rls_identity.sql'
+      - 'migrations/0002_story_shares.sql'
+      - 'migrations/0003_fix_profiles_rls_recursion.sql'
+      - 'migrations/0003_financement_pools.sql'
       - 'scripts/check-tree-invariants.mjs'
       - 'scripts/check-tree-transactions.mjs'
       - 'scripts/tree-postgres-fixture.mjs'
       - 'scripts/wallet-permission-cases.mjs'
+      - 'scripts/profile-rls-cases.mjs'
       - '.github/workflows/trees-transaction-ci.yml'
   push:
     branches: [main]
@@ -27,10 +32,15 @@ on:
       - 'db/migrations/20260423_p3_2_wallet_withdrawal_fn.sql'
       - 'db/migrations/20261122_atomic_tree_pledges.sql'
       - 'db/migrations/20261122_wallet_withdrawal_permissions.sql'
+      - 'db/migrations/20261122_profiles_rls_identity.sql'
+      - 'migrations/0002_story_shares.sql'
+      - 'migrations/0003_fix_profiles_rls_recursion.sql'
+      - 'migrations/0003_financement_pools.sql'
       - 'scripts/check-tree-invariants.mjs'
       - 'scripts/check-tree-transactions.mjs'
       - 'scripts/tree-postgres-fixture.mjs'
       - 'scripts/wallet-permission-cases.mjs'
+      - 'scripts/profile-rls-cases.mjs'
       - '.github/workflows/trees-transaction-ci.yml'
   workflow_dispatch:
 
@@ -70,7 +80,7 @@ jobs:
         env:
           YANA_TEST_MODULES: ${{ runner.temp }}/yana-tree-tools/node_modules
         run: node scripts/check-tree-invariants.mjs .
-      - name: Verify native rollback, concurrency, profile guards, and wallet permissions
+      - name: Verify native transactions, guards, wallet permissions and canonical profile RLS
         env:
           YANA_TREE_TEST_CONTAINER: ${{ job.services.postgres.id }}
           YANA_TEST_MODULES: ${{ runner.temp }}/yana-tree-tools/node_modules
