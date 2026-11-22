@@ -203,8 +203,8 @@ export function registerProfileRlsTests() {
     repairedTest(`${superAdmin ? 'admin' : 'ordinary'} client cannot UPDATE another user's profile`, async () => {
       if (superAdmin) await sql(`UPDATE yana.profiles SET role='super_admin' WHERE id=${sqlValue(USER)};`)
       const before = await profileRows()
-      assert.deepEqual(await jsonSql(`WITH changed AS (UPDATE yana.profiles SET full_name='unauthorized'
-        WHERE id=${sqlValue(OTHER)} RETURNING id) SELECT json_agg(id) FROM changed;`, { role: 'authenticated' }), null)
+      assert.equal(await sql(`WITH changed AS (UPDATE yana.profiles SET full_name='unauthorized'
+        WHERE id=${sqlValue(OTHER)} RETURNING id) SELECT count(*) FROM changed;`, { role: 'authenticated' }), '0')
       assert.deepEqual(await profileRows(), before)
     })
   }
