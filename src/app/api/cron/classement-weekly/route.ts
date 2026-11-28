@@ -11,7 +11,7 @@ export const maxDuration = 60
 // Header : Authorization: Bearer $CRON_SECRET
 //
 // - Calcule score de la semaine écoulée par user :
-//     referrals×10 + new_subscriptions×50 + trips_completed×5 + missions_validated×3
+//     referrals×10 + new_subscriptions×50 + missions_validated×3
 // - Top 10 → pool 6% de pool_balances.reward_users
 // - Répartition 2%/1%/0.7%/0.5%/0.4%/0.3%/0.275×4
 // - Insert contest_results + karma_winners + notifications + wallet_transactions
@@ -22,7 +22,6 @@ interface ScoreEntry {
   score: number
   referrals: number
   subscriptions: number
-  trips: number
   missions: number
 }
 
@@ -40,7 +39,7 @@ async function computeScores(
   startIso: string,
   endIso: string,
 ): Promise<ScoreEntry[]> {
-  const [referralsRes, paymentsRes, tripsRes, missionsRes] = await Promise.all([
+  const [referralsRes, paymentsRes, missionsRes] = await Promise.all([
     admin
       .from('referrals')
       .select('referrer_id, status, created_at')
@@ -53,12 +52,6 @@ async function computeScores(
       .gte('created_at', startIso)
       .lte('created_at', endIso)
       .eq('status', 'succeeded'),
-    admin
-      .from('trips')
-      .select('user_id, ended_at, started_at')
-      .gte('started_at', startIso)
-      .lte('started_at', endIso)
-      .not('ended_at', 'is', null),
     admin
       .from('mission_completions')
       .select('user_id, status, completed_at')
@@ -74,7 +67,6 @@ async function computeScores(
       score: 0,
       referrals: 0,
       subscriptions: 0,
-      trips: 0,
       missions: 0,
     }
     ;(existing[key] as number) = (existing[key] as number) + delta
@@ -88,9 +80,7 @@ async function computeScores(
   for (const p of paymentsRes.data ?? []) {
     if (p.user_id) bump(p.user_id, 'subscriptions', 1, 50)
   }
-  for (const t of tripsRes.data ?? []) {
-    if (t.user_id) bump(t.user_id, 'trips', 1, 5)
-  }
+  // Un trajet observé par téléphone ne constitue pas un justificatif de paiement.
   for (const m of missionsRes.data ?? []) {
     if (m.user_id) bump(m.user_id, 'missions', 1, 3)
   }

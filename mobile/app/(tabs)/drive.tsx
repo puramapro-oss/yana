@@ -13,7 +13,7 @@ import { useTrip } from '@/hooks/useTrip'
 import { TripTrackerRN } from '@/lib/trip-tracker'
 import type { VehicleRow } from '@/lib/trip-api'
 import { apiFatigueLog } from '@/lib/trip-api'
-import { getFatigueSignal, fatigueColor, fatigueLabel, type FatigueSignal } from '@/lib/health'
+import { getFatigueSignal, type FatigueSignal } from '@/lib/health'
 
 function formatDuration(sec: number): string {
   const h = Math.floor(sec / 3600)
@@ -36,7 +36,7 @@ function vehicleLabel(v: VehicleRow): string {
 export default function Drive() {
   const router = useRouter()
   const { vehicles, primary, loading: vehiclesLoading, error: vehiclesError, refresh } = useVehicles()
-  const { state, start, stop, cancel } = useTrip()
+  const { state, start, pause, resume, stop, cancel } = useTrip()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [fatigueSignal, setFatigueSignal] = useState<FatigueSignal | null>(null)
@@ -127,9 +127,11 @@ export default function Drive() {
     if (res.score) {
       Alert.alert(
         'Trajet terminé 🌱',
-        `SAFE ${res.score.safety_score}/100 · GREEN ${res.score.eco_score}/100\n` +
-          `${formatDistance(res.distance_km * 1000)} en ${formatDuration(res.duration_sec)}\n` +
-          `+${res.score.seeds_earned} seeds · ${res.score.medal.toUpperCase()}`,
+        res.score.safety_score === null || res.score.eco_score === null
+          ? 'Données insuffisantes pour évaluer ce trajet.'
+          : `Indices de conduite observée · ${res.score.safety_score}/100 sécurité · ${res.score.eco_score}/100 éco\n` +
+            `${formatDistance(res.distance_km * 1000)} en ${formatDuration(res.duration_sec)}\n` +
+            `${res.score.seeds_earned} Graines`,
       )
     }
   }
@@ -156,6 +158,7 @@ export default function Drive() {
   }
 
   const isActive = state.status === 'active' || state.status === 'paused'
+  const moving = (state.current_speed_kmh ?? 0) > 0
   const canStart = !isActive && !busy && vehicleId !== null
 
   return (
@@ -193,7 +196,7 @@ export default function Drive() {
                   textTransform: 'uppercase',
                 }}
               >
-                Trajet en cours
+                {state.status === 'paused' ? 'Trajet en pause' : 'Trajet en cours'}
               </Text>
               {state.sensors_active ? (
                 <View
@@ -252,7 +255,7 @@ export default function Drive() {
             <View style={{ flexDirection: 'row', gap: fib.md }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.dark.textMuted, fontSize: typography.body.xs }}>
-                  VITESSE
+                  VITESSE GPS INDICATIVE
                 </Text>
                 <Text
                   style={{
@@ -261,7 +264,7 @@ export default function Drive() {
                     fontWeight: '600',
                   }}
                 >
-                  {state.current_speed_kmh.toFixed(0)} km/h
+                  {state.current_speed_kmh === null ? 'Indisponible' : `${Math.round(state.current_speed_kmh)} km/h`}
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
@@ -279,11 +282,26 @@ export default function Drive() {
                 </Text>
               </View>
             </View>
+            <Text style={{ color: colors.dark.textSecondary, fontSize: typography.body.sm }}>
+              Limitation de la route inconnue. Utilise les commandes une fois stationné.
+            </Text>
+            {state.break_reminder_due && (
+              <Text accessibilityRole="text" style={{ color: colors.dark.textPrimary }}>
+                Prévois une pause sur la prochaine aire adaptée.
+              </Text>
+            )}
+            <PrimaryButton
+              testID="drive-pause"
+              label={state.status === 'paused' ? 'Reprendre le trajet' : 'Mettre en pause'}
+              variant="secondary"
+              onPress={state.status === 'paused' ? resume : pause}
+              disabled={busy || moving}
+            />
             <PrimaryButton
               testID="drive-stop"
               label={busy ? 'Finalisation…' : 'Arrêter le trajet'}
               onPress={handleStop}
-              disabled={busy}
+              disabled={busy || moving}
               loading={busy && state.status === 'ending'}
             />
             <PrimaryButton
@@ -291,13 +309,7 @@ export default function Drive() {
               label="Annuler ce trajet"
               variant="ghost"
               onPress={handleCancel}
-              disabled={busy}
-            />
-            <PrimaryButton
-              testID="drive-moto-mode"
-              label="🛵 Activer Moto Mode"
-              variant="secondary"
-              onPress={() => router.push('/moto')}
+              disabled={busy || moving}
             />
           </GlassCard>
         ) : (
@@ -357,6 +369,16 @@ export default function Drive() {
                     marginVertical: fib.xs,
                   }}
                 />
+                <Text style={{ color: colors.dark.textSecondary, fontSize: typography.body.sm }}>
+                  Prépare ton trajet à l’arrêt. Dès les premiers signes de fatigue, cherche un endroit sûr pour stationner.
+                </Text>
+                <PrimaryButton
+                  testID="drive-moto-mode"
+                  label="Ouvrir le mode moto"
+                  variant="secondary"
+                  disabled={!canStart}
+                  onPress={() => { if (vehicleId) router.push({ pathname: '/moto', params: { vehicleId } }) }}
+                />
                 <PrimaryButton
                   testID="drive-start"
                   label={busy ? 'Démarrage…' : '▶︎ Démarrer un trajet'}
@@ -380,6 +402,7 @@ export default function Drive() {
           </GlassCard>
         )}
 
+        {!isActive && <>
         <GlassCard style={{ gap: fib.xs }}>
           <Text
             style={{
@@ -432,6 +455,7 @@ export default function Drive() {
             />
           </View>
         </GlassCard>
+        </>}
       </ScrollView>
     </SafeAreaView>
   )

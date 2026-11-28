@@ -171,18 +171,20 @@ export interface SafeDriverMonthlyScore {
 
 // Résultat de lib/scoring.ts — scoring trip terminé
 export interface TripScoreResult {
-  safety_score: number          // 0-100
-  eco_score: number             // 0-100
-  co2_kg: number                // absolue, arrondi 0.001
-  seeds_earned: number          // Graines (1/km safe + bonus eco + bonus carpool)
-  badge: 'gold' | 'silver' | 'bronze' | 'learner'
+  assessment: 'indicative' | 'insufficient'
+  safety_score: number | null
+  eco_score: number | null
+  co2_kg: number
+  reward_distance_km: number
+  seeds_earned: number
+  badge: 'gold' | 'silver' | 'bronze' | 'learner' | null
   event_counts: Partial<Record<TripEventType, number>>
   breakdown: {
     base: number
     events_penalty: number
     events_bonus: number
     speeding_penalty: number
-  }
+  } | null
 }
 
 // État live d'un trajet en cours (client state hook useTrip)
@@ -193,7 +195,8 @@ export interface LiveTripState {
   paused_ms: number             // cumul pauses
   distance_m: number
   duration_sec: number
-  current_speed_kmh: number
+  current_speed_kmh: number | null
+  break_reminder_due: boolean
   max_speed_kmh: number
   events_count: number
   last_position: { lat: number; lng: number; accuracy: number; timestamp: number } | null

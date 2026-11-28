@@ -1,6 +1,6 @@
 # Flow 06 — Moto Mode UI
 # Couvre : Drive → bouton "Activer Moto Mode" → écran fullscreen → 3 boutons
-# présents (start/obstacle/stop) → exit retour à Drive.
+# présents (start/pause/stop) → exit retour à Drive.
 appId: dev.purama.yana
 tags:
   - moto
@@ -33,19 +33,11 @@ tags:
 - assertVisible:
     id: "moto-start"
 - assertVisible:
-    id: "moto-obstacle"
+    id: "moto-pause"
 - assertVisible:
     id: "moto-stop"
 - tapOn:
     id: "moto-exit"
-# On peut être hors trajet (back direct) ou en confirm dialog (trajet actif).
-- runFlow:
-    when:
-      visible:
-        text: "Quitter le Moto Mode"
-    commands:
-      - tapOn:
-          text: "Quitter"
 - assertVisible:
     id: "tab-drive"
     timeout: 6000

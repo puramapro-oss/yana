@@ -49,10 +49,10 @@ export default function DashboardPage() {
   }
 
   const firstName = profile?.full_name?.split(' ')[0] ?? 'pilote'
-  const avgSafety =
-    profile && profile.total_trips > 0 && profile.total_safety_score != null
-      ? Math.round(profile.total_safety_score / profile.total_trips)
-      : null
+  const scoredTrips = (recentTrips ?? []).filter((trip) => trip.safety_score != null)
+  const avgSafety = scoredTrips.length
+    ? Math.round(scoredTrips.reduce((sum, trip) => sum + (trip.safety_score ?? 0), 0) / scoredTrips.length)
+    : null
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -97,7 +97,7 @@ export default function DashboardPage() {
           icon="🌿"
         />
         <Stat
-          label="Score sécurité"
+          label="Indice des trajets récents"
           value={avgSafety != null ? `${avgSafety}/100` : '—'}
           icon="🛡️"
         />

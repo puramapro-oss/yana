@@ -1,5 +1,6 @@
 'use client'
 
+import { TripUploads } from '../../mobile/src/lib/trip-observations'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { TripTracker, type DetectedEvent, type TrackerTick } from '@/lib/tracking'
 import type { LiveTripState, TripMode, TripScoreResult } from '@/types'
@@ -11,7 +12,8 @@ const INITIAL: LiveTripState = {
   paused_ms: 0,
   distance_m: 0,
   duration_sec: 0,
-  current_speed_kmh: 0,
+  current_speed_kmh: null,
+  break_reminder_due: false,
   max_speed_kmh: 0,
   events_count: 0,
   last_position: null,
@@ -26,28 +28,13 @@ interface StartOpts {
 
 export function useTrip() {
   const [state, setState] = useState<LiveTripState>(INITIAL)
+  const uploadsRef = useRef<TripUploads | null>(null)
   const trackerRef = useRef<TripTracker | null>(null)
-  const eventQueueRef = useRef<DetectedEvent[]>([])
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Flush queue d'events vers /api/trips/event toutes les 3 secondes
-  // (batch pour éviter saturation — LEARNINGS pattern P2)
-  const startFlushTimer = useCallback((tripId: string) => {
+  const startFlushTimer = useCallback((uploads: TripUploads) => {
     if (flushTimerRef.current) return
-    flushTimerRef.current = setInterval(async () => {
-      if (eventQueueRef.current.length === 0) return
-      const batch = eventQueueRef.current.splice(0, eventQueueRef.current.length)
-      try {
-        await fetch('/api/trips/event', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ trip_id: tripId, events: batch }),
-        })
-      } catch {
-        // Remettre en file si fail pour retry
-        eventQueueRef.current.unshift(...batch)
-      }
-    }, 3_000)
+    flushTimerRef.current = setInterval(() => { void uploads.flush() }, 3_000)
   }, [])
 
   const stopFlushTimer = useCallback(() => {
@@ -61,6 +48,7 @@ export function useTrip() {
     return () => {
       trackerRef.current?.stop()
       stopFlushTimer()
+      void uploadsRef.current?.cancel()
     }
   }, [stopFlushTimer])
 
@@ -85,24 +73,53 @@ export function useTrip() {
         return { error: 'Connexion impossible. Vérifie ton réseau.' }
       }
 
+      const queue: DetectedEvent[] = []
+      const uploads = new TripUploads(
+        async (receipt) => {
+          const res = await fetch('/api/trips/coverage', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ trip_id: tripId, ...receipt }), signal: AbortSignal.timeout(10_000),
+          })
+          if (!res.ok) throw new Error('coverage_failed')
+        },
+        async () => {
+          const batch = queue.splice(0, 100)
+          if (!batch.length) return true
+          try {
+            const res = await fetch('/api/trips/event', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ trip_id: tripId, events: batch }), signal: AbortSignal.timeout(10_000),
+            })
+            if (!res.ok) throw new Error('events_failed')
+            return true
+          } catch {
+            queue.unshift(...batch)
+            return false
+          }
+        },
+        () => queue.length,
+      )
+      uploadsRef.current = uploads
       const tracker = new TripTracker()
       trackerRef.current = tracker
 
       try {
         await tracker.start({
           onTick: (t: TrackerTick) => {
+            uploads.observe(t)
             setState((s) => ({
               ...s,
               distance_m: t.distance_m,
               duration_sec: t.duration_sec,
               current_speed_kmh: t.current_speed_kmh,
+              break_reminder_due: t.break_reminder_due,
               max_speed_kmh: t.max_speed_kmh,
               events_count: t.events_count,
               last_position: t.last_position,
             }))
           },
           onEvent: (event: DetectedEvent) => {
-            eventQueueRef.current.push(event)
+            queue.push(event)
           },
           onError: (msg: string) => {
             setState((s) => ({ ...s, error: msg }))
@@ -119,7 +136,7 @@ export function useTrip() {
         return { error: 'Active la géolocalisation pour tracker ton trajet.' }
       }
 
-      startFlushTimer(tripId)
+      startFlushTimer(uploads)
       setState({
         ...INITIAL,
         trip_id: tripId,
@@ -152,16 +169,7 @@ export function useTrip() {
     const finalTick = tracker.stop()
     stopFlushTimer()
 
-    // Flush queue restante avant end
-    if (eventQueueRef.current.length > 0) {
-      const batch = eventQueueRef.current.splice(0, eventQueueRef.current.length)
-      await fetch('/api/trips/event', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ trip_id: tripId, events: batch }),
-      }).catch(() => null)
-    }
-
+    const journalComplete = await uploadsRef.current?.finish(finalTick)
     try {
       const res = await fetch('/api/trips/end', {
         method: 'POST',
@@ -170,7 +178,8 @@ export function useTrip() {
           trip_id: tripId,
           distance_km: finalTick.distance_m / 1000,
           duration_sec: finalTick.duration_sec,
-          max_speed_kmh: finalTick.max_speed_kmh,
+          max_speed_kmh: finalTick.coverage.accepted_fixes > 0 ? finalTick.max_speed_kmh : null,
+          ...(journalComplete ? { coverage: finalTick.coverage } : {}),
           end_lat: finalTick.last_position?.lat ?? null,
           end_lng: finalTick.last_position?.lng ?? null,
         }),
@@ -183,7 +192,7 @@ export function useTrip() {
     } catch {
       trackerRef.current = null
       setState(INITIAL)
-      return { score: null, error: 'Connexion impossible. Ton trajet a été sauvegardé, reconnecte-toi.' }
+      return { score: null, error: 'La clôture du trajet n’a pas pu être confirmée.' }
     }
   }, [state.trip_id, stopFlushTimer])
 
@@ -192,7 +201,7 @@ export function useTrip() {
     const tripId = state.trip_id
     tracker?.stop()
     stopFlushTimer()
-    eventQueueRef.current = []
+    await uploadsRef.current?.cancel()
     if (tripId) {
       await fetch('/api/trips/end', {
         method: 'POST',

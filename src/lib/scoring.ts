@@ -3,7 +3,8 @@
 // Appelé par /api/trips/end pour finaliser un trajet.
 
 import type { FuelType, TripEventType, TripMode, TripScoreResult } from '@/types'
-import { TRIP_EVENT_WEIGHTS } from '@/lib/constants'
+import { hasTripCoverage, observedRewardKm, type CoverageReceipt, type TripCoverage } from './trip-coverage.ts'
+import { TRIP_EVENT_WEIGHTS } from './constants.ts'
 
 // ADEME — Base Carbone v23 (2026) — kg CO2eq par km moyen
 // Source: https://base-carbone.ademe.fr (véhicule thermique + fab batterie + mix élec FR)
@@ -47,6 +48,9 @@ interface ScoringEvent {
 
 export interface CalculateTripScoreInput {
   events: ScoringEvent[]
+  coverage?: TripCoverage | null
+  receipts?: readonly CoverageReceipt[]
+  elapsed_sec?: number
   distance_km: number
   duration_sec: number
   fuel_type: FuelType | null
@@ -58,7 +62,6 @@ export interface CalculateTripScoreInput {
  * Safety score 0-100.
  *  - Base 100
  *  - Chaque event négatif: poids × (severity/3) (severity 3 = poids nominal)
- *  - Speeding: pénalité additionnelle proportionnelle au dépassement
  *  - Events positifs: bonus limité à +15
  *  - Clamp [0, 100]
  */
@@ -72,20 +75,15 @@ function computeSafetyScore(
 } {
   let penalty = 0
   let bonus = 0
-  let speedingPenalty = 0
 
   for (const ev of events) {
+    // Ces signaux du téléphone ne suffisent pas à attribuer une faute au conducteur.
+    if (ev.event_type !== 'harsh_accel' && ev.event_type !== 'eco_acceleration'
+      && ev.event_type !== 'smooth_drive' && ev.event_type !== 'focus_maintained') continue
     const weight = TRIP_EVENT_WEIGHTS[ev.event_type]
     if (weight == null) continue
     const severityFactor = Math.max(1, Math.min(5, ev.severity)) / 3
     const delta = weight * severityFactor
-
-    if (ev.event_type === 'speeding' && ev.speed_kmh != null && ev.speed_limit_kmh != null) {
-      const over = Math.max(0, ev.speed_kmh - ev.speed_limit_kmh)
-      // +1 pt pénalité par km/h au-dessus (cap 30)
-      speedingPenalty += Math.min(30, over)
-      continue
-    }
 
     if (delta < 0) penalty += delta
     else bonus += delta
@@ -94,10 +92,10 @@ function computeSafetyScore(
   // Cap bonus
   bonus = Math.min(15, bonus)
 
-  const raw = 100 + penalty + bonus - speedingPenalty
+  const raw = 100 + penalty + bonus
   const score = Math.max(0, Math.min(100, Math.round(raw)))
 
-  return { score, events_penalty: penalty, events_bonus: bonus, speeding_penalty: speedingPenalty }
+  return { score, events_penalty: penalty, events_bonus: bonus, speeding_penalty: 0 }
 }
 
 /**
@@ -105,7 +103,6 @@ function computeSafetyScore(
  *  - Base: 80 si électrique, 60 si hybride, 50 sinon
  *  - +3 par eco_acceleration (cap +20)
  *  - -3 par harsh_accel (cap -30)
- *  - -5 par speeding (conduite agressive = surconso)
  */
 function computeEcoScore(events: ScoringEvent[], fuel: FuelType | null): number {
   let base = 50
@@ -119,7 +116,6 @@ function computeEcoScore(events: ScoringEvent[], fuel: FuelType | null): number 
   for (const ev of events) {
     if (ev.event_type === 'eco_acceleration') ecoBonus += 3
     else if (ev.event_type === 'harsh_accel') ecoPenalty += 3
-    else if (ev.event_type === 'speeding') ecoPenalty += 5
   }
 
   ecoBonus = Math.min(20, ecoBonus)
@@ -136,14 +132,11 @@ function computeEcoScore(events: ScoringEvent[], fuel: FuelType | null): number 
  *  - Score 75-89: 0.4 Graine/km
  *  - Score >= 90: 0.6 Graine/km
  *  - Eco >= 70: +25%
- *  - Mode carpool_driver: +1 Graine par passager par 10 km
  */
 function computeSeedsEarned(
   distanceKm: number,
   safetyScore: number,
   ecoScore: number,
-  tripMode: TripMode,
-  passengers: number,
 ): number {
   if (distanceKm < 1) return 0
   if (safetyScore < 60) return 0
@@ -155,46 +148,35 @@ function computeSeedsEarned(
   let seeds = distanceKm * perKm
   if (ecoScore >= 70) seeds *= 1.25
 
-  if (tripMode === 'carpool_driver' && passengers > 0) {
-    seeds += (distanceKm / 10) * passengers
-  }
-
   return Math.floor(seeds)
 }
 
 export function calculateTripScore(input: CalculateTripScoreInput): TripScoreResult {
-  const { events, distance_km, fuel_type, trip_mode, passengers_count } = input
-
-  const { score: safety_score, events_penalty, events_bonus, speeding_penalty } = computeSafetyScore(
-    events,
-  )
-  const eco_score = computeEcoScore(events, fuel_type)
-  const co2_kg = calculateCo2Kg(distance_km, fuel_type)
-  const seeds_earned = computeSeedsEarned(
-    distance_km,
-    safety_score,
-    eco_score,
-    trip_mode,
-    passengers_count,
-  )
-
+  const { events, distance_km, duration_sec, fuel_type, coverage } = input
   const event_counts: Partial<Record<TripEventType, number>> = {}
-  for (const ev of events) {
-    event_counts[ev.event_type] = (event_counts[ev.event_type] ?? 0) + 1
+  for (const ev of events) event_counts[ev.event_type] = (event_counts[ev.event_type] ?? 0) + 1
+  const co2_kg = calculateCo2Kg(distance_km, fuel_type)
+
+  if (input.trip_mode === 'carpool_passenger'
+    || !hasTripCoverage(coverage, duration_sec, input.elapsed_sec ?? 0, distance_km)) {
+    return {
+      assessment: 'insufficient', safety_score: null, eco_score: null, badge: null,
+      co2_kg, event_counts, reward_distance_km: 0, seeds_earned: 0, breakdown: null,
+    }
   }
 
+  const { score, events_penalty, events_bonus, speeding_penalty } = computeSafetyScore(events)
+  const eco_score = computeEcoScore(events, fuel_type)
+  const eligibleKm = observedRewardKm(input.receipts ?? [], coverage, distance_km, duration_sec)
   return {
-    safety_score,
+    assessment: 'indicative',
+    safety_score: score,
     eco_score,
     co2_kg,
-    seeds_earned,
-    badge: safetyBadge(safety_score),
+    reward_distance_km: eligibleKm,
+    seeds_earned: computeSeedsEarned(eligibleKm, score, eco_score),
+    badge: safetyBadge(score),
     event_counts,
-    breakdown: {
-      base: 100,
-      events_penalty,
-      events_bonus,
-      speeding_penalty,
-    },
+    breakdown: { base: 100, events_penalty, events_bonus, speeding_penalty },
   }
 }

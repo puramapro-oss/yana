@@ -10,11 +10,13 @@
  * Persistence : la queue d'events est sauvegardée toutes les 500 ms dans
  * AsyncStorage, donc un crash app ne perd jamais > 3 s d'events détectés.
  */
+import { TripUploads } from '../lib/trip-observations'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { TripTrackerRN, type TrackerTick } from '@/lib/trip-tracker'
 import {
   apiTripStart,
   apiTripEvents,
+  apiTripCoverage,
   apiTripEnd,
   apiTripCancel,
   type TripEndResponse,
@@ -40,7 +42,8 @@ export interface LiveTripState {
   started_at: number | null
   distance_m: number
   duration_sec: number
-  current_speed_kmh: number
+  current_speed_kmh: number | null
+  break_reminder_due: boolean
   max_speed_kmh: number
   events_count: number
   queue_size: number
@@ -54,7 +57,8 @@ const INITIAL: LiveTripState = {
   started_at: null,
   distance_m: 0,
   duration_sec: 0,
-  current_speed_kmh: 0,
+  current_speed_kmh: null,
+  break_reminder_due: false,
   max_speed_kmh: 0,
   events_count: 0,
   queue_size: 0,
@@ -67,6 +71,7 @@ const FLUSH_BATCH_MAX = 50
 
 export function useTrip() {
   const [state, setState] = useState<LiveTripState>(INITIAL)
+  const uploadsRef = useRef<TripUploads | null>(null)
   const trackerRef = useRef<TripTrackerRN | null>(null)
   const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const phoneWatcherStopRef = useRef<(() => void) | null>(null)
@@ -78,26 +83,10 @@ export function useTrip() {
     }
   }, [])
 
-  const flushOnce = useCallback(async (tripId: string) => {
-    const batch = drain(FLUSH_BATCH_MAX)
-    if (batch.length === 0) return
-    try {
-      await apiTripEvents({ trip_id: tripId, events: batch })
-      setState((s) => ({ ...s, queue_size: queueSize() }))
-    } catch {
-      requeue(batch)
-    }
+  const startFlushTimer = useCallback((uploads: TripUploads) => {
+    if (flushTimerRef.current) return
+    flushTimerRef.current = setInterval(() => { void uploads.flush() }, FLUSH_INTERVAL_MS)
   }, [])
-
-  const startFlushTimer = useCallback(
-    (tripId: string) => {
-      if (flushTimerRef.current) return
-      flushTimerRef.current = setInterval(() => {
-        void flushOnce(tripId)
-      }, FLUSH_INTERVAL_MS)
-    },
-    [flushOnce],
-  )
 
   // Restaure la queue au premier mount (reprise après kill app).
   useEffect(() => {
@@ -109,6 +98,7 @@ export function useTrip() {
     return () => {
       trackerRef.current?.stop().catch(() => null)
       stopFlushTimer()
+      void uploadsRef.current?.cancel()
       phoneWatcherStopRef.current?.()
       phoneWatcherStopRef.current = null
     }
@@ -143,22 +133,42 @@ export function useTrip() {
 
       setActiveTrip(tripId)
 
+      const uploads = new TripUploads(
+        (receipt) => apiTripCoverage({ trip_id: tripId, ...receipt }),
+        async () => {
+          const batch = drain(FLUSH_BATCH_MAX)
+          if (!batch.length) return true
+          try {
+            await apiTripEvents({ trip_id: tripId, events: batch })
+            setState((s) => ({ ...s, queue_size: queueSize() }))
+            return true
+          } catch {
+            if (getActiveTrip() === tripId) requeue(batch)
+            return false
+          }
+        },
+        queueSize,
+      )
+      uploadsRef.current = uploads
       const tracker = new TripTrackerRN()
       trackerRef.current = tracker
 
       try {
         await tracker.start(
           {
-            onTick: (t: TrackerTick) =>
+            onTick: (t: TrackerTick) => {
+              uploads.observe(t)
               setState((s) => ({
                 ...s,
                 distance_m: t.distance_m,
                 duration_sec: t.duration_sec,
                 current_speed_kmh: t.current_speed_kmh,
+                break_reminder_due: t.break_reminder_due,
                 max_speed_kmh: t.max_speed_kmh,
                 events_count: t.events_count,
                 queue_size: queueSize(),
-              })),
+              }))
+            },
             onEvent: () => {
               setState((s) => ({ ...s, queue_size: queueSize() }))
             },
@@ -177,7 +187,7 @@ export function useTrip() {
         return { error: msg }
       }
 
-      startFlushTimer(tripId)
+      startFlushTimer(uploads)
 
       // No-Phone-While-Driving watcher si opt-in activé.
       if (await isNoPhoneEnabled()) {
@@ -234,14 +244,15 @@ export function useTrip() {
     stopFlushTimer()
     phoneWatcherStopRef.current?.()
     phoneWatcherStopRef.current = null
-    await flushOnce(tripId)
+    const journalComplete = await uploadsRef.current?.finish(finalTick)
 
     try {
       const res = await apiTripEnd({
         trip_id: tripId,
         distance_km: finalTick.distance_m / 1000,
         duration_sec: finalTick.duration_sec,
-        max_speed_kmh: finalTick.max_speed_kmh,
+        max_speed_kmh: finalTick.coverage.accepted_fixes > 0 ? finalTick.max_speed_kmh : null,
+        ...(journalComplete ? { coverage: finalTick.coverage } : {}),
         end_lat: finalTick.last_position?.lat ?? null,
         end_lng: finalTick.last_position?.lng ?? null,
       })
@@ -260,13 +271,14 @@ export function useTrip() {
       setState({ ...INITIAL, status: 'error', error: msg })
       return { score: null, error: msg, distance_km: 0, duration_sec: 0 }
     }
-  }, [state.trip_id, stopFlushTimer, flushOnce])
+  }, [state.trip_id, stopFlushTimer])
 
   const cancel = useCallback(async () => {
     const tripId = state.trip_id ?? getActiveTrip()
     const tracker = trackerRef.current
     if (tracker) await tracker.stop()
     stopFlushTimer()
+    await uploadsRef.current?.cancel()
     phoneWatcherStopRef.current?.()
     phoneWatcherStopRef.current = null
     if (tripId) {

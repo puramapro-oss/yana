@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { toast } from 'sonner'
 import { Play, Pause, Square } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
@@ -72,6 +71,7 @@ export default function DrivePage() {
   }
 
   const status = state.status
+  const moving = (state.current_speed_kmh ?? 0) > 0
 
   return (
     <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-2xl flex-col gap-6">
@@ -80,7 +80,7 @@ export default function DrivePage() {
           SAFE DRIVE
         </h1>
         <p className="mt-2 text-sm text-[var(--text-secondary)]">
-          Ta conduite, ton score, tes Graines. Respire avant de démarrer 🧘
+          Prépare le trajet à l’arrêt. En cas de fatigue, arrête-toi dès que tu peux stationner en sécurité.
         </p>
       </header>
 
@@ -110,6 +110,12 @@ export default function DrivePage() {
             status={status}
           />
 
+          {isActive && state.break_reminder_due && (
+            <p role="status" className="text-sm text-[var(--text-secondary)]">
+              Prévois une pause sur la prochaine aire adaptée.
+            </p>
+          )}
+
           <div className="grid grid-cols-3 gap-3">
             <Stat label="Distance" value={formatKm(state.distance_m / 1000)} />
             <Stat label="Durée" value={formatDuration(state.duration_sec)} />
@@ -135,6 +141,7 @@ export default function DrivePage() {
                 <Button
                   data-testid="drive-pause"
                   onClick={pause}
+                  disabled={moving || busy}
                   variant="secondary"
                   className="h-16 text-lg"
                   icon={<Pause className="h-5 w-5" />}
@@ -144,7 +151,7 @@ export default function DrivePage() {
                 <Button
                   data-testid="drive-stop"
                   onClick={handleStop}
-                  disabled={busy}
+                  disabled={busy || moving}
                   loading={busy}
                   className="h-16 bg-gradient-to-r from-[var(--pink)] to-[var(--orange)] text-white hover:opacity-90"
                   icon={<Square className="h-5 w-5" />}
@@ -167,7 +174,7 @@ export default function DrivePage() {
                 <Button
                   data-testid="drive-stop-paused"
                   onClick={handleStop}
-                  disabled={busy}
+                  disabled={busy || moving}
                   loading={busy}
                   variant="secondary"
                   className="h-16 text-lg"
@@ -182,7 +189,7 @@ export default function DrivePage() {
               <button
                 type="button"
                 onClick={handleCancel}
-                disabled={busy}
+                disabled={busy || moving}
                 className="text-xs text-[var(--text-muted)] underline hover:text-[var(--text-secondary)] disabled:opacity-50"
               >
                 Annuler sans sauvegarder
