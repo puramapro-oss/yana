@@ -1,19 +1,3 @@
-/**
- * TripTrackerRN — wrapper `expo-location` (foreground + background) pour YANA mobile.
- *
- * Algo porté depuis `src/lib/tracking.ts` (web) :
- *  - haversineMeters pour la distance cumulée
- *  - seuils MS2_HARD_BRAKE = -3.0 / HARD_ACCEL = 3.0 (m/s²)
- *  - cooldown 3 s par type d'event
- *  - GPS jitter filter (< 2 m entre 2 points)
- *  - speed limit par défaut 130 km/h (fallback)
- *
- * Différences mobile :
- *  - watchPositionAsync au lieu de navigator.geolocation.watchPosition
- *  - BackgroundLocationTask optionnel (ios UIBackgroundModes+location, android FG service)
- *  - pause réelle supportée via `expo-location.hasStartedLocationUpdatesAsync`
- *  - émission d'events vers la queue persistée (pas directement API)
- */
 import * as Location from 'expo-location'
 import * as TaskManager from 'expo-task-manager'
 import { Platform } from 'react-native'
@@ -22,39 +6,20 @@ import { enqueueEvent } from './event-queue'
 import { SensorBuffer } from './sensor-buffer'
 import type { DetectedEventPayload, TripEventType } from './trip-api'
 
-const EARTH_RADIUS_M = 6_371_000
-const GPS_JITTER_M = 2
+import { TripObservations, type ObservationTick } from './trip-observations'
+
 const EVENT_COOLDOWN_MS = 3_000
-const DEFAULT_SPEED_LIMIT_KMH = 130
-const MS_TO_KMH = 3.6
 const MS2_HARD_BRAKE = -3.0
 const MS2_HARD_ACCEL = 3.0
-const SPEED_DELTA_MIN_DT_MS = 500
-const ACCURACY_MAX_M = 50
 
-export interface TrackerTick {
-  distance_m: number
-  duration_sec: number
-  current_speed_kmh: number
-  max_speed_kmh: number
+export interface TrackerTick extends ObservationTick {
   events_count: number
-  last_position: { lat: number; lng: number; accuracy: number; timestamp: number } | null
 }
 
 export interface TrackerCallbacks {
   onTick?: (tick: TrackerTick) => void
   onEvent?: (event: DetectedEventPayload) => void
   onError?: (message: string) => void
-}
-
-function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
-  const toRad = (d: number) => (d * Math.PI) / 180
-  const dLat = toRad(b.lat - a.lat)
-  const dLng = toRad(b.lng - a.lng)
-  const lat1 = toRad(a.lat)
-  const lat2 = toRad(b.lat)
-  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2)
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(h))
 }
 
 function severityFromMs2(absMs2: number): number {
@@ -65,46 +30,21 @@ function severityFromMs2(absMs2: number): number {
   return 1
 }
 
-/**
- * Background task handler — reçoit les locations quand l'app est en veille.
- * Doit être défini au niveau module (pas dans une fonction) pour être enregistré
- * par TaskManager. Chaque location = event flush queue, pas de scoring ici.
- */
+// Foreground and background providers can deliver the same fix. Feed the
+// active trip only; the shared observer discards stale or duplicate timestamps.
+let activeBackgroundListener: ((loc: Location.LocationObject) => void) | null = null
+
 TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
-  if (error) return
+  if (error || !activeBackgroundListener) return
   const locations = (data as { locations?: Location.LocationObject[] } | undefined)?.locations
-  if (!locations || locations.length === 0) return
-  // En background on collecte les positions dans la queue — le scoring
-  // harsh_brake/accel sera fait à la reprise foreground (plus fiable, sensors OK).
-  // Ici on se contente de push des breadcrumbs "smooth_drive" marqueurs de continuité.
-  for (const loc of locations) {
-    const speedMs = loc.coords.speed ?? 0
-    const speedKmh = Math.max(0, speedMs * MS_TO_KMH)
-    if (speedKmh > DEFAULT_SPEED_LIMIT_KMH) {
-      const over = speedKmh - DEFAULT_SPEED_LIMIT_KMH
-      enqueueEvent({
-        event_type: 'speeding',
-        severity: severityFromMs2(over / 5),
-        speed_kmh: Math.round(speedKmh),
-        speed_limit_kmh: DEFAULT_SPEED_LIMIT_KMH,
-        g_force: null,
-        lat_rounded: Math.round(loc.coords.latitude * 1000) / 1000,
-        lng_rounded: Math.round(loc.coords.longitude * 1000) / 1000,
-        occurred_at: new Date(loc.timestamp).toISOString(),
-      })
-    }
-  }
+  for (const loc of locations ?? []) activeBackgroundListener(loc)
 })
 
 export class TripTrackerRN {
   private sub: Location.LocationSubscription | null = null
   private backgroundActive = false
-  private lastLoc: Location.LocationObject | null = null
-  private startMs = 0
-  private pausedAccumMs = 0
-  private pauseStartedMs: number | null = null
-  private distanceM = 0
-  private maxSpeedKmh = 0
+  private observations = new TripObservations()
+  private backgroundListener = (loc: Location.LocationObject) => this.handleLocation(loc)
   private eventsCount = 0
   private cooldowns = new Map<TripEventType, number>()
   private tickTimer: ReturnType<typeof setInterval> | null = null
@@ -117,7 +57,7 @@ export class TripTrackerRN {
   }
 
   isPaused(): boolean {
-    return this.pauseStartedMs !== null
+    return this.observations.paused
   }
 
   areSensorsActive(): boolean {
@@ -158,13 +98,8 @@ export class TripTrackerRN {
   async start(cbs: TrackerCallbacks, withBackground = false): Promise<void> {
     if (this.sub !== null) return
     this.cbs = cbs
-    this.startMs = Date.now()
-    this.pausedAccumMs = 0
-    this.pauseStartedMs = null
-    this.distanceM = 0
-    this.maxSpeedKmh = 0
+    this.observations = new TripObservations()
     this.eventsCount = 0
-    this.lastLoc = null
     this.cooldowns.clear()
 
     try {
@@ -192,12 +127,13 @@ export class TripTrackerRN {
             showsBackgroundLocationIndicator: true,
             foregroundService: {
               notificationTitle: 'YANA suit ton trajet',
-              notificationBody: 'Conduis en conscience — YANA note ton SAFE & GREEN score.',
+              notificationBody: 'Le suivi GPS du trajet est actif.',
               notificationColor: '#F97316',
             },
             pausesUpdatesAutomatically: false,
           })
         }
+        activeBackgroundListener = this.backgroundListener
         this.backgroundActive = true
       } catch {
         // Background désactivable silencieusement — foreground continue.
@@ -218,14 +154,11 @@ export class TripTrackerRN {
   }
 
   pause(): void {
-    if (this.sub === null || this.pauseStartedMs !== null) return
-    this.pauseStartedMs = Date.now()
+    if (this.isRunning()) this.observations.pause()
   }
 
   resume(): void {
-    if (this.pauseStartedMs === null) return
-    this.pausedAccumMs += Date.now() - this.pauseStartedMs
-    this.pauseStartedMs = null
+    if (this.isRunning()) this.observations.resume()
   }
 
   async stop(): Promise<TrackerTick> {
@@ -238,7 +171,8 @@ export class TripTrackerRN {
       this.sensors = null
       this.sensorsActive = false
     }
-    if (this.backgroundActive) {
+    if (this.backgroundActive && activeBackgroundListener === this.backgroundListener) {
+      activeBackgroundListener = null
       try {
         await Location.stopLocationUpdatesAsync(BACKGROUND_LOCATION_TASK)
       } catch {
@@ -250,51 +184,22 @@ export class TripTrackerRN {
       clearInterval(this.tickTimer)
       this.tickTimer = null
     }
-    if (this.pauseStartedMs !== null) {
-      this.pausedAccumMs += Date.now() - this.pauseStartedMs
-      this.pauseStartedMs = null
-    }
+
     return this.snapshot()
   }
 
   private handleLocation(loc: Location.LocationObject): void {
-    if (this.pauseStartedMs !== null) return
-    if ((loc.coords.accuracy ?? 999) > ACCURACY_MAX_M) return
-
-    const currentSpeedMs = loc.coords.speed ?? 0
-    const currentSpeedKmh = Math.max(0, currentSpeedMs * MS_TO_KMH)
-    if (currentSpeedKmh > this.maxSpeedKmh) this.maxSpeedKmh = currentSpeedKmh
-
-    const prev = this.lastLoc
-    if (prev) {
-      const meters = haversineMeters(
-        { lat: prev.coords.latitude, lng: prev.coords.longitude },
-        { lat: loc.coords.latitude, lng: loc.coords.longitude },
-      )
-      if (meters >= GPS_JITTER_M) this.distanceM += meters
-
-      const dtMs = loc.timestamp - prev.timestamp
-      const prevSpeedMs = prev.coords.speed ?? 0
-      if (dtMs >= SPEED_DELTA_MIN_DT_MS) {
-        const accelMs2 = (currentSpeedMs - prevSpeedMs) / (dtMs / 1000)
-        if (accelMs2 <= MS2_HARD_BRAKE) {
-          this.tryEmitEvent(loc, 'harsh_brake', severityFromMs2(Math.abs(accelMs2)), accelMs2)
-        } else if (accelMs2 >= MS2_HARD_ACCEL) {
-          this.tryEmitEvent(loc, 'harsh_accel', severityFromMs2(accelMs2), accelMs2)
-        }
-      }
-
-      if (currentSpeedKmh > DEFAULT_SPEED_LIMIT_KMH) {
-        const over = currentSpeedKmh - DEFAULT_SPEED_LIMIT_KMH
-        this.tryEmitEvent(loc, 'speeding', severityFromMs2(over / 5), 0, DEFAULT_SPEED_LIMIT_KMH)
-      }
+    const sample = this.observations.accept(loc)
+    if (!sample) return
+    const acceleration = sample.acceleration
+    if (acceleration !== null && acceleration <= MS2_HARD_BRAKE) {
+      this.tryEmitEvent(loc, 'harsh_brake', severityFromMs2(-acceleration), acceleration)
+    } else if (acceleration !== null && acceleration >= MS2_HARD_ACCEL) {
+      this.tryEmitEvent(loc, 'harsh_accel', severityFromMs2(acceleration), acceleration)
     }
-
-    this.lastLoc = loc
-    this.sensors?.updateContext(
-      { lat: loc.coords.latitude, lng: loc.coords.longitude },
-      currentSpeedKmh,
-    )
+    if (sample.speedMs !== null) {
+      this.sensors?.updateContext({ lat: loc.coords.latitude, lng: loc.coords.longitude }, sample.speedMs * 3.6)
+    }
   }
 
   private tryEmitEvent(
@@ -302,7 +207,6 @@ export class TripTrackerRN {
     type: TripEventType,
     severity: number,
     accelMs2: number,
-    speedLimitKmh?: number,
   ): void {
     const now = Date.now()
     const last = this.cooldowns.get(type) ?? 0
@@ -310,12 +214,12 @@ export class TripTrackerRN {
     this.cooldowns.set(type, now)
     this.eventsCount += 1
 
-    const speedMs = loc.coords.speed ?? 0
+    const speedMs = loc.coords.speed
     const event: DetectedEventPayload = {
       event_type: type,
       severity,
-      speed_kmh: speedMs != null ? Math.round(speedMs * MS_TO_KMH) : null,
-      speed_limit_kmh: speedLimitKmh ?? null,
+      speed_kmh: speedMs != null ? Math.round(speedMs * 3.6) : null,
+      speed_limit_kmh: null,
       g_force: accelMs2 !== 0 ? Math.round((accelMs2 / 9.81) * 100) / 100 : null,
       lat_rounded: Math.round(loc.coords.latitude * 1000) / 1000,
       lng_rounded: Math.round(loc.coords.longitude * 1000) / 1000,
@@ -330,6 +234,8 @@ export class TripTrackerRN {
    * hors GPS de signaler un harsh event détecté plus précisément.
    */
   injectSensorEvent(event: DetectedEventPayload): void {
+    const speed = this.observations.snapshot().current_speed_kmh
+    if (!this.isRunning() || speed === null || speed <= 0) return
     const now = Date.now()
     const last = this.cooldowns.get(event.event_type) ?? 0
     if (now - last < EVENT_COOLDOWN_MS) return
@@ -344,27 +250,6 @@ export class TripTrackerRN {
   }
 
   private snapshot(): TrackerTick {
-    const now = Date.now()
-    const pausedMs =
-      this.pausedAccumMs + (this.pauseStartedMs !== null ? now - this.pauseStartedMs : 0)
-    const durationSec = Math.max(0, Math.floor((now - this.startMs - pausedMs) / 1000))
-    const currentSpeedKmh = this.lastLoc?.coords.speed
-      ? this.lastLoc.coords.speed * MS_TO_KMH
-      : 0
-    return {
-      distance_m: Math.round(this.distanceM),
-      duration_sec: durationSec,
-      current_speed_kmh: Math.round(currentSpeedKmh * 10) / 10,
-      max_speed_kmh: Math.round(this.maxSpeedKmh * 10) / 10,
-      events_count: this.eventsCount,
-      last_position: this.lastLoc
-        ? {
-            lat: this.lastLoc.coords.latitude,
-            lng: this.lastLoc.coords.longitude,
-            accuracy: this.lastLoc.coords.accuracy ?? 0,
-            timestamp: this.lastLoc.timestamp,
-          }
-        : null,
-    }
+    return { ...this.observations.snapshot(), events_count: this.eventsCount }
   }
 }

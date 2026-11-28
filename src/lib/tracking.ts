@@ -1,19 +1,10 @@
-// lib/tracking.ts — Wrapper navigator.geolocation pour SAFE DRIVE web MVP.
-// Détection hard_brake / hard_accel / speeding via delta de vitesse GPS entre
-// deux positions (1 Hz typique). DeviceMotion désactivé en web MVP (fiabilité
-// cross-browser faible, cross-OS différents axes, iOS requiert permission
-// modal bloquante). P7 mobile Expo ajoutera expo-sensors.
-
 import type { TripEventType } from '@/types'
 
-const EARTH_RADIUS_M = 6_371_000
-const GPS_JITTER_M = 2               // ignorer déplacements < 2m entre 2 points
-const EVENT_COOLDOWN_MS = 3_000      // même type d'event: 1 toutes les 3 sec
-const DEFAULT_SPEED_LIMIT_KMH = 130  // fallback si pas de speedlimit OSM
-const MS_TO_KMH = 3.6
+import { TripObservations, type ObservationTick } from '../../mobile/src/lib/trip-observations'
+
+const EVENT_COOLDOWN_MS = 3_000
 const MS2_HARD_BRAKE = -3.0
 const MS2_HARD_ACCEL = 3.0
-const SPEED_DELTA_MIN_DT_MS = 500    // ignorer deltas calculés sur dt < 500ms
 
 export interface TrackingOptions {
   /** Appelé à chaque mise à jour positionnelle valide. */
@@ -22,7 +13,7 @@ export interface TrackingOptions {
     lng: number
     accuracy: number
     speed_ms: number | null
-    speed_kmh: number
+    speed_kmh: number | null
     timestamp: number
   }) => void
   /** Event safety détecté. Lat/lng sont déjà arrondis (3 décimales = ~100m). */
@@ -44,26 +35,8 @@ export interface DetectedEvent {
   occurred_at: string                    // ISO
 }
 
-export interface TrackerTick {
-  distance_m: number
-  duration_sec: number
-  current_speed_kmh: number
-  max_speed_kmh: number
+export interface TrackerTick extends ObservationTick {
   events_count: number
-  last_position: { lat: number; lng: number; accuracy: number; timestamp: number } | null
-}
-
-function haversineMeters(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-): number {
-  const toRad = (d: number) => (d * Math.PI) / 180
-  const dLat = toRad(b.lat - a.lat)
-  const dLng = toRad(b.lng - a.lng)
-  const lat1 = toRad(a.lat)
-  const lat2 = toRad(b.lat)
-  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2)
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(h))
 }
 
 function geolocErrorFr(err: GeolocationPositionError): string {
@@ -89,12 +62,7 @@ function severityFromMs2(absMs2: number): number {
 
 export class TripTracker {
   private watchId: number | null = null
-  private lastPosition: GeolocationPosition | null = null
-  private startMs = 0
-  private pausedAccumMs = 0
-  private pauseStartedMs: number | null = null
-  private distanceM = 0
-  private maxSpeedKmh = 0
+  private observations = new TripObservations()
   private eventsCount = 0
   private cooldowns = new Map<TripEventType, number>()
   private tickTimer: ReturnType<typeof setInterval> | null = null
@@ -105,7 +73,7 @@ export class TripTracker {
   }
 
   isPaused(): boolean {
-    return this.pauseStartedMs !== null
+    return this.observations.paused
   }
 
   async start(opts: TrackingOptions): Promise<void> {
@@ -116,13 +84,8 @@ export class TripTracker {
     if (this.watchId !== null) return
 
     this.opts = opts
-    this.startMs = Date.now()
-    this.pausedAccumMs = 0
-    this.pauseStartedMs = null
-    this.distanceM = 0
-    this.maxSpeedKmh = 0
+    this.observations = new TripObservations()
     this.eventsCount = 0
-    this.lastPosition = null
     this.cooldowns.clear()
 
     this.watchId = navigator.geolocation.watchPosition(
@@ -135,14 +98,11 @@ export class TripTracker {
   }
 
   pause(): void {
-    if (this.watchId === null || this.pauseStartedMs !== null) return
-    this.pauseStartedMs = Date.now()
+    if (this.isRunning()) this.observations.pause()
   }
 
   resume(): void {
-    if (this.pauseStartedMs === null) return
-    this.pausedAccumMs += Date.now() - this.pauseStartedMs
-    this.pauseStartedMs = null
+    if (this.isRunning()) this.observations.resume()
   }
 
   stop(): TrackerTick {
@@ -150,10 +110,7 @@ export class TripTracker {
       navigator.geolocation.clearWatch(this.watchId)
     }
     if (this.tickTimer) clearInterval(this.tickTimer)
-    if (this.pauseStartedMs !== null) {
-      this.pausedAccumMs += Date.now() - this.pauseStartedMs
-      this.pauseStartedMs = null
-    }
+
     const tick = this.snapshot()
     this.watchId = null
     this.tickTimer = null
@@ -161,50 +118,20 @@ export class TripTracker {
   }
 
   private handlePosition(pos: GeolocationPosition): void {
-    // Ignorer si en pause ou précision trop mauvaise
-    if (this.pauseStartedMs !== null) return
-    if (pos.coords.accuracy > 50) return
-
-    const currentSpeedMs = pos.coords.speed ?? 0
-    const currentSpeedKmh = Math.max(0, currentSpeedMs * MS_TO_KMH)
-
-    if (currentSpeedKmh > this.maxSpeedKmh) this.maxSpeedKmh = currentSpeedKmh
-
-    const prev = this.lastPosition
-    if (prev) {
-      const meters = haversineMeters(
-        { lat: prev.coords.latitude, lng: prev.coords.longitude },
-        { lat: pos.coords.latitude, lng: pos.coords.longitude },
-      )
-      if (meters >= GPS_JITTER_M) {
-        this.distanceM += meters
-      }
-
-      const dtMs = pos.timestamp - prev.timestamp
-      const prevSpeedMs = prev.coords.speed ?? 0
-      if (dtMs >= SPEED_DELTA_MIN_DT_MS) {
-        const accelMs2 = (currentSpeedMs - prevSpeedMs) / (dtMs / 1000)
-
-        if (accelMs2 <= MS2_HARD_BRAKE) {
-          this.tryEmitEvent(pos, 'harsh_brake', severityFromMs2(Math.abs(accelMs2)), accelMs2)
-        } else if (accelMs2 >= MS2_HARD_ACCEL) {
-          this.tryEmitEvent(pos, 'harsh_accel', severityFromMs2(accelMs2), accelMs2)
-        }
-      }
-
-      if (currentSpeedKmh > DEFAULT_SPEED_LIMIT_KMH) {
-        const over = currentSpeedKmh - DEFAULT_SPEED_LIMIT_KMH
-        this.tryEmitEvent(pos, 'speeding', severityFromMs2(over / 5), 0, DEFAULT_SPEED_LIMIT_KMH)
-      }
+    const sample = this.observations.accept(pos)
+    if (!sample) return
+    const acceleration = sample.acceleration
+    if (acceleration !== null && acceleration <= MS2_HARD_BRAKE) {
+      this.tryEmitEvent(pos, 'harsh_brake', severityFromMs2(-acceleration), acceleration)
+    } else if (acceleration !== null && acceleration >= MS2_HARD_ACCEL) {
+      this.tryEmitEvent(pos, 'harsh_accel', severityFromMs2(acceleration), acceleration)
     }
-
-    this.lastPosition = pos
     this.opts.onPosition?.({
       lat: pos.coords.latitude,
       lng: pos.coords.longitude,
       accuracy: pos.coords.accuracy,
-      speed_ms: pos.coords.speed,
-      speed_kmh: currentSpeedKmh,
+      speed_ms: sample.speedMs,
+      speed_kmh: sample.speedMs === null ? null : sample.speedMs * 3.6,
       timestamp: pos.timestamp,
     })
   }
@@ -214,7 +141,6 @@ export class TripTracker {
     type: TripEventType,
     severity: number,
     accelMs2: number,
-    speedLimitKmh?: number,
   ): void {
     const now = Date.now()
     const last = this.cooldowns.get(type) ?? 0
@@ -225,8 +151,8 @@ export class TripTracker {
     const event: DetectedEvent = {
       event_type: type,
       severity,
-      speed_kmh: pos.coords.speed != null ? Math.round(pos.coords.speed * MS_TO_KMH) : null,
-      speed_limit_kmh: speedLimitKmh ?? null,
+      speed_kmh: pos.coords.speed != null ? Math.round(pos.coords.speed * 3.6) : null,
+      speed_limit_kmh: null,
       g_force: accelMs2 !== 0 ? Math.round((accelMs2 / 9.81) * 100) / 100 : null,
       lat_rounded: Math.round(pos.coords.latitude * 1000) / 1000,
       lng_rounded: Math.round(pos.coords.longitude * 1000) / 1000,
@@ -240,26 +166,6 @@ export class TripTracker {
   }
 
   private snapshot(): TrackerTick {
-    const now = Date.now()
-    const pausedMs = this.pausedAccumMs + (this.pauseStartedMs !== null ? now - this.pauseStartedMs : 0)
-    const durationSec = Math.max(0, Math.floor((now - this.startMs - pausedMs) / 1000))
-    const currentSpeedKmh = this.lastPosition?.coords.speed
-      ? this.lastPosition.coords.speed * MS_TO_KMH
-      : 0
-    return {
-      distance_m: Math.round(this.distanceM),
-      duration_sec: durationSec,
-      current_speed_kmh: Math.round(currentSpeedKmh * 10) / 10,
-      max_speed_kmh: Math.round(this.maxSpeedKmh * 10) / 10,
-      events_count: this.eventsCount,
-      last_position: this.lastPosition
-        ? {
-            lat: this.lastPosition.coords.latitude,
-            lng: this.lastPosition.coords.longitude,
-            accuracy: this.lastPosition.coords.accuracy,
-            timestamp: this.lastPosition.timestamp,
-          }
-        : null,
-    }
+    return { ...this.observations.snapshot(), events_count: this.eventsCount }
   }
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Car, AlertTriangle, Leaf, Sparkles } from 'lucide-react'
+import { Car, AlertTriangle, Leaf } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import type { TripScoreResult, Vehicle } from '@/types'
 import { VEHICLE_TYPES } from '@/lib/constants'
@@ -80,7 +80,7 @@ export function SpeedGauge({
   active,
   status,
 }: {
-  speed: number
+  speed: number | null
   active: boolean
   status: string
 }) {
@@ -105,18 +105,17 @@ export function SpeedGauge({
         <p
           className="mt-2 font-[family-name:var(--font-display)] text-7xl font-bold text-[var(--text-primary)] tabular-nums sm:text-8xl"
           data-testid="drive-speed"
-          aria-live="polite"
         >
-          {Math.round(speed)}
+          {speed === null ? '—' : Math.round(speed)}
         </p>
-        <p className="mt-1 text-sm text-[var(--text-secondary)]">km/h</p>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">km/h · vitesse GPS indicative</p>
         {active && status === 'active' && (
           <div className="mt-4 flex items-center gap-2 text-xs text-[var(--text-muted)]">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--cyan)] opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--cyan)]" />
             </span>
-            GPS actif
+            {speed === null ? 'Vitesse indisponible' : 'Limitation de la route inconnue'}
           </div>
         )}
       </div>
@@ -151,45 +150,32 @@ export function ScoreCard({
   durationSec: number
   onClose: () => void
 }) {
-  const badgeLabel = {
-    gold: 'Or',
-    silver: 'Argent',
-    bronze: 'Bronze',
-    learner: 'Apprenti',
-  }[score.badge]
-
-  const badgeColor = {
-    gold: 'from-amber-400 to-yellow-500',
-    silver: 'from-slate-300 to-slate-500',
-    bronze: 'from-amber-700 to-amber-900',
-    learner: 'from-slate-500 to-slate-700',
-  }[score.badge]
-
+  const badgeLabel = score.badge ? { gold: 'Or', silver: 'Argent', bronze: 'Bronze', learner: 'Apprenti' }[score.badge] : null
   return (
     <div className="flex flex-col items-center gap-5 py-2 text-center">
-      <div
-        className={`flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br ${badgeColor} shadow-xl`}
-      >
-        <Sparkles className="h-8 w-8 text-white" />
-      </div>
-      <div>
-        <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]">
-          Score sécurité · {badgeLabel}
-        </p>
-        <p className="mt-1 font-[family-name:var(--font-display)] text-6xl font-bold text-[var(--text-primary)] tabular-nums">
-          {score.safety_score}
-        </p>
-      </div>
+      {score.safety_score != null ? (
+        <div>
+          <p className="text-xs uppercase tracking-widest text-[var(--text-muted)]">
+            Indice de conduite observée{badgeLabel && ` · ${badgeLabel}`}
+          </p>
+          <p className="mt-1 font-[family-name:var(--font-display)] text-6xl font-bold text-[var(--text-primary)] tabular-nums">
+            {score.safety_score}/100
+          </p>
+          <p className="text-sm text-[var(--text-secondary)]">Estimation fondée sur les mouvements enregistrés.</p>
+        </div>
+      ) : (
+        <p className="text-sm text-[var(--text-secondary)]">Données insuffisantes pour évaluer ce trajet.</p>
+      )}
 
       <div className="grid w-full grid-cols-2 gap-3">
         <div className="rounded-xl border border-[var(--border)] bg-white/[0.02] p-3">
           <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Éco</p>
           <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--text-primary)]">
-            {score.eco_score}/100
+            {score.eco_score == null ? '—' : `${score.eco_score}/100`}
           </p>
         </div>
         <div className="rounded-xl border border-[var(--border)] bg-white/[0.02] p-3">
-          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">CO₂</p>
+          <p className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">CO₂ estimé</p>
           <p className="font-[family-name:var(--font-display)] text-xl font-bold text-[var(--text-primary)]">
             {score.co2_kg.toFixed(2)} kg
           </p>
@@ -219,7 +205,7 @@ export function ScoreCard({
         <div className="flex w-full items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-left">
           <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-400" />
           <p className="text-xs text-amber-100">
-            Score insuffisant pour gagner des Graines. Respire, allège ton pied, arrive entier 🧘
+            Aucune Graine de conduite créditée pour ce trajet.
           </p>
         </div>
       )}

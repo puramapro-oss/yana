@@ -161,6 +161,12 @@ jobs:
           'src/app/(dashboard)/carpool/new/page.tsx'
           'src/app/(dashboard)/settings/abonnement/page.tsx' src/types/autres.ts
 
+      - name: Verify shared rides, mobile observations and database transactions
+        run: |
+          export POSTGRES_BIN="$(pg_config --bindir)"
+          test -x "$POSTGRES_BIN/initdb" && test -x "$POSTGRES_BIN/postgres"
+          node --test --test-concurrency=1 scripts/carpool-*.test.mjs scripts/trip-*.test.mjs
+
       - name: TypeScript strict
         run: node node_modules/typescript/bin/tsc --noEmit --incremental false
 

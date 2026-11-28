@@ -3,7 +3,7 @@ import { Trash2 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
-import { formatPrice } from '@/lib/utils'
+import CarpoolReceipt from './CarpoolReceipt'
 import type { SafeWalkContact } from '../types'
 import type { Carpool } from '@/types'
 
@@ -12,6 +12,7 @@ interface BookingModalProps {
   onClose: () => void
   carpool: Carpool
   seats: number
+  estimatedSeeds?: number
   onSeatsChange: (n: number) => void
   contacts: SafeWalkContact[]
   onContactsChange: (contacts: SafeWalkContact[]) => void
@@ -24,6 +25,7 @@ export default function BookingModal({
   onClose,
   carpool,
   seats,
+  estimatedSeeds,
   onSeatsChange,
   contacts,
   onContactsChange,
@@ -116,15 +118,11 @@ export default function BookingModal({
           </div>
         </div>
 
-        <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-white/[0.02] p-3 text-sm">
-          <span className="text-[var(--text-secondary)]">Total</span>
-          <span className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--text-primary)] tabular-nums">
-            {formatPrice(carpool.price_per_seat_cents * seats)}
-          </span>
-        </div>
-
-        <p className="text-[11px] text-[var(--text-muted)]">
-          Paiement Stripe activé en P3. En dev YANA le trajet est confirmé sans paiement réel.{' '}
+        <CarpoolReceipt totalCents={carpool.price_per_seat_cents * seats} />
+        <p className="text-xs text-[var(--text-muted)]">
+          Les Graines sont des points PURAMA.{' '}
+          {estimatedSeeds != null && <>Estimation pour ta formule actuelle · {estimatedSeeds} Graines pour cette réservation.{' '}</>}
+          Le nombre de points crédités sera affiché après les deux confirmations.{' '}
           <Link href="/cgv" className="underline">Conditions</Link>
         </p>
 

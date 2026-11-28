@@ -45,12 +45,13 @@ export interface TripStartResponse {
 }
 
 export interface TripScoreResult {
-  safety_score: number
-  eco_score: number
+  assessment: 'indicative' | 'insufficient'
+  safety_score: number | null
+  eco_score: number | null
   co2_kg: number
   seeds_earned: number
-  events_summary: Record<TripEventType, number>
-  medal: 'bronze' | 'silver' | 'gold' | 'platinum' | 'legend'
+  event_counts: Partial<Record<TripEventType, number>>
+  badge: 'bronze' | 'silver' | 'gold' | 'learner' | null
 }
 
 export interface TripEndResponse {
@@ -71,16 +72,21 @@ async function getAuthHeader(): Promise<Record<string, string>> {
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const auth = await getAuthHeader()
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', ...auth },
-    body: JSON.stringify(body),
-  })
-  const payload = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(payload.error ?? 'Erreur réseau. Réessaie.')
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 10_000)
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...auth },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+    const payload = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(payload.error ?? 'Erreur réseau. Réessaie.')
+    return payload as T
+  } finally {
+    clearTimeout(timer)
   }
-  return payload as T
 }
 
 export async function apiTripStart(input: {
@@ -100,11 +106,21 @@ export async function apiTripEvents(input: {
   return post<{ inserted: number }>('/event', input)
 }
 
+interface TripCoverage {
+  accepted_fixes: number
+  observed_seconds: number
+}
+
+export async function apiTripCoverage(input: TripCoverage & { trip_id: string; distance_m: number }) {
+  return post<{ received: boolean }>('/coverage', input)
+}
+
 export async function apiTripEnd(input: {
   trip_id: string
   distance_km: number
   duration_sec: number
-  max_speed_kmh: number
+  coverage?: TripCoverage
+  max_speed_kmh?: number | null
   end_lat?: number | null
   end_lng?: number | null
 }): Promise<TripEndResponse> {

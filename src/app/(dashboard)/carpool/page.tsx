@@ -1,13 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import ArrivalFilter from './components/ArrivalFilter'
+import CarpoolCard from './components/CarpoolCard'
 import Link from 'next/link'
-import { Plus, MapPin, Users, ChevronRight } from 'lucide-react'
+import { Plus, ChevronRight } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
 import KycBanner from './components/KycBanner'
-import { useCarpool } from '@/hooks/useCarpool'
+import { useCarpool, type SearchCarpoolInput } from '@/hooks/useCarpool'
 import { useKyc } from '@/hooks/useKyc'
 import { formatDateTime, formatPrice } from '@/lib/utils'
+import type { SearchableCarpool } from '@/lib/carpool-arrival'
 import type { Carpool, CarpoolBooking } from '@/types'
 
 type Tab = 'search' | 'driver' | 'passenger'
@@ -16,23 +20,6 @@ export default function CarpoolPage() {
   const { mine_as_driver, mine_as_passenger, loading, error, search, refetch } = useCarpool()
   const { isApproved, status: kycStatus } = useKyc()
   const [tab, setTab] = useState<Tab>('search')
-  const [searchResults, setSearchResults] = useState<Carpool[]>([])
-  const [searching, setSearching] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-    queueMicrotask(() => setSearching(true))
-    search({}).then((rows) => {
-      if (!cancelled) {
-        setSearchResults(rows)
-        setSearching(false)
-      }
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [search])
-
   return (
     <div className="mx-auto max-w-4xl">
       <header className="mb-6 flex items-start justify-between gap-4">
@@ -41,7 +28,7 @@ export default function CarpoolPage() {
             Covoiturage 🚘
           </h1>
           <p className="mt-2 text-sm text-[var(--text-secondary)]">
-            Dual Reward : 80 % pour le conducteur, 5 % pour planter des arbres, 50 Graines chacun.
+            Trouve une place ou partage un trajet que tu as déjà prévu.
           </p>
         </div>
         <Link
@@ -78,9 +65,9 @@ export default function CarpoolPage() {
         </TabBtn>
       </nav>
 
-      {loading && <CarpoolSkeletonList />}
+      {tab !== 'search' && loading && <CarpoolSkeletonList />}
 
-      {!loading && error && (
+      {tab !== 'search' && !loading && error && (
         <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm text-red-300">
           {error}{' '}
           <button onClick={refetch} className="underline hover:no-underline">
@@ -89,8 +76,10 @@ export default function CarpoolPage() {
         </div>
       )}
 
-      {!loading && !error && tab === 'search' && (
-        <SearchTab results={searchResults} loading={searching} canBook={isApproved} />
+      {tab === 'search' && (
+        <Suspense fallback={<CarpoolSkeletonList />}>
+          <CarpoolSearch search={search} canBook={isApproved} />
+        </Suspense>
       )}
 
       {!loading && !error && tab === 'driver' && <DriverTab carpools={mine_as_driver} />}
@@ -126,25 +115,70 @@ function TabBtn({
   )
 }
 
+function CarpoolSearch({ search, canBook }: {
+  search: (input: SearchCarpoolInput) => Promise<SearchableCarpool[]>
+  canBook: boolean
+}) {
+  const query = useSearchParams().toString()
+  const [attempt, setAttempt] = useState(0)
+  const [result, setResult] = useState<{ query: string; attempt: number; rows: SearchableCarpool[]; error?: string } | null>(null)
+  useEffect(() => {
+    let active = true
+    const params = new URLSearchParams(query)
+    const get = (name: string) => params.get(name) ?? undefined
+    const number = (name: string) => {
+      const value = get(name)
+      return value?.trim() && Number.isFinite(Number(value)) ? Number(value) : undefined
+    }
+    search({
+      from_city: get('from'), to_city: get('to'), departure_after: get('departure_after'),
+      arrive_by: get('arrive_by'), min_seats: get('min_seats'), exclude_id: get('exclude_id'),
+      departure_from: get('from_at'), departure_to: get('to_at'), women_only: get('women_only') === '1',
+      from_lat: number('from_lat'), from_lng: number('from_lng'), to_lat: number('to_lat'), to_lng: number('to_lng'),
+      silent_ride: get('silent_ride') === '1', pets_allowed: get('pets_allowed') === '1',
+    }).then(rows => {
+      if (active) setResult({ query, attempt, rows })
+    }).catch((reason: unknown) => {
+      if (active) setResult({ query, attempt, rows: [], error: reason instanceof Error ? reason.message : 'Recherche impossible.' })
+    })
+    return () => { active = false }
+  }, [search, query, attempt])
+  const current = result?.query === query && result.attempt === attempt ? result : null
+  return (
+    <>
+      <ArrivalFilter key={query} query={query} />
+      {current?.error ? (
+        <p role="alert" className="text-sm">{current.error}{' '}
+          <button className="underline" onClick={() => setAttempt(n => n + 1)}>Réessayer</button>
+        </p>
+      ) : (
+        <SearchTab results={current?.rows ?? []} loading={!current} canBook={canBook} filtered={Boolean(query)} />
+      )}
+    </>
+  )
+}
+
 function SearchTab({
   results,
   loading,
   canBook,
+  filtered,
 }: {
-  results: Carpool[]
+  results: SearchableCarpool[]
   loading: boolean
   canBook: boolean
+  filtered: boolean
 }) {
   if (loading) return <CarpoolSkeletonList />
   if (results.length === 0) {
     return (
       <EmptyState
         icon="🚗"
-        title="Pas encore de trajet"
+        title={filtered ? 'Aucun trajet correspondant' : 'Pas encore de trajet'}
         description={
-          canBook
-            ? 'Sois le premier à proposer un covoiturage. Tu gagnes 80 % du prix + 50 Graines par passager.'
-            : "Personne n'a encore proposé de trajet près de chez toi. Vérifie ton identité et propose le premier."
+          filtered
+            ? 'Tu peux élargir la recherche. Avec une heure limite, seuls les trajets dont l’arrivée peut être estimée sont affichés.'
+            : canBook ? 'Tu peux proposer un trajet déjà prévu.' : 'Vérifie ton identité pour proposer un trajet.'
         }
         action={
           <Link
@@ -175,7 +209,7 @@ function DriverTab({ carpools }: { carpools: Carpool[] }) {
       <EmptyState
         icon="🛞"
         title="Tu n'as pas encore proposé de trajet"
-        description="Ouvre une place à un voisin, gagne des Graines et de l'argent."
+        description="Propose une place sur un de tes prochains déplacements."
         action={
           <Link
             href="/carpool/new"
@@ -217,53 +251,6 @@ function PassengerTab({ bookings }: { bookings: CarpoolBooking[] }) {
         </li>
       ))}
     </ul>
-  )
-}
-
-function CarpoolCard({ carpool, asDriver }: { carpool: Carpool; asDriver?: boolean }) {
-  return (
-    <Link
-      href={`/carpool/${carpool.id}`}
-      data-testid="carpool-card"
-      className="group flex items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-white/[0.02] p-4 transition hover:border-[var(--border-glow)] hover:bg-white/[0.04]"
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--cyan)]/10 text-[var(--cyan)]">
-          <MapPin className="h-4 w-4" />
-        </div>
-        <div className="min-w-0">
-          <p className="truncate font-semibold text-[var(--text-primary)]">
-            {carpool.from_city} → {carpool.to_city}
-          </p>
-          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-            {formatDateTime(carpool.departure_at)} ·{' '}
-            <span className="inline-flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              {carpool.seats_remaining}/{carpool.seats_total}
-            </span>
-          </p>
-        </div>
-      </div>
-      <div className="flex flex-shrink-0 items-center gap-3">
-        <div className="text-right">
-          <p className="font-[family-name:var(--font-display)] text-lg font-bold text-[var(--text-primary)] tabular-nums">
-            {formatPrice(carpool.price_per_seat_cents)}
-          </p>
-          <p className="text-[10px] text-[var(--text-muted)]">/ place</p>
-        </div>
-        {asDriver && carpool.status === 'completed' && (
-          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
-            Terminé
-          </span>
-        )}
-        {asDriver && carpool.status === 'full' && (
-          <span className="rounded-full bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
-            Complet
-          </span>
-        )}
-        <ChevronRight className="h-4 w-4 text-[var(--text-muted)] transition group-hover:translate-x-0.5" />
-      </div>
-    </Link>
   )
 }
 

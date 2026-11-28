@@ -1,32 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Alert, Pressable, StatusBar, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import * as Speech from 'expo-speech'
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { colors, fib, radii, typography } from '@/lib/theme'
 import { useTrip } from '@/hooks/useTrip'
 import { useVehicles } from '@/hooks/useVehicles'
 import { TripTrackerRN } from '@/lib/trip-tracker'
-import { enqueueEvent } from '@/lib/event-queue'
-import type { DetectedEventPayload } from '@/lib/trip-api'
 
 const KEEP_AWAKE_TAG = 'yana-moto-mode'
 
-/**
- * Moto Mode — écran plein écran haute lisibilité pour usage casque/gants.
- *
- * Règles ergonomiques :
- *  - OLED pur #000000, 3 boutons ≥ 160×160, couleurs contrastées 1 coup d'œil.
- *  - Chaque press = Haptics.Heavy + TTS FR confirmant l'action (lecture audio
- *    suffisante sans regarder l'écran).
- *  - Screen keep-awake actif tout le temps que l'écran est monté.
- *  - Aucun texte parasite, aucune info secondaire.
- *  - Bouton "Obstacle" enqueue un event dédié (marqué focus_maintained severity 3
- *    avec metadata.type='moto_obstacle' — stocké dans la queue existante).
- *  - iOS Apple guidelines §23 : textes neutres, aucun mot "paiement"/"abo".
- */
 function speak(text: string) {
   try {
     Speech.speak(text, { language: 'fr-FR', pitch: 1, rate: 1 })
@@ -37,12 +22,16 @@ function speak(text: string) {
 
 export default function MotoMode() {
   const router = useRouter()
-  const { state, start, stop, cancel } = useTrip()
-  const { primary } = useVehicles()
+  const { state, start, stop, pause, resume } = useTrip()
+  const { vehicleId } = useLocalSearchParams<{ vehicleId?: string }>()
+  const { vehicles, primary, loading } = useVehicles()
+  const vehicle = vehicleId ? vehicles.find((row) => row.id === vehicleId) : primary
   const [busy, setBusy] = useState(false)
   const keepAwakeActive = useRef(false)
 
   const isActive = state.status === 'active' || state.status === 'paused'
+
+  const moving = (state.current_speed_kmh ?? 0) > 0
 
   useEffect(() => {
     void activateKeepAwakeAsync(KEEP_AWAKE_TAG).then(() => {
@@ -58,16 +47,19 @@ export default function MotoMode() {
     }
   }, [])
 
+  useEffect(() => {
+    if (state.break_reminder_due) speak('Prévois une pause sur la prochaine aire adaptée.')
+  }, [state.break_reminder_due])
+
   async function onStart() {
     if (busy || isActive) return
     setBusy(true)
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
-    speak('Trajet démarré. Conduis en conscience.')
-    if (!primary?.id) {
+    if (!vehicle?.id) {
       setBusy(false)
       Alert.alert(
         'Véhicule requis',
-        'Ajoute un véhicule principal depuis le site pour démarrer en Moto Mode.',
+        'Sélectionne un véhicule disponible depuis l’écran de départ.',
       )
       return
     }
@@ -78,37 +70,19 @@ export default function MotoMode() {
       return
     }
     const { error } = await start({
-      vehicle_id: primary.id,
+      vehicle_id: vehicle.id,
       trip_mode: 'solo',
       with_background: perms.background,
     })
     setBusy(false)
     if (error) Alert.alert('Démarrage impossible', error)
-  }
-
-  async function onObstacle() {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
-    speak('Obstacle signalé.')
-    if (!state.trip_id) return
-    const now = new Date().toISOString()
-    const event: DetectedEventPayload = {
-      event_type: 'focus_maintained',
-      severity: 3,
-      speed_kmh: Math.round(state.current_speed_kmh),
-      speed_limit_kmh: null,
-      g_force: null,
-      lat_rounded: null,
-      lng_rounded: null,
-      occurred_at: now,
-    }
-    enqueueEvent(event)
+    else speak('Trajet démarré.')
   }
 
   async function onStop() {
     if (busy) return
     setBusy(true)
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy)
-    speak('Trajet terminé. Calcul de ton score.')
     const res = await stop()
     setBusy(false)
     if (res.error) {
@@ -116,13 +90,12 @@ export default function MotoMode() {
       return
     }
     if (res.score) {
-      speak(
-        `Score sécurité ${res.score.safety_score} sur 100. Score écologie ${res.score.eco_score} sur 100.`,
-      )
-      Alert.alert(
-        'Trajet terminé',
-        `SAFE ${res.score.safety_score}/100 · GREEN ${res.score.eco_score}/100\n+${res.score.seeds_earned} seeds`,
-      )
+      const { safety_score, eco_score, seeds_earned } = res.score
+      const summary = safety_score === null || eco_score === null
+        ? 'Données insuffisantes pour évaluer ce trajet.'
+        : `Indices de conduite observée · ${safety_score}/100 sécurité · ${eco_score}/100 éco. ${seeds_earned} Graines.`
+      speak('Trajet terminé.')
+      Alert.alert('Trajet terminé', summary)
       router.replace('/(tabs)/drive')
     }
   }
@@ -130,19 +103,7 @@ export default function MotoMode() {
   async function onExit() {
     await Haptics.selectionAsync()
     if (isActive) {
-      Alert.alert(
-        'Quitter le Moto Mode ?',
-        'Ton trajet continue en arrière-plan. Tu peux revenir dans le Moto Mode depuis Drive.',
-        [
-          { text: 'Rester', style: 'cancel' },
-          {
-            text: 'Quitter',
-            onPress: () => {
-              router.back()
-            },
-          },
-        ],
-      )
+      Alert.alert('Trajet en cours', 'Une fois stationné, termine le trajet avant de quitter cet écran.')
       return
     }
     router.back()
@@ -170,6 +131,7 @@ export default function MotoMode() {
           <Pressable
             testID="moto-exit"
             onPress={onExit}
+            disabled={moving || busy}
             hitSlop={24}
             accessibilityRole="button"
             accessibilityLabel="Quitter le Moto Mode"
@@ -192,12 +154,15 @@ export default function MotoMode() {
               {(state.distance_m / 1000).toFixed(2)} km
             </Text>
             <Text style={{ color: colors.dark.textSecondary, fontSize: typography.moto.label }}>
-              {state.current_speed_kmh.toFixed(0)} km/h
+              {state.current_speed_kmh === null ? 'Vitesse indisponible' : `${Math.round(state.current_speed_kmh)} km/h · GPS indicatif`}
+            </Text>
+            <Text style={{ color: colors.dark.textSecondary }}>
+              Limitation inconnue{state.break_reminder_due ? ' · Prévois une pause sur la prochaine aire adaptée.' : ''}
             </Text>
           </View>
         ) : (
           <Text style={{ color: colors.dark.textSecondary, fontSize: typography.moto.label }}>
-            Écran conduite. Contrôles haptiques + voix.
+            Prépare le trajet à l’arrêt. Dès les premiers signes de fatigue, stationne en sécurité.
           </Text>
         )}
 
@@ -206,23 +171,23 @@ export default function MotoMode() {
             testID="moto-start"
             label={isActive ? 'TRAJET ACTIF' : '🛵  DÉMARRER'}
             bg={isActive ? '#1f2937' : colors.accent.primary}
-            disabled={isActive || busy}
+            disabled={isActive || busy || loading}
             onPress={onStart}
             accessibilityLabel="Démarrer un trajet"
           />
           <MotoButton
-            testID="moto-obstacle"
-            label="⚠️  OBSTACLE"
-            bg={isActive ? colors.semantic.warning : '#1f2937'}
-            disabled={!isActive}
-            onPress={onObstacle}
-            accessibilityLabel="Signaler un obstacle"
+            testID="moto-pause"
+            label={state.status === 'paused' ? 'REPRENDRE' : 'PAUSE'}
+            bg={colors.accent.primary}
+            disabled={!isActive || busy || moving}
+            onPress={state.status === 'paused' ? resume : pause}
+            accessibilityLabel={state.status === 'paused' ? 'Reprendre le trajet' : 'Mettre en pause'}
           />
           <MotoButton
             testID="moto-stop"
             label="⏹  ARRÊTER"
             bg={isActive ? colors.semantic.error : '#1f2937'}
-            disabled={!isActive || busy}
+            disabled={!isActive || busy || moving}
             onPress={onStop}
             accessibilityLabel="Arrêter le trajet"
           />
@@ -235,7 +200,7 @@ export default function MotoMode() {
             fontSize: typography.body.xs,
           }}
         >
-          Reste concentré sur la route. YANA écoute ton trajet.
+          Utilise les commandes une fois stationné.
         </Text>
       </View>
     </SafeAreaView>
